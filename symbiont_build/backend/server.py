@@ -67,30 +67,79 @@ MANIFEST_VERSION = MANIFEST_BASE
 ROLLOUT = 100                # текущая волна canary-выкатки, % (операторский рычаг)
 
 
+# ── Само-починка узлов: heartbeat + свип протухших ────────────────────────────
+# Узлы, зарегистрировавшиеся сами (/v1/node/register), шлют раз в ~минуту heartbeat
+# (/v1/node/heartbeat). Нет свежего heartbeat дольше NODE_STALE_SEC → узел выпадает
+# из манифеста; снова зашумел → возвращается. Узлы, опубликованные вручную
+# (publish_nodes.py, без heartbeat), НЕ трогаем — ими управляет оператор.
+NODE_STALE_SEC = int(os.environ.get("SYMBIONT_NODE_STALE_SEC", "150"))
+_node_health: dict[str, dict] = persist.jload("node_health.json", {})  # id -> {last_seen, load_pct}
+def _save_node_health(): persist.jsave("node_health.json", _node_health)
+_node_rev = 1 if os.path.exists("nodes.json") else 0   # версия += при смене НАБОРА узлов
+
+def _healthy_ids() -> set:
+    """id узлов, которые сейчас показываем клиенту: со свежим heartbeat, ЛИБО без
+    записи health вообще (опубликованы вручную — само-починка их не касается)."""
+    now = int(time.time())
+    data = persist.jload("nodes.json", {"nodes": []})
+    cur = data.get("nodes") if isinstance(data, dict) else data
+    ids = set()
+    for n in (cur or []):
+        h = _node_health.get(n.get("id"))
+        if h is None or (now - h.get("last_seen", 0)) <= NODE_STALE_SEC:
+            ids.add(n.get("id"))
+    return ids
+
+
 def _build_manifest():
-    """Манифест из demo-тела; если рядом есть nodes.json (реальные узлы с серверов,
-    собранные server/publish_nodes.py) — подставляем их вместо демо-узлов. Версия
-    ДЕТЕРМИНИРОВАНА (base +1 при наличии реальных узлов) — пересборка манифеста
-    (смена rollout) НЕ двигает версию, иначе клиенты ложно увидели бы «обновление».
-    rollout (% волны canary) кладём в ПОДПИСАННОЕ тело — клиент не сможет подделать."""
+    """Манифест из demo-тела; если рядом есть nodes.json (реальные узлы) — подставляем
+    их, отфильтровав ПРОТУХШИЕ (без свежего heartbeat) и подставив живую загрузку.
+    Версия = MANIFEST_BASE + _node_rev: растёт при смене набора живых узлов, но НЕ при
+    смене rollout (иначе клиент ложно увидел бы «обновление»). rollout — в подписанном
+    теле (клиент не подделает)."""
     global MANIFEST_VERSION
-    has_real = os.path.exists("nodes.json")
-    MANIFEST_VERSION = MANIFEST_BASE + (1 if has_real else 0)
+    MANIFEST_VERSION = MANIFEST_BASE + _node_rev
     body = demo_manifest(MANIFEST_VERSION)
-    if has_real:
+    if os.path.exists("nodes.json"):
         try:
-            with open("nodes.json", encoding="utf-8") as f:
-                data = json.load(f)
+            data = persist.jload("nodes.json", {"nodes": []})
             real = data.get("nodes") if isinstance(data, dict) else data
             if real:
-                body["nodes"] = real
+                healthy = _healthy_ids()
+                live = []
+                for n in real:
+                    if n.get("id") not in healthy:
+                        continue                       # протухший — само-починка убрала
+                    h = _node_health.get(n.get("id"))
+                    if h and isinstance(h.get("load_pct"), int):
+                        n = {**n, "loadPct": h["load_pct"]}   # живая загрузка из heartbeat
+                    live.append(n)
+                body["nodes"] = live
         except Exception as e:
             print(f"[manifest] nodes.json не загружен: {e}")
     body["rollout"] = ROLLOUT
     return sign_manifest(body, _sk)
 
 
+_last_healthy: set = _healthy_ids()
 _manifest_signed = _build_manifest()
+
+def _bump_and_rebuild():
+    """Набор узлов ИЗМЕНИЛСЯ (регистрация/новые параметры) → двигаем версию и
+    переподписываем манифест, чтобы клиенты перетянули."""
+    global _manifest_signed, _node_rev, _last_healthy
+    _node_rev += 1
+    _last_healthy = _healthy_ids()
+    _manifest_signed = _build_manifest()
+
+def _sync_manifest_health() -> bool:
+    """Ленивый свип: если набор ЖИВЫХ узлов изменился (кто-то протух/вернулся) —
+    двигаем версию и пересобираем. Возвращает True при изменении. Вызывается из
+    heartbeat и из чтения манифеста (без фонового потока)."""
+    if _healthy_ids() != _last_healthy:
+        _bump_and_rebuild()
+        return True
+    return False
 
 # ── «БД» в памяти ─────────────────────────────────────────────────────────────
 # Персистентные хранилища (переживают рестарт). Файлы — в рабочем каталоге бэкенда.
@@ -817,6 +866,7 @@ def key_check(req: RedeemReq):
 # ── 3. Подписанный манифест ───────────────────────────────────────────────────
 @app.get("/v1/manifest")
 def manifest(since: int = 0):
+    _sync_manifest_health()   # ленивый свип протухших/вернувшихся узлов
     if since >= MANIFEST_VERSION:
         raise HTTPException(304, "not_modified")
     return _manifest_signed
@@ -860,13 +910,47 @@ async def node_register(request: Request):
     cur = [n for n in (cur or []) if n.get("id") != node["id"]]
     cur.append(node)
     persist.jsave("nodes.json", {"nodes": cur})
-    _manifest_signed = _build_manifest()   # пересобрать+переподписать манифест
-    # выдаём узлу ЕГО собственный секрет для дальнейших вызовов (node/session)
+    # регистрация = свежий узел живой; заводим health, чтобы свип дал ему grace-период
+    _node_health[node["id"]] = {"last_seen": int(time.time()),
+                                "load_pct": node.get("loadPct", node.get("load_pct"))}
+    _save_node_health()
+    _bump_and_rebuild()                    # набор узлов изменился → версия+подпись
+    # выдаём узлу ЕГО собственный секрет для дальнейших вызовов (node/session, heartbeat)
     node_secret = _node_secrets.get(node["id"]) or b32(secrets.token_bytes(24))
     _node_secrets[node["id"]] = node_secret
     persist.jsave("node_secrets.json", _node_secrets)
     return {"ok": True, "id": node["id"], "total_nodes": len(cur),
-            "version": MANIFEST_VERSION, "node_secret": node_secret}
+            "version": MANIFEST_VERSION, "node_secret": node_secret,
+            "stale_after_sec": NODE_STALE_SEC}
+
+
+# ── 3c. Heartbeat узла (само-починка: живой → в манифесте, замолчал → выпал) ───
+@app.post("/v1/node/heartbeat")
+async def node_heartbeat(request: Request):
+    """Узел раз в ~минуту рапортует «я жив» (+ опц. load_pct). Подпись — ПЕР-УЗЛОВЫМ
+    секретом (как /v1/node/session). Нет heartbeat дольше NODE_STALE_SEC → узел
+    выпадает из манифеста; вернулся → снова появляется (и версия манифеста растёт)."""
+    raw = await request.body()
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise HTTPException(422, "bad_json")
+    node_id = data.get("node_id")
+    node_secret = _node_secrets.get(node_id) if node_id else None
+    if not node_secret:
+        raise HTTPException(403, "unknown_node")
+    expect = hmac.new(node_secret.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(request.headers.get("x-node-sign", ""), expect):
+        raise HTTPException(403, "bad_node_sign")
+    h = _node_health.setdefault(node_id, {})
+    h["last_seen"] = int(time.time())
+    lp = data.get("load_pct")
+    if isinstance(lp, (int, float)):
+        h["load_pct"] = max(0, min(100, int(lp)))
+    _save_node_health()
+    revived = _sync_manifest_health()      # если узел вернулся из протухших — обновит манифест
+    return {"ok": True, "revived": revived, "stale_after_sec": NODE_STALE_SEC,
+            "version": MANIFEST_VERSION}
 
 
 # ── 4. Поддержка (диалог по токену) ──────────────────────────────────────────

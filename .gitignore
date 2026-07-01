@@ -37,6 +37,7 @@ keys_registry.json
 nodes.json
 economy.json
 payments.json
+node_health.json
 
 # ── Misc ──
 .DS_Store

@@ -36,7 +36,8 @@ die()  { echo -e "${RED}[symbiont] ОШИБКА:${NC} $*" >&2; exit 1; }
 [ "$(id -u)" -eq 0 ] || die "запусти от root:  sudo bash bootstrap_vps.sh"
 
 # ── параметры ────────────────────────────────────────────────────────────────
-HOST=""; CODE="NL"; COUNTRY="Netherlands"; SNI="www.microsoft.com"
+# Пустые code/country/sni = «не задано вручную» → возьмём из авто-подбора (node_autotune).
+HOST=""; CODE=""; COUNTRY=""; SNI=""; NODE_ID=""; AUTOTUNE="yes"
 BACKEND_PORT="8000"; DO_BACKEND="yes"; ROLE="node"; REGISTER_TO=""; NODE_SECRET=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -44,10 +45,12 @@ while [ $# -gt 0 ]; do
     --code) CODE="$2"; shift 2;;
     --country) COUNTRY="$2"; shift 2;;
     --sni) SNI="$2"; shift 2;;
+    --node-id) NODE_ID="$2"; shift 2;;
     --backend-port) BACKEND_PORT="$2"; shift 2;;
     --role) ROLE="$2"; shift 2;;
     --register-to) REGISTER_TO="$2"; shift 2;;   # узел сам зарегистрируется на этом бэкенде
     --node-secret) NODE_SECRET="$2"; shift 2;;   # секрет оператора для саморегистрации
+    --no-autotune) AUTOTUNE="no"; shift;;        # отключить авто-подбор (взять дефолты)
     --no-backend) DO_BACKEND="no"; shift;;
     *) die "неизвестный параметр: $1";;
   esac
@@ -76,6 +79,26 @@ if [ -z "$HOST" ]; then
 fi
 say "адрес узла: ${BOLD}$HOST${NC}"
 
+# ── 1b) АВТО-ПОДБОР лучших параметров узла (гео, живой SNI, протоколы, ёмкость) ─
+# node_autotune.py сам меряет СВОЮ сеть: страну по IP, самый быстрый живой SNI из
+# пула, есть ли UDP-egress (для Hysteria2), стартовую загрузку по скорости. Явно
+# заданные флаги (--code/--country/--sni/--node-id) имеют приоритет над авто-подбором.
+if [ "$AUTOTUNE" = "yes" ]; then
+  say "авто-подбор лучших параметров узла (гео · SNI · протоколы · ёмкость)…"
+  AT="$(python3 "$BACKEND_SRC/node_autotune.py" --host "$HOST" --role "$ROLE" 2>/dev/null || true)"
+  if [ -n "$AT" ] && echo "$AT" | jq -e . >/dev/null 2>&1; then
+    [ -z "$CODE" ]    && CODE="$(echo "$AT"    | jq -r '.code // empty')"
+    [ -z "$COUNTRY" ] && COUNTRY="$(echo "$AT" | jq -r '.country // empty')"
+    [ -z "$SNI" ]     && SNI="$(echo "$AT"     | jq -r '.sni // empty')"
+    [ -z "$NODE_ID" ] && NODE_ID="$(echo "$AT" | jq -r '.node_id // empty')"
+    say "авто-подбор: страна=${BOLD}${CODE}/${COUNTRY}${NC}  SNI=${BOLD}${SNI}${NC}  id=${BOLD}${NODE_ID}${NC}"
+  else
+    warn "авто-подбор не удался (нет egress?) — беру значения по умолчанию"
+  fi
+fi
+# дефолты, если ни флаг, ни авто-подбор не задали
+CODE="${CODE:-NL}"; COUNTRY="${COUNTRY:-Netherlands}"; SNI="${SNI:-www.microsoft.com}"
+
 # ── 2) генерация конфига узла ────────────────────────────────────────────────
 OUT="/etc/symbiont/out"
 mkdir -p "$OUT"
@@ -83,7 +106,7 @@ say "генерирую конфиг узла (Reality/Hysteria2/SS2022)…"
 python3 -m pip install -q --break-system-packages cryptography >/dev/null 2>&1 || \
   python3 -m pip install -q cryptography >/dev/null 2>&1 || true
 python3 "$SCRIPT_DIR/gen_server.py" --host "$HOST" --code "$CODE" --country "$COUNTRY" \
-  --role "$ROLE" --sni "$SNI" --out "$OUT" >/dev/null
+  --role "$ROLE" --sni "$SNI" ${NODE_ID:+--node-id "$NODE_ID"} --out "$OUT" >/dev/null
 say "узел сгенерирован → $OUT (config.json, secrets.json, manifest_node.json)"
 
 # ── 3) ставим узел (sing-box) через install.sh ───────────────────────────────
@@ -151,9 +174,40 @@ fi
 # ── 4b) саморегистрация на удалённом бэкенде (узел на отдельном VPS) ──────────
 if [ -n "$REGISTER_TO" ]; then
   say "регистрирую узел на бэкенде $REGISTER_TO…"
+  SECRET_FILE="/etc/symbiont/node_secret"
   if SYMBIONT_NODE_SECRET="${NODE_SECRET:-demo-node-secret}" \
-       python3 "$SCRIPT_DIR/register_node.py" --node "$OUT/manifest_node.json" --backend "$REGISTER_TO"; then
+       python3 "$SCRIPT_DIR/register_node.py" --node "$OUT/manifest_node.json" \
+         --backend "$REGISTER_TO" --secret-out "$SECRET_FILE"; then
     say "узел вписан в манифест бэкенда ✔ (появится у клиентов автоматически)"
+    # ── heartbeat-таймер: узел раз в минуту держит себя живым в манифесте ──
+    # Замолчал дольше порога → само-починка выкинет его; вернулся → появится снова.
+    cp -f "$SCRIPT_DIR/heartbeat_node.py" /etc/symbiont/heartbeat_node.py
+    cat > /etc/systemd/system/symbiont-heartbeat.service <<UNIT
+[Unit]
+Description=Symbiont node heartbeat
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 /etc/symbiont/heartbeat_node.py \\
+  --node $OUT/manifest_node.json --backend $REGISTER_TO --secret $SECRET_FILE
+UNIT
+    cat > /etc/systemd/system/symbiont-heartbeat.timer <<UNIT
+[Unit]
+Description=Symbiont node heartbeat (every 60s)
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target
+UNIT
+    systemctl daemon-reload
+    systemctl enable --now symbiont-heartbeat.timer >/dev/null 2>&1 || true
+    say "heartbeat-таймер включён (каждые 60с) — узел сам держится живым в сети"
   else
     warn "не удалось зарегистрировать узел — проверь --register-to и --node-secret"
   fi

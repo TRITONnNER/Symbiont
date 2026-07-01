@@ -23,6 +23,8 @@ def main() -> int:
     ap.add_argument("--backend", required=True, help="база бэкенда, напр. https://api.example.com")
     ap.add_argument("--secret", default=os.environ.get("SYMBIONT_NODE_SECRET", ""),
                     help="секрет оператора (или env SYMBIONT_NODE_SECRET)")
+    ap.add_argument("--secret-out", default=None,
+                    help="куда записать выданный ПЕР-УЗЛОВОЙ секрет (для heartbeat-таймера)")
     args = ap.parse_args()
     if not args.secret:
         print("ОШИБКА: задай секрет оператора (--secret или SYMBIONT_NODE_SECRET)", file=sys.stderr)
@@ -39,6 +41,15 @@ def main() -> int:
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             resp = json.loads(r.read().decode())
+        # сохранить ПЕР-УЗЛОВОЙ секрет (для последующих heartbeat/session-вызовов)
+        if args.secret_out and resp.get("node_secret"):
+            os.makedirs(os.path.dirname(os.path.abspath(args.secret_out)), exist_ok=True)
+            with open(args.secret_out, "w", encoding="utf-8") as f:
+                f.write(resp["node_secret"])
+            try:
+                os.chmod(args.secret_out, 0o600)
+            except OSError:
+                pass
         print(f"[symbiont] узел зарегистрирован: id={resp.get('id')} "
               f"всего узлов={resp.get('total_nodes')} версия манифеста={resp.get('version')}")
         return 0
