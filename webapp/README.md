@@ -15,6 +15,11 @@ python3 serve.py 8080          # затем открыть http://127.0.0.1:8080
 ## Что внутри
 - `Симбионт.dc.html` — главный экран (весь UI: защита/узлы/маршруты/анализ/аккаунт/…).
 - `ConnectionCore/Card/ListRow/Picker.dc.html` — компоненты.
+- `doc-*.dc.html` — **справочные материалы дизайна** (из Claude Design), тоже
+  офлайн: `doc-anatomy` (разбор интерфейса послойно), `doc-system-map` (карта
+  системы: что на каких платформах), `doc-platforms` (витрина платформ —
+  iOS/Android/десктоп/расширение), `doc-ui-kit` (UI-кит: основания/атомы/
+  компоненты/экраны). Открываются так же через `serve.py`.
 - `support.js` — рантайм Design-Components (пропатчен: React/Babel из локальных файлов).
 - `react*.js`, `babel.min.js`, `fonts/`, `fonts.css` — вшитые зависимости (offline).
 - `flags/` — флаги всех стран ISO-3166 (`w40` PNG, flagcdn) — подхватываются по коду узла/языка.
