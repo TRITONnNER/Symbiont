@@ -21,10 +21,15 @@ from pydantic import BaseModel
 
 import hmac, hashlib
 from fastapi import Request
+import logging
 import persist
 import identity
+import log_setup
 from keys import Issuer, KeyError_, load_or_create_signing_key, b32
 from manifest import demo_manifest, sign_manifest
+
+# Единый логгер бэкенда (stdout + ротируемый файл). Уровень — SYMBIONT_LOG_LEVEL.
+log = log_setup.setup("symbiont.backend")
 
 # ── Секреты: env → secrets.json → генерация. Никаких предсказуемых дефолтов. ───
 # В prod секреты задают через окружение. Если их нет — генерируем случайные и
@@ -61,7 +66,7 @@ issuer = Issuer(_sk, registry_path="keys_registry.json")  # реестр клю�
 _node_secrets: dict[str, str] = persist.jload("node_secrets.json", {})
 if _secrets_store != _secrets_before:
     persist.jsave("secrets.json", _secrets_store)
-    print("[secrets] недостающие секреты сгенерированы и сохранены в secrets.json (НЕ коммитить, держать вне репо)")
+    log.info("недостающие секреты сгенерированы и сохранены в secrets.json (НЕ коммитить, держать вне репо)")
 MANIFEST_BASE = 184          # базовая версия (demo-узлы)
 MANIFEST_VERSION = MANIFEST_BASE
 ROLLOUT = 100                # текущая волна canary-выкатки, % (операторский рычаг)
@@ -116,7 +121,7 @@ def _build_manifest():
                     live.append(n)
                 body["nodes"] = live
         except Exception as e:
-            print(f"[manifest] nodes.json не загружен: {e}")
+            log.warning("nodes.json не загружен: %s", e)
     body["rollout"] = ROLLOUT
     return sign_manifest(body, _sk)
 
@@ -223,6 +228,32 @@ app.add_middleware(
 )
 
 
+# ── Сквозное логирование запросов + необработанных ошибок ─────────────────────
+# Каждый запрос: метод · путь · код · время. Любое НЕОБРАБОТАННОЕ исключение —
+# с полным трейсбеком (видно, ЧТО и ГДЕ упало → как чинить). 4xx/5xx — WARNING+.
+@app.middleware("http")
+async def _log_requests(request: Request, call_next):
+    t0 = time.monotonic()
+    try:
+        resp = await call_next(request)
+    except Exception:
+        dt = (time.monotonic() - t0) * 1000
+        log.exception("НЕОБРАБОТАННАЯ ОШИБКА: %s %s (%.0fмс)",
+                      request.method, request.url.path, dt)
+        raise
+    dt = (time.monotonic() - t0) * 1000
+    lvl = logging.WARNING if resp.status_code >= 400 else logging.INFO
+    log.log(lvl, "%s %s → %s (%.0fмс)", request.method, request.url.path,
+            resp.status_code, dt)
+    return resp
+
+
+@app.on_event("startup")
+async def _log_startup():
+    log.info("бэкенд запущен · манифест v%s · rollout %s%% · sandbox_pay=%s · порогузла=%sс",
+             MANIFEST_VERSION, ROLLOUT, SANDBOX_PAY, NODE_STALE_SEC)
+
+
 # ── авторизация по токену ─────────────────────────────────────────────────────
 def auth(authorization: str = Header(default="")) -> str:
     if not authorization.startswith("Bearer "):
@@ -237,7 +268,8 @@ def auth(authorization: str = Header(default="")) -> str:
 
 
 def admin(x_admin_token: str = Header(default="")) -> None:
-    if x_admin_token != ADMIN_TOKEN:
+    if not hmac.compare_digest(x_admin_token, ADMIN_TOKEN):   # константное время (не утечь секрет по таймингу)
+        log.warning("отказ админ-доступа: неверный x-admin-token")
         raise HTTPException(403, "forbidden")
 
 
@@ -358,7 +390,7 @@ def account_register(req: RegisterReq, request: Request):
             idaccounts[inviter].setdefault("referrals", []).append(aid)
             reg = DEFAULT_ECONOMY["referral"]["register"]
             _grant_days(aid, reg["invitee"], "ref_register")
-            if _can_payout(inviter):
+            if _can_payout(inviter) and not idaccounts[inviter].get("fraud"):
                 _grant_days(inviter, reg["inviter"], "ref_register")
                 _record_payout(inviter)
     _save_idaccounts(); _save_aliases()
@@ -479,7 +511,7 @@ def economy():
             with open("economy.json", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"[economy] economy.json не загружен: {e}")
+            log.warning("economy.json не загружен: %s", e)
     return DEFAULT_ECONOMY
 
 
@@ -596,7 +628,7 @@ def _apply_purchase(aid: str, product: str, method: str) -> dict:
                 _grant_days(aid, bonus, f"combo_{thr}m")
         # реферальная награда инвайтеру за покупку (метится лимитом репутации)
         inviter = idaccounts[aid].get("invited_by")
-        if inviter and inviter in idaccounts and _can_payout(inviter):
+        if inviter and inviter in idaccounts and _can_payout(inviter) and not idaccounts[inviter].get("fraud"):
             ref = DEFAULT_ECONOMY["referral"]
             key = ("premium_year" if product == "premium_year" else
                    "ultimate" if "ultimate" in product else "premium_month")
@@ -663,13 +695,16 @@ async def billing_webhook(request: Request):
     pay = payments.get(data.get("payment_id"))
     if not pay:
         raise HTTPException(404, "no_payment")
-    if pay["status"] == "completed":
-        return {"ok": True, "status": "completed", "idempotent": True}
+    if pay["status"] in ("completed", "failed"):    # ТЕРМИНАЛЬНЫЕ статусы — не переигрываем
+        return {"ok": True, "status": pay["status"], "idempotent": True}
     if data.get("status") == "failed":
         pay.update(status="failed", completed_at=int(time.time()))
         _save_payments()
+        log.info("платёж %s помечен failed вебхуком", pay["payment_id"])
         return {"ok": True, "status": "failed"}
     sub = _apply_purchase(pay["account_id"], pay["product"], pay["method"])
+    log.info("платёж %s подтверждён вебхуком: %s/%s",
+             pay["payment_id"], pay["product"], pay["method"])
     pay.update(status="completed", completed_at=int(time.time()))
     _save_payments()
     return {"ok": True, "status": "completed", "subscription": sub}
@@ -702,15 +737,25 @@ async def node_session(request: Request):
     времени. Узнаём длительность, НЕ содержимое трафика (приватность). Подпись —
     ПЕР-УЗЛОВЫМ секретом (выдан при регистрации), узел опознаётся по node_id."""
     raw = await request.body()
-    data = json.loads(raw)
+    try:                                       # разбор ДО любых действий: битое тело → 422, не 500
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError("not_an_object")
+    except Exception:
+        raise HTTPException(422, "bad_json")
     node_id = data.get("node_id")
     node_secret = _node_secrets.get(node_id) if node_id else None
     if not node_secret:
         raise HTTPException(403, "unknown_node")
     expect = hmac.new(node_secret.encode(), raw, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(request.headers.get("x-node-sign", ""), expect):
+        log.warning("отказ node/session: неверная подпись узла %s", node_id)
         raise HTTPException(403, "bad_node_sign")
-    aid, minutes = data.get("account_id"), int(data.get("minutes", 0))
+    try:                                       # минуты СПИСАНИЯ: только неотрицательные
+        minutes = max(0, int(data.get("minutes", 0)))   # (иначе отрицательные «начисляли» баланс)
+    except (TypeError, ValueError):
+        raise HTTPException(422, "bad_minutes")
+    aid = data.get("account_id")
     if aid not in idaccounts:
         raise HTTPException(404, "no_account")
     sub = _sub(aid)
@@ -743,6 +788,8 @@ def admin_grant(req: GrantReq, _: None = Depends(admin)):
 @app.get("/v1/referral")
 def referral_info(token: str = Depends(auth)):
     aid = _account_of(token)
+    if not aid:
+        raise HTTPException(400, "no_account")
     _ensure_referral_fields(aid)
     acc = idaccounts[aid]
     lvl, cap, mult = _reputation(aid)
@@ -804,6 +851,8 @@ def _wheel_index(aid: str, date: str) -> int:
 @app.get("/v1/wheel")
 def wheel_info(token: str = Depends(auth)):
     aid = _account_of(token)
+    if not aid:
+        raise HTTPException(400, "no_account")
     w = idaccounts[aid].get("wheel", {})
     spun = w.get("last_date") == _today()
     return {"segments": _wheel_segments(), "available": not spun,
@@ -833,10 +882,16 @@ def wheel_spin(token: str = Depends(auth)):
 # ── 2. Оплата ключами ─────────────────────────────────────────────────────────
 @app.post("/v1/key/redeem")
 def redeem(req: RedeemReq, token: str = Depends(auth)):
+    # Привязка погашения — к УСТОЙЧИВОЙ личности (account_id), а не к эфемерному
+    # session-токену: иначе один пользователь, перелогинившись, выбирал все uses
+    # многоразового ключа. Аноним без account_id — привязываем к токену (best effort).
+    aid = _account_of(token)
+    bind = aid or token
     try:
-        res = issuer.redeem(req.code, account_token=token)
+        res = issuer.redeem(req.code, account_token=bind)
     except KeyError_ as e:
         code = str(e)
+        log.warning("отказ погашения ключа: %s", code)
         status = {"key_already_redeemed": 409, "key_revoked": 410,
                   "key_expired": 410, "key_invalid": 422}.get(code, 422)
         raise HTTPException(status, code)
@@ -850,6 +905,13 @@ def redeem(req: RedeemReq, token: str = Depends(auth)):
     a["paid_until"] = paid_until.isoformat()
     a["max_sessions"] = 5 if a["plan"] == "pro" else a["max_sessions"]
     _save_accounts()
+    # Начислить и на ИДЕНТИТИ-слой (billing/ledger видят оплату ключом; переживает
+    # перелогин). Только для зарегистрированных и только при реальном (не идемпотентном) погашении.
+    if aid and not res.get("idempotent") and res["grant_days"] > 0:
+        tier = "ultimate" if res.get("plan") == "ultimate" else "premium"
+        _grant_days(aid, res["grant_days"], "keyact", tier=tier)
+        _save_idaccounts()
+        log.info("ключ погашен: account=%s plan=%s +%sдн", aid, res["plan"], res["grant_days"])
     return {"plan": a["plan"], "paidUntil": a["paid_until"],
             "added": {"days": res["grant_days"]}, "idempotent": res["idempotent"]}
 
