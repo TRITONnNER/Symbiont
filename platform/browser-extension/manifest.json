@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Симбионт — компаньон",
+  "short_name": "Симбионт",
+  "version": "0.1.0",
+  "default_locale": "ru",
+  "description": "Быстрый доступ к Симбионту: статус защиты, выбор узла и правила маршрутизации. VPN-движок работает в приложении.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Симбионт"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["storage", "nativeMessaging"],
+  "host_permissions": [
+    "http://127.0.0.1:8600/*",
+    "https://api.symbiont.net/*"
+  ]
+}
