@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./fonts.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html{scroll-behavior:smooth;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  a{text-decoration:none;}
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(120% 80% at 50% -10%, #0C1614, #070A0F 58%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif;">
+
+  <div style="position:sticky; top:0; z-index:50; backdrop-filter:blur(14px); background:rgba(7,10,15,0.82); border-bottom:1px solid rgba(255,255,255,0.07);">
+    <div style="max-width:1240px; margin:0 auto; padding:13px 32px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:11px; flex:1; min-width:0;">
+        <div style="width:34px; height:34px; border-radius:10px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#06231A;">dashboard_customize</span></div>
+        <span style="font-weight:700; font-size:15px; white-space:nowrap;">Симбионт · UI-кит</span>
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <a href="#foundations" style="padding:7px 13px; border-radius:9px; background:rgba(255,255,255,0.04); color:#C2CCCA; font-size:12.5px; font-weight:600;">Основания</a>
+        <a href="#atoms" style="padding:7px 13px; border-radius:9px; background:rgba(255,255,255,0.04); color:#C2CCCA; font-size:12.5px; font-weight:600;">Атомы</a>
+        <a href="#components" style="padding:7px 13px; border-radius:9px; background:rgba(255,255,255,0.04); color:#C2CCCA; font-size:12.5px; font-weight:600;">Компоненты</a>
+        <a href="#screens" style="padding:7px 13px; border-radius:9px; background:rgba(255,255,255,0.04); color:#C2CCCA; font-size:12.5px; font-weight:600;">Экраны</a>
+        <a href="Симбионт - платформы.dc.html" style="padding:7px 13px; border-radius:9px; background:rgba(52,229,176,0.10); color:#34E5B0; font-size:12.5px; font-weight:600;">Платформы ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1240px; margin:0 auto; padding:40px 32px 90px; display:flex; flex-direction:column; gap:54px;">
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <h1 style="margin:0; font-size:32px; font-weight:800; letter-spacing:-0.02em;">UI/UX-кит и хэндофф</h1>
+      <span style="font-size:15px; color:#7C8A99; max-width:680px; line-height:1.5;">Единый исходник: каждый токен, атом, компонент и экран сервиса 1:1 как реализовано — со ссылкой на платформенную витрину. Экраны ниже — это живые встроенные инстансы реального приложения.</span>
+    </div>
+
+    <!-- ============== FOUNDATIONS ============== -->
+    <div id="foundations" style="display:flex; flex-direction:column; gap:20px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#34E5B0; background:rgba(52,229,176,0.14); padding:3px 10px; border-radius:7px;">01</span><span style="font-weight:700; font-size:20px;">Основания</span></div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:16px;">
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:13px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ЦВЕТА</span>
+          <sc-for list="{{ colors }}" as="c" hint-placeholder-count="9">
+            <div style="display:flex; align-items:center; gap:12px;"><span style="{{ c.sw }}"></span><span style="font-weight:600; font-size:13px; flex:0 0 auto;">{{ c.name }}</span><span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#7C8A99; text-align:right;">{{ c.hex }}</span></div>
+          </sc-for>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:16px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ТИПОГРАФИКА</span>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <div><div style="font-weight:800; font-size:26px; letter-spacing:-0.02em;">Заголовок</div><div style="font-size:11px; color:#7C8A99; font-family:'JetBrains Mono',monospace;">Golos Text · 800 · 26–32</div></div>
+            <div><div style="font-weight:600; font-size:15px;">Текст интерфейса и карточек</div><div style="font-size:11px; color:#7C8A99; font-family:'JetBrains Mono',monospace;">Golos Text · 600 · 13–15</div></div>
+            <div><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:16px; color:#34E5B0;">38 мс · SYMB-7K2Q</div><div style="font-size:11px; color:#7C8A99; font-family:'JetBrains Mono',monospace;">JetBrains Mono · числа, коды, домены</div></div>
+            <div><div style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#7C8A99;">КАПС-ЗАГОЛОВОК</div><div style="font-size:11px; color:#7C8A99; font-family:'JetBrains Mono',monospace;">11 · 700 · letter-spacing 0.1em</div></div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">РАДИУСЫ</span>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;"><sc-for list="{{ radii }}" as="r" hint-placeholder-count="5"><span style="display:inline-flex; align-items:center; gap:7px; padding:6px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px;"><span style="{{ r.box }}"></span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#C2CCCA;">{{ r.label }}</span></span></sc-for></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ИКОНКИ · Material Symbols Rounded</span>
+            <div style="display:flex; flex-wrap:wrap; gap:13px; color:#C2CCCA;"><sc-for list="{{ icons }}" as="i" hint-placeholder-count="12"><span style="font-family:'Material Symbols Rounded'; font-size:23px;">{{ i }}</span></sc-for></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ОТСТУПЫ · база 4</span>
+            <div style="display:flex; align-items:flex-end; gap:8px;"><sc-for list="{{ spaces }}" as="s" hint-placeholder-count="5"><div style="display:flex; flex-direction:column; align-items:center; gap:5px;"><span style="{{ s.box }}"></span><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#7C8A99;">{{ s.label }}</span></div></sc-for></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== ATOMS ============== -->
+    <div id="atoms" style="display:flex; flex-direction:column; gap:20px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#5B9BFF; background:rgba(91,155,255,0.14); padding:3px 10px; border-radius:7px;">02</span><span style="font-weight:700; font-size:20px;">Атомы</span><span style="font-size:13px; color:#7C8A99;">— кнопки, контролы, чипы 1:1</span></div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:14px;">
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:14px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">КНОПКИ</span>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px; padding:13px 22px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); box-shadow:0 8px 24px -8px rgba(31,166,125,0.4);"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#06231A;">bolt</span><span style="font-weight:700; font-size:14px; color:#06231A;">Основная</span></div>
+            <div style="display:flex; align-items:center; gap:8px; padding:13px 20px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);"><span style="font-weight:600; font-size:14px; color:#C2CCCA;">Вторичная</span></div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            <div style="padding:11px 18px; border-radius:11px; background:rgba(255,107,122,0.08); border:1px solid rgba(255,107,122,0.28);"><span style="font-weight:600; font-size:13.5px; color:#FF6B7A;">Опасная</span></div>
+            <div style="padding:11px 16px; border-radius:11px; border:1px dashed rgba(255,255,255,0.16);"><span style="font-weight:600; font-size:13px; color:#9DABA8;">+ Пунктир</span></div>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:14px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">ТУМБЛЕР · ЧИП · СЕГМЕНТЫ</span>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:44px; height:25px; border-radius:999px; background:#34E5B0; position:relative;"><div style="position:absolute; top:3px; left:22px; width:19px; height:19px; border-radius:50%; background:#06231A;"></div></div>
+            <div style="width:44px; height:25px; border-radius:999px; background:rgba(255,255,255,0.12); position:relative;"><div style="position:absolute; top:3px; left:3px; width:19px; height:19px; border-radius:50%; background:#EAF1EF;"></div></div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:7px;">
+            <span style="font-size:12px; font-weight:600; color:#34E5B0; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.30); padding:7px 14px; border-radius:999px;">Активный</span>
+            <span style="font-size:12px; color:#9DABA8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.10); padding:7px 14px; border-radius:999px;">Обычный</span>
+          </div>
+          <div style="display:flex; gap:4px; padding:4px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); width:fit-content;">
+            <span style="padding:8px 16px; border-radius:8px; background:#34E5B0; color:#06231A; font-size:13px; font-weight:700;">Глоссарий</span>
+            <span style="padding:8px 16px; border-radius:8px; color:#9DABA8; font-size:13px; font-weight:600;">FAQ</span>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:13px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">ПИЛЮЛИ МАРШРУТА · единый словарь</span>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <sc-for list="{{ routePills }}" as="p" hint-placeholder-count="6">
+              <div style="{{ p.style }}"><sc-if value="{{ p.star }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:13px; color:#34E5B0;">auto_awesome</span></sc-if><sc-if value="{{ p.hasDot }}" hint-placeholder-val="{{ false }}"><span style="{{ p.dotStyle }}"></span></sc-if><span style="{{ p.labelStyle }}">{{ p.label }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:18px; display:flex; flex-direction:column; gap:13px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">ПОЛЕ · БЕЙДЖИ · ТОСТ</span>
+          <div style="width:100%; padding:12px 15px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(52,229,176,0.3); font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">SYMB-7K2Q-9XR4.MT8V</div>
+          <div style="display:flex; flex-wrap:wrap; gap:7px; align-items:center;">
+            <span style="font-size:10px; font-weight:700; letter-spacing:0.06em; color:#06231A; background:#34E5B0; padding:3px 8px; border-radius:5px;">ВЛАДЕЛЕЦ</span>
+            <span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.28);"><span style="font-family:'Material Symbols Rounded'; font-size:12px; color:#34E5B0;">restart_alt</span><span style="font-size:9.5px; font-weight:700; color:#34E5B0; text-transform:uppercase;">вернулся</span></span>
+            <span style="font-size:10px; font-weight:700; color:#34E5B0; background:rgba(52,229,176,0.12); padding:3px 8px; border-radius:5px;">рек.</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:11px; background:rgba(30,34,40,0.96); border:1px solid rgba(52,229,176,0.22); box-shadow:0 12px 30px -12px rgba(0,0,0,0.6);"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:18px; color:#34E5B0;">check_circle</span><span style="font-size:13px; color:#EAF1EF;">Защита включена</span></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============== COMPONENTS ============== -->
+    <div id="components" style="display:flex; flex-direction:column; gap:20px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#A78BFA; background:rgba(167,139,250,0.14); padding:3px 10px; border-radius:7px;">03</span><span style="font-weight:700; font-size:20px;">Компоненты</span><span style="font-size:13px; color:#7C8A99;">— настоящие, смонтированы 1:1</span></div>
+
+      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:22px; display:flex; flex-direction:column; gap:12px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">CONNECTIONCORE · состояния</span>
+        <div style="display:flex; flex-wrap:wrap; gap:18px; justify-content:center;">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;"><dc-import name="ConnectionCore" state="idle" size="150" show-stepper="false" hint-size="154px,176px"></dc-import><span style="font-size:11.5px; color:#7C8A99;">idle</span></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;"><dc-import name="ConnectionCore" state="measuring" size="150" show-stepper="false" hint-size="154px,176px"></dc-import><span style="font-size:11.5px; color:#7C8A99;">measuring</span></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;"><dc-import name="ConnectionCore" state="connecting" size="150" show-stepper="false" hint-size="154px,176px"></dc-import><span style="font-size:11.5px; color:#7C8A99;">connecting</span></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;"><dc-import name="ConnectionCore" state="connected" stage="tunnel" size="150" ping="38" show-stepper="false" hint-size="154px,176px"></dc-import><span style="font-size:11.5px; color:#34E5B0;">connected</span></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:10px;"><dc-import name="ConnectionCore" state="blocking" stage="tunnel" size="150" show-stepper="false" hint-size="154px,176px"></dc-import><span style="font-size:11.5px; color:#FF6B7A;">blocking</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:9px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">CARD · data</span><dc-import name="Card" style="display:block; width:100%;" variant="data" label="Пинг" value="38" unit="мс" hint-size="100%,82px"></dc-import></div>
+        <div style="display:flex; flex-direction:column; gap:9px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">CARD · notice</span><dc-import name="Card" style="display:block; width:100%;" variant="notice" tone="warn" title="Блокировка DPI" body="DPI активен на :443. Связь удержана через обход." hint-size="100%,110px"></dc-import></div>
+        <div style="display:flex; flex-direction:column; gap:9px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">CARD · action</span><dc-import name="Card" style="display:block; width:100%;" variant="action" center="{{ true }}" icon="monitoring" label="Открыть анализ" on-click="{{ noop }}" hint-size="100%,82px"></dc-import></div>
+        <div style="display:flex; flex-direction:column; gap:9px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">CARD · panel</span>
+          <dc-import name="Card" style="display:block; width:100%;" variant="panel" title="Подписка" head-icon="workspace_premium" hint-size="100%,108px">
+            <div style="display:flex; align-items:center; gap:12px;"><div style="width:40px; height:40px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:22px; color:#06231A;">verified</span></div><div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:15px; color:#EAF1EF;">Premium</div><div style="font-size:12px; color:#7C8A99;">активен до 14 мая 2026</div></div></div>
+          </dc-import>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">LISTROW · лиды и действия</span>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:6px 18px;">
+          <dc-import name="ListRow" style="display:block; width:100%;" variant="plain" lead="{{ lrLogo }}" title="Telegram" sub="telegram.org" sub-mono="{{ true }}" action="{{ lrTunnel }}" hint-size="100%,64px"></dc-import>
+          <dc-import name="ListRow" style="display:block; width:100%;" variant="plain" lead="{{ lrFlag }}" title="Нидерланды" sub="nl-ams-03" sub-mono="{{ true }}" action="{{ lrMeter }}" on-click="{{ noop }}" hint-size="100%,64px"></dc-import>
+          <dc-import name="ListRow" style="display:block; width:100%;" variant="plain" lead="{{ lrBlock }}" title="Блокировка рекламы" sub="режет баннеры и видео" action="{{ lrToggle }}" hint-size="100%,64px"></dc-import>
+          <dc-import name="ListRow" style="display:block; width:100%;" variant="plain" lead="{{ lrDns }}" title="Шифрованный DNS" sub="DoH · 1.1.1.1" action="{{ lrChev }}" on-click="{{ noop }}" divider="{{ false }}" hint-size="100%,64px"></dc-import>
+        </div>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:10px; display:flex; flex-direction:column; gap:8px;">
+          <dc-import name="ListRow" style="display:block; width:100%;" variant="card" tone="active" lead="{{ lrDot }}" title="Авто-каскад" sub="прямой → обход → VPN → реле" action="{{ lrAuto }}" on-click="{{ noop }}" hint-size="100%,64px"></dc-import>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== SCREENS ============== -->
+    <div id="screens" style="display:flex; flex-direction:column; gap:20px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#F4B740; background:rgba(244,183,64,0.14); padding:3px 10px; border-radius:7px;">04</span><span style="font-weight:700; font-size:20px;">Экраны</span><span style="font-size:13px; color:#7C8A99;">— живые инстансы приложения 1:1, с указанием места в навигации</span></div>
+
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">ДЕСКТОП</span>
+        <div style="display:flex; flex-wrap:wrap; gap:16px;">
+          <sc-for list="{{ screens }}" as="s" hint-placeholder-count="16">
+            <div style="display:flex; flex-direction:column; gap:9px; width:484px;">
+              <div style="position:relative; width:484px; height:296px; border-radius:13px; overflow:hidden; border:1px solid rgba(255,255,255,0.09); background:#070A0F; box-shadow:0 18px 40px -22px rgba(0,0,0,0.6);">
+                <div style="position:absolute; top:0; left:0; width:1180px; height:721px; transform:scale(0.41); transform-origin:top left;">
+                  <dc-import name="Симбионт" vw="1180" screen="{{ s.screen }}" chrome="0" embed="1" style="position:absolute; inset:0; width:1180px; height:721px;" hint-size="1180px,721px"></dc-import>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:9px;">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; color:#F4B740; background:rgba(244,183,64,0.14); padding:2px 8px; border-radius:6px; flex:0 0 auto;">{{ s.id }}</span>
+                <span style="font-weight:700; font-size:14px; color:#EAF1EF;">{{ s.name }}</span>
+                <span style="flex:1;"></span>
+                <span style="font-size:11.5px; color:#7C8A99;">{{ s.nav }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:7px; margin-top:6px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#7C8A99;">МОБАЙЛ · та же сборка, мобильная раскладка (таб-бар)</span>
+        <div style="display:flex; flex-wrap:wrap; gap:16px;">
+          <sc-for list="{{ mobileScreens }}" as="s" hint-placeholder-count="5">
+            <div style="display:flex; flex-direction:column; gap:9px; width:236px;">
+              <div style="position:relative; width:236px; height:472px; border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.1); background:#070A0F; box-shadow:0 18px 40px -22px rgba(0,0,0,0.6);">
+                <div style="position:absolute; top:0; left:0; width:390px; height:780px; transform:scale(0.605); transform-origin:top left;">
+                  <dc-import name="Симбионт" vw="390" screen="{{ s.screen }}" chrome="0" embed="1" style="position:absolute; inset:0; width:390px; height:780px;" hint-size="390px,780px"></dc-import>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:600; font-size:13px; color:#C2CCCA;">{{ s.name }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== ARCHITECTURE ============== -->
+    <div id="dev" style="display:flex; flex-direction:column; gap:20px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#34E5B0; background:rgba(52,229,176,0.14); padding:3px 10px; border-radius:7px;">05</span><span style="font-weight:700; font-size:20px;">Для разработчика</span><span style="font-size:13px; color:#7C8A99;">— архитектура, API, состояние, потоки</span></div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ФАЙЛЫ И НАЗНАЧЕНИЕ</span>
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <sc-for list="{{ files }}" as="f" hint-placeholder-count="10">
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#34E5B0;">{{ f.f }}</span><span style="font-size:12px; color:#9DABA8; line-height:1.4;">{{ f.r }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:12px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">МОДЕЛЬ СОСТОЯНИЯ · state{}</span>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ stateKeys }}" as="s" hint-placeholder-count="14">
+              <div style="display:flex; gap:10px; align-items:baseline;"><span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:600; color:#5B9BFF; flex:0 0 42%;">{{ s.k }}</span><span style="flex:1; font-size:12px; color:#9DABA8; line-height:1.4;">{{ s.d }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:11px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">PROP-ТАБЛИЦЫ КОМПОНЕНТОВ</span>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(330px, 1fr)); gap:14px;">
+          <sc-for list="{{ propTables }}" as="pt" hint-placeholder-count="4">
+            <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:11px;">
+              <span style="{{ pt.headStyle }}">{{ pt.comp }}</span>
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <sc-for list="{{ pt.rows }}" as="r" hint-placeholder-count="6">
+                  <div style="display:flex; flex-direction:column; gap:2px;">
+                    <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;"><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600; color:#EAF1EF;">{{ r.n }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#6E7B8A;">{{ r.t }}</span></div>
+                    <span style="font-size:11.5px; color:#8E9A9F; line-height:1.4;">{{ r.d }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:11px;">
+        <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ПОТОКИ И ПОВЕДЕНИЕ</span>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:13px;">
+          <sc-for list="{{ flows }}" as="fl" hint-placeholder-count="6">
+            <div style="{{ fl.cardStyle }}">
+              <span style="{{ fl.titleStyle }}">{{ fl.name }}</span>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <sc-for list="{{ fl.stepsV }}" as="st" hint-placeholder-count="4">
+                  <div style="display:flex; align-items:baseline; gap:9px;"><span style="{{ st.nStyle }}">{{ st.n }}</span><span style="flex:1; font-size:12px; color:#C2CCCA; line-height:1.4;">{{ st.t }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============== OVERLAYS ============== -->
+    <div id="overlays" style="display:flex; flex-direction:column; gap:16px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#A78BFA; background:rgba(167,139,250,0.14); padding:3px 10px; border-radius:7px;">06</span><span style="font-weight:700; font-size:20px;">Оверлеи (мини-окна)</span><span style="font-size:13px; color:#7C8A99;">— триггер → содержимое · scrim + панель, на мобайле нижний лист</span></div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:12px;">
+        <sc-for list="{{ overlays }}" as="o" hint-placeholder-count="9">
+          <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:15px 17px; display:flex; flex-direction:column; gap:6px;">
+            <span style="font-weight:700; font-size:14px; color:#EAF1EF;">{{ o.o }}</span>
+            <div style="display:flex; align-items:center; gap:7px;"><span style="font-family:'Material Symbols Rounded'; font-size:14px; color:#A78BFA;">touch_app</span><span style="font-size:11.5px; color:#9DABA8;">{{ o.t }}</span></div>
+            <div style="display:flex; align-items:center; gap:7px;"><span style="font-family:'Material Symbols Rounded'; font-size:14px; color:#7C8A99;">subject</span><span style="font-size:11.5px; color:#7C8A99;">{{ o.c }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ============== STATES + NOTIFICATIONS ============== -->
+    <div id="states" style="display:flex; flex-direction:column; gap:16px; scroll-margin-top:78px;">
+      <div style="display:flex; align-items:center; gap:11px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#FF8FA3; background:rgba(255,143,163,0.14); padding:3px 10px; border-radius:7px;">07</span><span style="font-weight:700; font-size:20px;">Состояния, уведомления, адаптивность</span></div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px;">
+        <sc-for list="{{ stateGroups }}" as="g" hint-placeholder-count="2">
+          <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:10px;">
+            <span style="{{ g.headStyle }}">{{ g.name }}</span>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="5">
+                <div style="display:flex; gap:9px; align-items:baseline;"><span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:600; color:#C2CCCA; flex:0 0 38%;">{{ i.n }}</span><span style="flex:1; font-size:12px; color:#8E9A9F; line-height:1.4;">{{ i.d }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:11px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">УВЕДОМЛЕНИЯ И СИСТЕМА</span>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="9">
+              <div style="display:flex; align-items:center; gap:9px;"><span style="font-family:'Material Symbols Rounded'; font-size:15px; color:#F4B740; flex:0 0 auto;">notifications</span><span style="flex:1; font-size:12.5px; color:#C2CCCA;">{{ n.n }}</span><span style="font-size:10.5px; font-weight:600; color:#7C8A99; background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:5px;">{{ n.p }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px;">
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:10px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">АДАПТИВНОСТЬ · mode() = f(vw)</span>
+          <sc-for list="{{ breakpoints }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex; align-items:baseline; gap:10px;"><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#34E5B0; flex:0 0 78px;">{{ b.bp }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#9DABA8; flex:0 0 62px;">{{ b.mode }}</span><span style="flex:1; font-size:11.5px; color:#8E9A9F; line-height:1.4;">{{ b.lay }}</span></div>
+          </sc-for>
+        </div>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:8px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ЛОКАЛИЗАЦИЯ И RTL</span>
+          <span style="font-size:12.5px; color:#9DABA8; line-height:1.5;">55 языков из <span style="font-family:'JetBrains Mono',monospace; color:#C2CCCA;">symbiont-i18n.js</span>. Смена языка шлёт событие <span style="font-family:'JetBrains Mono',monospace; color:#34E5B0;">sym-i18n</span> → forceUpdate. Направление <span style="font-family:'JetBrains Mono',monospace; color:#C2CCCA;">dir=rtl</span> для fa/ar/he/ur: логические свойства (padding-inline, inset-inline), моно-острова с <span style="font-family:'JetBrains Mono',monospace; color:#C2CCCA;">unicode-bidi:plaintext</span>, шевроны зеркалятся (data-rtlflip).</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; gap:8px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ДОСТУПНОСТЬ</span>
+          <span style="font-size:12.5px; color:#9DABA8; line-height:1.5;">Кликабельные — <span style="font-family:'JetBrains Mono',monospace; color:#C2CCCA;">role=button</span>, тумблеры — <span style="font-family:'JetBrains Mono',monospace; color:#C2CCCA;">role=switch · aria-checked</span>. Хит-таргеты ≥ 44px на мобайле. Контраст текста ≥ 4.5:1 на тёмном фоне. Состояния hover/active/focus у всех контролов.</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:13px; padding:20px 24px; border-radius:16px; background:linear-gradient(135deg, rgba(91,155,255,0.10), rgba(91,155,255,0.03)); border:1px solid rgba(91,155,255,0.22);">
+      <span style="font-family:'Material Symbols Rounded'; font-size:26px; color:#5B9BFF; flex:0 0 auto;">devices</span>
+      <div style="flex:1; min-width:0;"><div style="font-weight:700; font-size:15px; color:#EAF1EF;">Платформенная витрина</div><div style="font-size:13px; color:#7C8A99;">Те же экраны в рамках iOS · Android · macOS · Windows · Linux · веб · расширение + системные фишки.</div></div>
+      <a href="Симбионт - платформы.dc.html" style="display:inline-flex; align-items:center; gap:7px; padding:11px 18px; border-radius:11px; background:#5B9BFF; color:#04121F; font-weight:700; font-size:13.5px; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">open_in_new</span>Открыть</a>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const colors=[
+      {name:'Фон',hex:'#070A0F'},{name:'Поверхность',hex:'rgba 255 .025'},{name:'Акцент · мята',hex:'#34E5B0'},
+      {name:'Акцент-2',hex:'#5BE5A6'},{name:'Инфо',hex:'#5B9BFF'},{name:'Премиум',hex:'#A78BFA'},
+      {name:'Внимание',hex:'#F4B740'},{name:'Опасность',hex:'#FF6B7A'},{name:'Текст',hex:'#EAF1EF'}
+    ];
+    const _cmap={'Фон':'#070A0F','Поверхность':'rgba(255,255,255,0.06)','Акцент · мята':'#34E5B0','Акцент-2':'#5BE5A6','Инфо':'#5B9BFF','Премиум':'#A78BFA','Внимание':'#F4B740','Опасность':'#FF6B7A','Текст':'#EAF1EF'};
+    const colorsV=colors.map(c=>({ name:c.name, hex:c.hex, sw:{width:'28px',height:'28px',borderRadius:'8px',background:_cmap[c.name],border:'1px solid rgba(255,255,255,0.12)',flex:'0 0 auto'} }));
+
+    const radii=[{label:'8',r:'6px'},{label:'11',r:'8px'},{label:'14',r:'10px'},{label:'16',r:'11px'},{label:'999',r:'14px'}].map(t=>({ label:t.label, box:{width:'18px',height:'18px',background:'rgba(52,229,176,0.18)',border:'1px solid rgba(52,229,176,0.4)',borderRadius:t.r,flex:'0 0 auto'} }));
+    const spaces=[{n:'4',h:'12px'},{n:'8',h:'18px'},{n:'12',h:'26px'},{n:'16',h:'34px'},{n:'24',h:'46px'}].map(s=>({ label:s.n, box:{width:'12px',height:s.h,background:'rgba(91,155,255,0.35)',borderRadius:'3px'} }));
+    const icons=['shield','dns','alt_route','troubleshoot','account_circle','tune','redeem','diversity_3','devices','vpn_key','bolt','lan'];
+
+    // route pills (real ACT vocabulary + colors)
+    const _pill=(label,color,opts)=>{ opts=opts||{}; return { label, star:!!opts.star, hasDot:!!opts.dot, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:opts.dot||color,flex:'0 0 auto'}, labelStyle:{fontSize:'12.5px',fontWeight:600,color:color,whiteSpace:'nowrap'}, style:{display:'inline-flex',alignItems:'center',gap:'7px',padding:'7px 13px',borderRadius:'8px',background:(opts.bg||color+'1a'),border:'2px solid '+(opts.border||color+'4d')} }; };
+    const routePills=[
+      _pill('Авто','#34E5B0',{star:true}),
+      _pill('Напрямую','#5BE5A6',{dot:'#5BE5A6'}),
+      _pill('Туннель','#34E5B0',{dot:'#34E5B0'}),
+      _pill('Обход','#F4B740',{dot:'#F4B740'}),
+      _pill('Ускорение','#A78BFA',{dot:'#A78BFA'}),
+      _pill('Блок','#FF6B7A',{dot:'#FF6B7A'})
+    ];
+
+    // ListRow real lead/action objects
+    const lrLogo={kind:'tile',img:'./icons/telegram.svg',tint:'rgba(34,158,217,0.16)',imgSize:22};
+    const lrTunnel={kind:'pill',tone:'solid',label:'Туннель',color:'#34E5B0',dot:'#34E5B0',bg:'rgba(52,229,176,0.10)',border:'rgba(52,229,176,0.28)',chevron:'expand_more'};
+    const lrFlag={kind:'flag',code:'nl'};
+    const lrMeter={kind:'meter',ping:38,unit:'мс',load:42,pingColor:'#34E5B0',loadColor:'#9DABA8'};
+    const lrBlock={kind:'glyph',icon:'block',color:'#34E5B0',fill:true};
+    const lrToggle={kind:'toggle',on:true};
+    const lrDns={kind:'tile',icon:'dns',color:'#8E9A9F'};
+    const lrChev={kind:'chevron'};
+    const lrDot={kind:'dot',color:'#34E5B0'};
+    const lrAuto={kind:'pill',tone:'solid',label:'Авто',color:'#34E5B0',star:true,bg:'rgba(52,229,176,0.10)',border:'rgba(52,229,176,0.3)',chevron:'expand_more'};
+
+    const screens=[
+      {screen:'home',name:'Главная / Защита',nav:'Рейл · Защита'},
+      {screen:'nodes',name:'Узлы',nav:'Рейл · Узлы'},
+      {screen:'routing',name:'Маршрутизация',nav:'Рейл · Маршрутизация'},
+      {screen:'analysis',name:'Анализ сети',nav:'Рейл · Анализ'},
+      {screen:'account',name:'Аккаунт',nav:'Рейл · Аккаунт'},
+      {screen:'support',name:'Поддержка',nav:'Рейл · Поддержка'},
+      {screen:'settings',name:'Настройки',nav:'Аккаунт → шестерёнка'},
+      {screen:'glossary',name:'Глоссарий / FAQ',nav:'Топбар · книга'},
+      {screen:'wheel',name:'Колесо удачи',nav:'Топбар · подарок'},
+      {screen:'referral',name:'Рефералы',nav:'Аккаунт → Рефералы'},
+      {screen:'devices',name:'Устройства',nav:'Аккаунт → Устройства'},
+      {screen:'recovery',name:'Код восстановления',nav:'Аккаунт → Доступ'},
+      {screen:'traffic',name:'Карта трафика',nav:'Топбар · сеть'},
+      {screen:'ledger',name:'История начислений',nav:'Аккаунт → История'},
+      {screen:'admin',name:'Панель ваучеров',nav:'Настройки → Админ'},
+      {screen:'logs',name:'Журнал',nav:'Топбар · журнал'}
+    ].map((s,i)=>({ screen:s.screen, name:s.name, nav:s.nav, id:'SCR-'+((i+1<10?'0':'')+(i+1)) }));
+
+    const mobileScreens=[
+      {screen:'home',name:'Главная'},
+      {screen:'routing',name:'Маршрутизация'},
+      {screen:'wheel',name:'Колесо'},
+      {screen:'account',name:'Аккаунт'},
+      {screen:'nodes',name:'Узлы'}
+    ];
+
+    const _pt=(comp,color,rows)=>({comp,color,rows:rows.map(r=>({n:r[0],t:r[1],d:r[2]}))});
+    const propTables=[
+      _pt('ConnectionCore','#34E5B0',[['state','idle|measuring|connecting|connected|blocking','состояние ядра'],['stage','direct|bypass|tunnel|relay','ступень каскада'],['size','number','диаметр, px'],['ping','number','пинг для подписи'],['protocol','string','метка протокола'],['showStepper','boolean','показывать каскад-степпер'],['lang','string','язык подписей']]),
+      _pt('Card','#5BE5A6',[['variant','data|panel|notice|action','тип карточки'],['label · value · unit','string','данные (variant=data)'],['valueColor · icon · iconColor · iconFill','string·string·string·bool','акцент data'],['title · meta · headIcon','string','шапка panel'],['body · tone','string · warn|info|ok','notice'],['center · dashed','boolean','вид action'],['onClick','fn','действие'],['children','slot','тело panel']]),
+      _pt('ListRow','#A78BFA',[['variant','card|plain','контейнер'],['tone','default|active','выделение'],['dir','ltr|rtl','зеркалирование (RTL)'],['title · sub','string','тексты'],['titleMono · subMono','boolean','моно-шрифт (домены/коды)'],['titleColor','color','цвет заголовка'],['lead','{kind:glyph|tile|flag|dot,icon,color,fill,img,code,tint}','лид слева'],['action','{kind:toggle|pill|meter|chevron|text,on,label,color,dot,bg,border,chevron,ping,load}','действие справа'],['onClick · divider','fn · boolean','тап · разделитель (plain)']]),
+      _pt('Picker','#5B9BFF',[['title · subtitle','string','шапка окна'],['searchable','boolean','поле поиска'],['options','[{id,label,lead,sub,star,dot,color}]','опции (можно группами)'],['defaultId','string','выбранная опция'],['showClose','boolean','кнопка закрытия'],['onSelect · onClose','fn','выбор · закрытие']])
+    ];
+    const files=[['Симбионт.dc.html','Главное приложение — все экраны, состояние, i18n, роутинг, оверлеи'],['ConnectionCore.dc.html','Ядро подключения + каскад-степпер'],['Card.dc.html','Контейнер: data · panel · notice · action'],['ListRow.dc.html','Строка списка: лид + тело + действие'],['Picker.dc.html','Мини-окно выбора с поиском и группами'],['symbiont-i18n.js','Словари 55 языков + событие смены языка sym-i18n'],['Симбионт - платформы.dc.html','Витрина: апп в рамках 7 платформ + системные фишки'],['Симбионт - карта системы.dc.html','Каталог всех элементов с ID + платформенная матрица'],['Симбионт - разбор интерфейса.dc.html','Послойная анатомия + инструкция сборки'],['Симбионт - UI-кит.dc.html','Этот документ — единый хэндофф']].map(x=>({f:x[0],r:x[1]}));
+    const stateKeys=[['screen','текущий экран (home/nodes/routing/…)'],['conn · stage','статус подключения и ступень каскада'],['node · nodeQuery','выбранный узел и поиск'],['routeMode · userRules · appActions','политика маршрутизации и правила'],['lang · dir','язык и направление (RTL: fa/ar/he/ur)'],['vw · vh','размеры окна → mode()'],['overlay','открытое мини-окно'],['routeAppIdx · routeRuleIdx · routeDefOpen · svcTarget','цель route-пикера'],['scanPhase','фаза сканера устройства'],['kcOpen · kcPhase · kcStatus','проверка ключа'],['pay','оплата: null | pending | done'],['wheelPhase · wheelWin · wheelAngle · wheelNextAt','колесо'],['settings{…}','тумблеры защиты и системы'],['glTab · glQuery · faqOpen','глоссарий / FAQ']].map(x=>({k:x[0],d:x[1]}));
+    const flows=[
+      {name:'Подключение',color:'#34E5B0',steps:['Тап по ядру','idle → connecting','Каскад подбирает путь','connected / blocking + метрики']},
+      {name:'Авто-каскад',color:'#34E5B0',steps:['Прямой путь','Блок DPI → обход','Мало → туннель','Резерв → реле','Тап по ступени закрепляет']},
+      {name:'Сканер устройства',color:'#A78BFA',steps:['Маршрутизация → «Сканер»','Анимация поиска','Приложения по категориям','Добавить → правило']},
+      {name:'Оплата',color:'#F4B740',steps:['Аккаунт → тариф','pay=pending (спиннер)','Подтверждение','pay=done → баланс']},
+      {name:'Проверка ключа',color:'#22D3EE',steps:['Ввод ключа','Скан на устройстве','Криптопечать + вердикт','valid → активировать']},
+      {name:'Колесо',color:'#F4B740',steps:['1 спин/день','Взвешенный результат','Начисление','Серия / сброс / заморозка']}
+    ];
+    const breakpoints=[['< 720','mobile','таб-бар снизу · оверлеи → нижние листы · ядро меньше'],['720–1079','tablet','рейл · более плотные сетки'],['≥ 1080','desktop','рейл + оконные кнопки · широкие сетки']].map(x=>({bp:x[0],mode:x[1],lay:x[2]}));
+    const overlays=[['Пикер узла','строка узла / Узлы','поиск, флаги, пинг/нагрузка, избранное'],['Пикер протокола','Настройки / ядро','Авто-каскад + reality/hysteria2/SS2022'],['Пикер маршрута + охват','строка сервиса/правила','действие + домен / *.поддомены'],['Шторка «Добавить»','+ в Маршрутизации','сайт по ссылке или приложение'],['Сканер устройства','«Сканер устройства»','поиск приложений по категориям'],['Проверка ключа','Аккаунт','скан → криптопечать → вердикт (6 статусов)'],['Подписка / оплата','тариф в Аккаунте','планы + pending → done'],['Онбординг','первый запуск','ключ / восстановление, разрешения'],['Меню языка','флаг в топбаре','55 языков, регионы, RTL']].map(x=>({o:x[0],t:x[1],c:x[2]}));
+    const _sg=(name,color,items)=>({name,color,items:items.map(i=>({n:i[0],d:i[1]}))});
+    const stateGroups=[_sg('Подключение','#34E5B0',[['idle','покой, призыв подключиться'],['connecting','подбор пути'],['connected','защищено + метрики'],['blocking','обход DPI'],['error','не удалось + повтор']]),_sg('Пустые / граничные','#5B9BFF',[['нет узлов','фильтр пуст'],['трафик','нужно подключиться'],['поиск','ничего не найдено'],['на десктопе','функция вне платформы']])];
+    const notifs=[['Защита включена','все'],['Обрыв · Kill-switch','все'],['Каскад переключился','все'],['Виджет','iOS · And'],['Плитка','iOS · And'],['Меню-бар','mac'],['Трей','Win · Lin'],['VPN-разрешение','iOS · And'],['Per-app split-tunnel','And']].map(x=>({n:x[0],p:x[1]}));
+    propTables.forEach(p=>{ p.headStyle={fontFamily:"'JetBrains Mono',monospace",fontWeight:'700',fontSize:'13px',color:p.color,background:p.color+'1a',padding:'4px 10px',borderRadius:'7px',alignSelf:'flex-start'}; });
+    flows.forEach(f=>{ f.cardStyle={background:'rgba(255,255,255,0.025)',border:'1px solid rgba(255,255,255,0.07)',borderRadius:'13px',padding:'15px 16px',display:'flex',flexDirection:'column',gap:'10px'}; f.titleStyle={fontWeight:'700',fontSize:'14px',color:f.color}; f.stepsV=f.steps.map((s,i)=>({n:String(i+1),t:s,nStyle:{width:'19px',height:'19px',borderRadius:'6px',background:f.color+'22',color:f.color,fontFamily:"'JetBrains Mono',monospace",fontWeight:'700',fontSize:'10.5px',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}})); });
+    stateGroups.forEach(g=>{ g.headStyle={fontWeight:'700',fontSize:'14px',color:g.color}; });
+    return { colors:colorsV, radii, spaces, icons, routePills, propTables, files, stateKeys, flows, breakpoints, overlays, stateGroups, notifs,
+      lrLogo, lrTunnel, lrFlag, lrMeter, lrBlock, lrToggle, lrDns, lrChev, lrDot, lrAuto,
+      screens, mobileScreens, noop:()=>{} };
+  }
+}
+</script>
+</body>
+</html>

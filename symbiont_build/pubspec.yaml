@@ -14,12 +14,20 @@ dependencies:
   http: ^1.2.0
   cryptography: ^2.7.0
   shared_preferences: ^2.2.2
+  flutter_inappwebview: ^6.1.5   # WebView-хост дизайн-оболочки (Win/mac/Linux/Android/iOS)
 
 dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
+  assets:
+    # Дизайн-оболочка (webapp/), вшитая скриптом tools/sync_webapp.sh.
+    # Flutter требует перечислять подкаталоги ассетов явно.
+    - assets/webapp/
+    - assets/webapp/fonts/
+    - assets/webapp/flags/
+    - assets/webapp/icons/
   fonts:
     - family: JetBrains Mono
       fonts:
