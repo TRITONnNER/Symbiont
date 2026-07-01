@@ -2,7 +2,8 @@
 
 Это **ваш дизайн из Claude Design**, сделанный автономным (offline) веб-приложением:
 Design-Components-оболочка + рантайм (`support.js`), с локально вшитыми React/Babel,
-шрифтами (Golos Text, JetBrains Mono) и иконками (Material Symbols) — **без CDN**
+шрифтами (Golos Text, JetBrains Mono, Noto Sans/Arabic), иконками (Material Symbols),
+**флагами стран** и **логотипами сервисов** — **без единого CDN**
 (важно для аудитории в РФ, где CDN блокируемы).
 
 ## Запуск
@@ -16,7 +17,15 @@ python3 serve.py 8080          # затем открыть http://127.0.0.1:8080
 - `ConnectionCore/Card/ListRow/Picker.dc.html` — компоненты.
 - `support.js` — рантайм Design-Components (пропатчен: React/Babel из локальных файлов).
 - `react*.js`, `babel.min.js`, `fonts/`, `fonts.css` — вшитые зависимости (offline).
+- `flags/` — флаги всех стран ISO-3166 (`w40` PNG, flagcdn) — подхватываются по коду узла/языка.
+- `icons/` — логотипы сервисов (Telegram, Discord, Steam, YouTube… — Simple Icons, SVG).
+- `favicon.svg` — иконка вкладки (бренд-марка).
 - `symbiont-strings.js`, `symbiont-i18n.js` — тексты и локализация.
+- `vendor_assets.py` — скрипт, который переписал ссылки на CDN (шрифты/флаги/иконки) на локальные.
+
+Все флаги/иконки скачаны один раз и лежат в репозитории; ни один экран не ходит в интернет
+за ресурсами оформления. Языки китайский/хинди в списке используют системный шрифт-фолбэк
+(Noto SC/Devanagari не вшиты из-за размера; основной UI — кириллица/латиница/арабица — вшит).
 
 ## Подключение к бэкенду
 Вся «живая» логика — в `state` компонента внутри `Симбионт.dc.html`. Данные пока

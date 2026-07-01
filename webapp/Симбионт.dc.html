@@ -1,19 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="./fonts.css">
 <meta charset="utf-8">
+<title>Симбионт — VPN</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="stylesheet" href="./fonts.css">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..0&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="./symbiont-i18n.js"></script>
 <script src="./symbiont-strings.js"></script>
 <style>
@@ -1687,7 +1684,7 @@ class Component extends DCLogic {
     
     const _ISV="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14' preserveAspectRatio='none'%3E%3Cpolygon points='0,0 20,0 10,7' fill='%2315479E'/%3E%3Cpolygon points='20,0 20,14 10,7' fill='%23FFFFFF'/%3E%3Cpolygon points='20,14 0,14 10,7' fill='%23E11D2A'/%3E%3Cpolygon points='0,14 0,0 10,7' fill='%23FFD400'/%3E%3C/svg%3E\")";
     const _supported=new Set(['ru','en','es','de'].concat(Object.keys(_EXT||{})));
-    const langOptions=_LR.map(function(l){return l.code;}).map(code=>{ const on=lng===code; const _soon=!_supported.has(code); const nm=_langNames[code]; const en=_langEn[code]; const hasSub=!!en&&en!==nm; return { code, soon:_soon, soonStyle:{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:'999px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.10)',color:'#7C8A99',fontSize:'9.5px',fontWeight:700,letterSpacing:'0.04em',textTransform:'uppercase',whiteSpace:'nowrap',flex:'0 0 auto'}, name:nm, enName:en, sub:en, hasSub, onClick:()=>this.pickLang(code), flagStyle: code==='isv'?{width:'22px',height:'15px',borderRadius:'3px',backgroundImage:_ISV,backgroundSize:'100% 100%',flex:'0 0 auto'}:(_flagCC[code]?{width:'22px',height:'15px',borderRadius:'3px',backgroundImage:'url(https://flagcdn.com/w40/'+_flagCC[code]+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}:{width:'22px',height:'15px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'}), rowStyle:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 12px',borderRadius:'10px',cursor:'pointer',background:on?'rgba(52,229,176,0.10)':'transparent',border:on?'1px solid rgba(52,229,176,0.26)':'1px solid transparent'}, nameStyle:{fontWeight:on?700:600,fontSize:'13.5px',color:on?'#34E5B0':'#EAF1EF',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}, subStyle:{fontSize:'11px',color:on?'rgba(52,229,176,0.7)':'#7C8A99',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}, checkStyle:{fontFamily:"'Material Symbols Rounded'",fontVariationSettings:"'FILL' 1",fontSize:'18px',color:'#34E5B0',opacity:on?1:0,flex:'0 0 auto'} }; });
+    const langOptions=_LR.map(function(l){return l.code;}).map(code=>{ const on=lng===code; const _soon=!_supported.has(code); const nm=_langNames[code]; const en=_langEn[code]; const hasSub=!!en&&en!==nm; return { code, soon:_soon, soonStyle:{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:'999px',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.10)',color:'#7C8A99',fontSize:'9.5px',fontWeight:700,letterSpacing:'0.04em',textTransform:'uppercase',whiteSpace:'nowrap',flex:'0 0 auto'}, name:nm, enName:en, sub:en, hasSub, onClick:()=>this.pickLang(code), flagStyle: code==='isv'?{width:'22px',height:'15px',borderRadius:'3px',backgroundImage:_ISV,backgroundSize:'100% 100%',flex:'0 0 auto'}:(_flagCC[code]?{width:'22px',height:'15px',borderRadius:'3px',backgroundImage:'url(./flags/'+_flagCC[code]+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}:{width:'22px',height:'15px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'}), rowStyle:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 12px',borderRadius:'10px',cursor:'pointer',background:on?'rgba(52,229,176,0.10)':'transparent',border:on?'1px solid rgba(52,229,176,0.26)':'1px solid transparent'}, nameStyle:{fontWeight:on?700:600,fontSize:'13.5px',color:on?'#34E5B0':'#EAF1EF',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}, subStyle:{fontSize:'11px',color:on?'rgba(52,229,176,0.7)':'#7C8A99',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}, checkStyle:{fontFamily:"'Material Symbols Rounded'",fontVariationSettings:"'FILL' 1",fontSize:'18px',color:'#34E5B0',opacity:on?1:0,flex:'0 0 auto'} }; });
     const langChevStyle={fontFamily:"'Material Symbols Rounded'",fontSize:'18px',color:'#566270',transition:'transform 0.2s ease',transform:S.langOpen?'rotate(180deg)':'rotate(0deg)',flex:'0 0 auto'};
     const langMenuChevStyle={fontFamily:"'Material Symbols Rounded'",fontSize:'18px',color:'#566270',transition:'transform 0.2s ease',transform:S.langMenuOpen?'rotate(180deg)':'rotate(0deg)',flex:'0 0 auto'};
     const _lq=(S.langQuery||'').toLowerCase().trim();
@@ -1758,7 +1755,7 @@ class Component extends DCLogic {
     const nodeVC=(p,l)=>['#5BE5A6','#F5C451','#FF6B6B'][Math.max(p<=60?0:p<=100?1:2, l<=75?0:l<=90?1:2)];
     const NODES=this._nodes();
     const nd=NODES[S.node]||NODES[0];
-    const node={ ...nd, country: nd.country+' · '+nd.city, flagStyle:{width:'34px',height:'24px',borderRadius:'5px',backgroundImage:'url(https://flagcdn.com/w40/'+nd.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, loadBarStyle:{ width: nd.load+'%', height:'100%', background: nodeVC(nd.ping,nd.load), borderRadius:'2px' }, pingStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'13px', color: nodeVC(nd.ping,nd.load) }, loadPctStyle:{ fontFamily:"'JetBrains Mono',monospace", fontSize:'10.5px', fontWeight:600, color: nodeVC(nd.ping,nd.load) } };
+    const node={ ...nd, country: nd.country+' · '+nd.city, flagStyle:{width:'34px',height:'24px',borderRadius:'5px',backgroundImage:'url(./flags/'+nd.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, loadBarStyle:{ width: nd.load+'%', height:'100%', background: nodeVC(nd.ping,nd.load), borderRadius:'2px' }, pingStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'13px', color: nodeVC(nd.ping,nd.load) }, loadPctStyle:{ fontFamily:"'JetBrains Mono',monospace", fontSize:'10.5px', fontWeight:600, color: nodeVC(nd.ping,nd.load) } };
 
     const mPing = liveOn? String(livePing) : '—';
     const mLoss = connected? '0.0' : '—';
@@ -1826,7 +1823,7 @@ class Component extends DCLogic {
     })[lng]||{pulse:'Nodes reachable',pulseSub:'self-healing: dead drop out, recovered return',recovered:'recovered'};
     const _nodeCardsAll=NODES.map((n,i)=>{ const sel=i===S.node; const vc=nodeVC(n.ping,n.load); const fv=!!favs[i]; const _rec=(i%5===2); return {
       _ping:n.ping, _load:n.load, _fav:fv, _txt:(n.country+' '+n.city+' '+n.code).toLowerCase(),
-      code:n.code, recovered:_rec, recoveredLabel:_nodeX.recovered, flagStyle:{width:'32px',height:'23px',borderRadius:'5px',backgroundImage:'url(https://flagcdn.com/w40/'+n.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, title:n.country+' · '+n.city, host:n.host, ping:n.ping, load:n.load, pingLbl:ns.ping, loadLbl:ns.load, pingStr:n.ping+' '+ns.ms,
+      code:n.code, recovered:_rec, recoveredLabel:_nodeX.recovered, flagStyle:{width:'32px',height:'23px',borderRadius:'5px',backgroundImage:'url(./flags/'+n.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, title:n.country+' · '+n.city, host:n.host, ping:n.ping, load:n.load, pingLbl:ns.ping, loadLbl:ns.load, pingStr:n.ping+' '+ns.ms,
       onClick:()=>this.selectNode(i), selected:sel, starClick:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); this.toggleFav(i); },
       cardStyle:{ display:'flex', flexDirection:'column', gap:'12px', padding:'16px 16px', borderRadius:'16px', cursor:'pointer', background: sel?'rgba(52,229,176,0.07)':'rgba(255,255,255,0.025)', border:'2px solid '+(sel?'rgba(52,229,176,0.34)':'rgba(255,255,255,0.06)'), transition:'border-color .15s ease, transform .15s ease' },
       loadBarStyle:{ width:n.load+'%', height:'100%', background:vc, borderRadius:'2px' },
@@ -1849,12 +1846,12 @@ class Component extends DCLogic {
       block:{label:rl.block,color:'#FF6B6B',bg:'rgba(255,107,107,0.10)',border:'rgba(255,107,107,0.28)',dot:'#FF6B6B'}
     };
     const appsRaw=[
-      {name:'Google Chrome',exe:'chrome.exe',c:'#6BA4FF',act:'auto',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {name:'Telegram',exe:'Telegram.exe',c:'#58B7F5',act:'bypass',logo:'https://cdn.simpleicons.org/telegram'},
-      {name:'Discord',exe:'Discord.exe',c:'#8C9EFF',act:'tunnel',logo:'https://cdn.simpleicons.org/discord'},
-      {name:'VALORANT',exe:'VALORANT.exe',tag:'game',c:'#FF6B6B',act:'boost',logo:'https://cdn.simpleicons.org/valorant'},
-      {name:'Steam',exe:'steam.exe',c:'#9FB2C4',act:'direct',logo:'https://cdn.simpleicons.org/steam'},
-      {name:'Spotify',exe:'Spotify.exe',c:'#5BE5A6',act:'direct',logo:'https://cdn.simpleicons.org/spotify'}
+      {name:'Google Chrome',exe:'chrome.exe',c:'#6BA4FF',act:'auto',logo:'./icons/googlechrome.svg'},
+      {name:'Telegram',exe:'Telegram.exe',c:'#58B7F5',act:'bypass',logo:'./icons/telegram.svg'},
+      {name:'Discord',exe:'Discord.exe',c:'#8C9EFF',act:'tunnel',logo:'./icons/discord.svg'},
+      {name:'VALORANT',exe:'VALORANT.exe',tag:'game',c:'#FF6B6B',act:'boost',logo:'./icons/valorant.svg'},
+      {name:'Steam',exe:'steam.exe',c:'#9FB2C4',act:'direct',logo:'./icons/steam.svg'},
+      {name:'Spotify',exe:'Spotify.exe',c:'#5BE5A6',act:'direct',logo:'./icons/spotify.svg'}
     ];
     const _gameWord={ru:'игра',en:'game',es:'juego',de:'Spiel'}[lng]||'игра';
     const apps=appsRaw.map((a,i)=>{ const actKey=(S.appActions&&S.appActions[i])||a.act; const ac=ACT[actKey]; return {
@@ -1864,20 +1861,20 @@ class Component extends DCLogic {
       action:{ kind:'pill', tone:'solid', label:ac.label, color:ac.color, dot:ac.dot, star:!!ac.star, bg:ac.bg, border:ac.border, chevron:'expand_more', onClick:()=>this.toggleAppPicker(i) }
     }; });
     const DEVICE_APPS=[
-      {id:'chrome',name:'Google Chrome',exe:'chrome.exe',cat:'browser',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {id:'firefox',name:'Mozilla Firefox',exe:'firefox.exe',cat:'browser',logo:'https://cdn.simpleicons.org/firefoxbrowser'},
-      {id:'edge',name:'Microsoft Edge',exe:'msedge.exe',cat:'browser',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {id:'telegram',name:'Telegram',exe:'Telegram.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/telegram'},
-      {id:'discord',name:'Discord',exe:'Discord.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/discord'},
-      {id:'whatsapp',name:'WhatsApp',exe:'WhatsApp.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/whatsapp'},
-      {id:'valorant',name:'VALORANT',exe:'VALORANT.exe',cat:'game',logo:'https://cdn.simpleicons.org/valorant'},
-      {id:'steam',name:'Steam',exe:'steam.exe',cat:'game',logo:'https://cdn.simpleicons.org/steam'},
-      {id:'epic',name:'Epic Games',exe:'EpicGamesLauncher.exe',cat:'game',logo:'https://cdn.simpleicons.org/epicgames'},
-      {id:'spotify',name:'Spotify',exe:'Spotify.exe',cat:'media',logo:'https://cdn.simpleicons.org/spotify'},
-      {id:'vlc',name:'VLC',exe:'vlc.exe',cat:'media',logo:'https://cdn.simpleicons.org/vlcmediaplayer'},
-      {id:'obs',name:'OBS Studio',exe:'obs64.exe',cat:'media',logo:'https://cdn.simpleicons.org/obsstudio'},
-      {id:'vscode',name:'VS Code',exe:'Code.exe',cat:'dev',logo:'https://cdn.simpleicons.org/codecrafters'},
-      {id:'docker',name:'Docker',exe:'Docker Desktop.exe',cat:'dev',logo:'https://cdn.simpleicons.org/docker'}
+      {id:'chrome',name:'Google Chrome',exe:'chrome.exe',cat:'browser',logo:'./icons/googlechrome.svg'},
+      {id:'firefox',name:'Mozilla Firefox',exe:'firefox.exe',cat:'browser',logo:'./icons/firefoxbrowser.svg'},
+      {id:'edge',name:'Microsoft Edge',exe:'msedge.exe',cat:'browser',logo:'./icons/googlechrome.svg'},
+      {id:'telegram',name:'Telegram',exe:'Telegram.exe',cat:'messenger',logo:'./icons/telegram.svg'},
+      {id:'discord',name:'Discord',exe:'Discord.exe',cat:'messenger',logo:'./icons/discord.svg'},
+      {id:'whatsapp',name:'WhatsApp',exe:'WhatsApp.exe',cat:'messenger',logo:'./icons/whatsapp.svg'},
+      {id:'valorant',name:'VALORANT',exe:'VALORANT.exe',cat:'game',logo:'./icons/valorant.svg'},
+      {id:'steam',name:'Steam',exe:'steam.exe',cat:'game',logo:'./icons/steam.svg'},
+      {id:'epic',name:'Epic Games',exe:'EpicGamesLauncher.exe',cat:'game',logo:'./icons/epicgames.svg'},
+      {id:'spotify',name:'Spotify',exe:'Spotify.exe',cat:'media',logo:'./icons/spotify.svg'},
+      {id:'vlc',name:'VLC',exe:'vlc.exe',cat:'media',logo:'./icons/vlcmediaplayer.svg'},
+      {id:'obs',name:'OBS Studio',exe:'obs64.exe',cat:'media',logo:'./icons/obsstudio.svg'},
+      {id:'vscode',name:'VS Code',exe:'Code.exe',cat:'dev',logo:'./icons/codecrafters.svg'},
+      {id:'docker',name:'Docker',exe:'Docker Desktop.exe',cat:'dev',logo:'./icons/docker.svg'}
     ];
     const _scn=this._scanStr();
     const _scanX=_ext.scanX||({ru:{addAll:'Добавить все',addedAll:'Все приложения добавлены'},en:{addAll:'Add all',addedAll:'All apps added'},es:{addAll:'Añadir todo',addedAll:'Todas añadidas'},de:{addAll:'Alle hinzufügen',addedAll:'Alle hinzugefügt'}})[lng]||{addAll:'Add all',addedAll:'All apps added'};
@@ -1892,24 +1889,24 @@ class Component extends DCLogic {
     const scanAddAllN=_toAddScan.length;
     const _catL=_ext.catL||({ru:{all:'Все',social:'Соцсети',video:'Видео',messenger:'Мессенджеры',game:'Игры',bank:'Банки',other:'Прочее'},en:{all:'All',social:'Social',video:'Video',messenger:'Messengers',game:'Games',bank:'Banks',other:'Other'},es:{all:'Todo',social:'Redes',video:'Vídeo',messenger:'Mensajería',game:'Juegos',bank:'Bancos',other:'Otros'},de:{all:'Alle',social:'Soziales',video:'Video',messenger:'Messenger',game:'Spiele',bank:'Banken',other:'Andere'}})[lng]||{all:'All',social:'Social',video:'Video',messenger:'Messengers',game:'Games',bank:'Banks',other:'Other'};
     const SERVICES=[
-      {name:'Instagram',domain:'instagram.com',cat:'social',logo:'https://cdn.simpleicons.org/instagram',act:'tunnel'},
-      {name:'Facebook',domain:'facebook.com',cat:'social',logo:'https://cdn.simpleicons.org/facebook',act:'tunnel'},
-      {name:'X (Twitter)',domain:'x.com',cat:'social',logo:'https://cdn.simpleicons.org/x',act:'tunnel'},
-      {name:'TikTok',domain:'tiktok.com',cat:'social',logo:'https://cdn.simpleicons.org/tiktok',act:'tunnel'},
-      {name:'Reddit',domain:'reddit.com',cat:'social',logo:'https://cdn.simpleicons.org/reddit',act:'auto'},
-      {name:'YouTube',domain:'youtube.com',cat:'video',logo:'https://cdn.simpleicons.org/youtube',act:'bypass'},
-      {name:'Twitch',domain:'twitch.tv',cat:'video',logo:'https://cdn.simpleicons.org/twitch',act:'auto'},
-      {name:'Netflix',domain:'netflix.com',cat:'video',logo:'https://cdn.simpleicons.org/netflix',act:'tunnel'},
-      {name:'Telegram',domain:'telegram.org',cat:'messenger',logo:'https://cdn.simpleicons.org/telegram',act:'bypass'},
-      {name:'Discord',domain:'discord.com',cat:'messenger',logo:'https://cdn.simpleicons.org/discord',act:'tunnel'},
-      {name:'WhatsApp',domain:'whatsapp.com',cat:'messenger',logo:'https://cdn.simpleicons.org/whatsapp',act:'auto'},
-      {name:'Steam',domain:'steampowered.com',cat:'game',logo:'https://cdn.simpleicons.org/steam',act:'direct'},
-      {name:'Epic Games',domain:'epicgames.com',cat:'game',logo:'https://cdn.simpleicons.org/epicgames',act:'boost'},
-      {name:'Riot Games',domain:'riotgames.com',cat:'game',logo:'https://cdn.simpleicons.org/riotgames',act:'boost'},
-      {name:'PayPal',domain:'paypal.com',cat:'bank',logo:'https://cdn.simpleicons.org/paypal',act:'direct'},
-      {name:'Wise',domain:'wise.com',cat:'bank',logo:'https://cdn.simpleicons.org/wise',act:'direct'},
-      {name:'GitHub',domain:'github.com',cat:'other',logo:'https://cdn.simpleicons.org/github',act:'auto'},
-      {name:'Wikipedia',domain:'wikipedia.org',cat:'other',logo:'https://cdn.simpleicons.org/wikipedia',act:'auto'}
+      {name:'Instagram',domain:'instagram.com',cat:'social',logo:'./icons/instagram.svg',act:'tunnel'},
+      {name:'Facebook',domain:'facebook.com',cat:'social',logo:'./icons/facebook.svg',act:'tunnel'},
+      {name:'X (Twitter)',domain:'x.com',cat:'social',logo:'./icons/x.svg',act:'tunnel'},
+      {name:'TikTok',domain:'tiktok.com',cat:'social',logo:'./icons/tiktok.svg',act:'tunnel'},
+      {name:'Reddit',domain:'reddit.com',cat:'social',logo:'./icons/reddit.svg',act:'auto'},
+      {name:'YouTube',domain:'youtube.com',cat:'video',logo:'./icons/youtube.svg',act:'bypass'},
+      {name:'Twitch',domain:'twitch.tv',cat:'video',logo:'./icons/twitch.svg',act:'auto'},
+      {name:'Netflix',domain:'netflix.com',cat:'video',logo:'./icons/netflix.svg',act:'tunnel'},
+      {name:'Telegram',domain:'telegram.org',cat:'messenger',logo:'./icons/telegram.svg',act:'bypass'},
+      {name:'Discord',domain:'discord.com',cat:'messenger',logo:'./icons/discord.svg',act:'tunnel'},
+      {name:'WhatsApp',domain:'whatsapp.com',cat:'messenger',logo:'./icons/whatsapp.svg',act:'auto'},
+      {name:'Steam',domain:'steampowered.com',cat:'game',logo:'./icons/steam.svg',act:'direct'},
+      {name:'Epic Games',domain:'epicgames.com',cat:'game',logo:'./icons/epicgames.svg',act:'boost'},
+      {name:'Riot Games',domain:'riotgames.com',cat:'game',logo:'./icons/riotgames.svg',act:'boost'},
+      {name:'PayPal',domain:'paypal.com',cat:'bank',logo:'./icons/paypal.svg',act:'direct'},
+      {name:'Wise',domain:'wise.com',cat:'bank',logo:'./icons/wise.svg',act:'direct'},
+      {name:'GitHub',domain:'github.com',cat:'other',logo:'./icons/github.svg',act:'auto'},
+      {name:'Wikipedia',domain:'wikipedia.org',cat:'other',logo:'./icons/wikipedia.svg',act:'auto'}
     ];
     const _scat=S.svcCat||'all'; const _sq2=(S.routingQuery||'').toLowerCase().trim();
     const _catDomains=SERVICES.map(s=>s.domain);
@@ -2144,7 +2141,7 @@ class Component extends DCLogic {
       {icon:'settings', color:'#9DABA8', label:ui.stTitle, onClick:()=>{ this.go('settings'); this.setState({topMenuOpen:false}); }}
     ].map(function(it){ return Object.assign({}, it, { iconWrap:{width:'32px',height:'32px',borderRadius:'9px',background:it.color+'1F',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}, iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'18px',color:it.color} }); });
     return {
-      rootStyle, brand, dir, curLang, curFlagStyle:(S.lang==='isv'?{width:'20px',height:'14px',borderRadius:'3px',backgroundImage:_ISV,backgroundSize:'100% 100%',flex:'0 0 auto'}:_flagCC[S.lang]?{width:'20px',height:'14px',borderRadius:'3px',backgroundImage:'url(https://flagcdn.com/w40/'+_flagCC[S.lang]+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}:{width:'20px',height:'14px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'}), showRail, railStyle, railWide, navItems, mainColStyle, topbarStyle, contentStyle,
+      rootStyle, brand, dir, curLang, curFlagStyle:(S.lang==='isv'?{width:'20px',height:'14px',borderRadius:'3px',backgroundImage:_ISV,backgroundSize:'100% 100%',flex:'0 0 auto'}:_flagCC[S.lang]?{width:'20px',height:'14px',borderRadius:'3px',backgroundImage:'url(./flags/'+_flagCC[S.lang]+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}:{width:'20px',height:'14px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'}), showRail, railStyle, railWide, navItems, mainColStyle, topbarStyle, contentStyle,
       showTabs, tabbarStyle, tabs, showLang, showWinCtrls, mobile, tablet, desktop, pageStyle, showBrandText, showIconRow, showTopMenu, topMenuOpen:S.topMenuOpen, toggleTopMenu:()=>this.setState(s=>({topMenuOpen:!s.topMenuOpen})), topMenuIcon:S.topMenuOpen?'close':'menu', closeTopMenu:()=>this.setState({topMenuOpen:false}), topMenuHdr:({ru:'Быстрый доступ',en:'Quick access',es:'Acceso rápido',de:'Schnellzugriff'})[lng]||'Quick access', topMenuItems,
       statusPillStyle, statusIcon:stIcon, statusIconStyle, statusText:stText, statusTextStyle, killChipStyle, killIconStyle, killLabelStyle, killIcon:killOn?'gpp_good':'gpp_bad', showKillLabel, killLabelText:ui.killLabel, killTitle:ui.killLabel+' — '+ui.killSub, toggleKill:()=>{ const cur=!!this.state.settings.killswitch; this.toggleSetting('killswitch'); this.toast(ui.killLabel+': '+(!cur?(({ru:'вкл',en:'on',es:'activado',de:'an'})[lng]||'on'):(({ru:'выкл',en:'off',es:'desactivado',de:'aus'})[lng]||'off')), !cur?'ok':'muted'); },
       isHome:screen==='home', isNodes:screen==='nodes', isRouting:screen==='routing', isAnalysis:screen==='analysis', isAccount:screen==='account', isSupport:screen==='support', isSettings:screen==='settings',
