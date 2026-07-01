@@ -107,6 +107,12 @@ func resetBlockedConnections() int {
 	n := binary.LittleEndian.Uint32(buf[0:4])
 	rows := buf[4:]
 	const rowSize = 24 // MIB_TCPROW_OWNER_PID
+	// Санити раскладки: строки должны укладываться ровно по rowSize. Если структура
+	// иной длины (другая версия Windows) — НЕ трогаем таблицу вовсе, иначе рискуем
+	// оборвать ЧУЖОЕ живое соединение по неверно разобранной строке.
+	if n > 0 && len(rows)/int(n) != rowSize {
+		return 0
+	}
 	now := time.Now().UnixNano()
 	killed := 0
 	discPIDs := discordProcessPIDs() // PID процессов Discord — для точного резета их старых соединений
@@ -126,6 +132,9 @@ func resetBlockedConnections() int {
 		}
 		localAddr := binary.BigEndian.Uint32(row[4:8])
 		localPort := binary.BigEndian.Uint16(row[8:10])
+		if remoteAddr == 0 || localAddr == 0 {
+			continue // мусорная/нулевая строка — не разрываем «в никуда»
+		}
 		tupleHash := uint64(localAddr)<<32 ^ uint64(localPort)<<16 ^ uint64(remoteAddr) ^ uint64(remotePort)
 		ownerPID := binary.LittleEndian.Uint32(row[20:24]) // MIB_TCPROW_OWNER_PID: PID в конце строки
 		host := hostForIP(remoteAddr)

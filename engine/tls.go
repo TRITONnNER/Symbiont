@@ -32,10 +32,15 @@ func parseTLSClientHello(payload []byte) tlsInfo {
 	}
 	// p[1],p[2] = версия (0x0301..0x0303); не критично проверять строго
 	recLen := int(p[3])<<8 | int(p[4])
-	if len(p) < 5+recLen {
+	end := 5 + recLen
+	if end > len(p) {
 		info.fragmented = true // ClientHello продолжается в следующем пакете (kyber)
+		end = len(p)
 	}
-	hs := p[5:]
+	// Парсим строго В ГРАНИЦАХ TLS-записи: если за записью в пакете лежат другие
+	// байты (склеенные записи/хвост TCP), не принимаем их за поля ClientHello —
+	// иначе можно вычислить НЕВЕРНЫЙ sniOffset и разрезать живой handshake не там.
+	hs := p[5:end]
 	if len(hs) < 4 {
 		return info
 	}

@@ -234,6 +234,11 @@ func extractCryptoCH(plain []byte) []byte {
 			i += int(ln)
 			// складываем по offset (обычно offset=0, один фрейм)
 			need := int(off) + len(data)
+			// защита от гигантского offset (варинт до 2^62): ClientHello не занимает
+			// столько — иначе make() съел бы память. 64 КБ хватает даже под kyber.
+			if int(off) > 65535 || need > 65535 {
+				break
+			}
 			if need > len(ch) {
 				nb := make([]byte, need)
 				copy(nb, ch)
