@@ -13,6 +13,7 @@
 <helmet>
 <script src="./symbiont-i18n.js"></script>
 <script src="./symbiont-strings.js"></script>
+<script src="./symbiont-bridge.js"></script>
 <style>
   html,body{margin:0;padding:0;background:#0A0F11;}
   *{box-sizing:border-box;}
@@ -1544,7 +1545,7 @@ class Component extends DCLogic {
     settings:{killswitch:true, autostart:true, dns:true, reduceMotion:false, adblock:true, trackers:true, phishing:false, tray:true},
     embedChrome:true
   };
-  componentDidMount(){ try{var P=new URLSearchParams(location.search),patch={},sc=P.get('screen'),lg=P.get('lang'),cn=P.get('conn'),ch=P.get('chrome'),ov=P.get('overlay'),am=P.get('admin');if(sc)patch.screen=sc;if(lg)patch.lang=lg;if(cn)patch.conn=cn;if(ov)patch.overlay=ov;if(am==='1')patch.admin=true;if(ch==='0')patch.embedChrome=false;if(Object.keys(patch).length)this.setState(patch);}catch(e){} this._on=()=>this.setState({vw:window.innerWidth, vh:window.innerHeight}); window.addEventListener('resize', this._on); if(!(this.props.embed||this.props.vw)){ this._tk=setInterval(()=>this._tick(),1100); } this._i18nL=()=>this.forceUpdate(); window.addEventListener('sym-i18n', this._i18nL); }
+  componentDidMount(){ try{var P=new URLSearchParams(location.search),patch={},sc=P.get('screen'),lg=P.get('lang'),cn=P.get('conn'),ch=P.get('chrome'),ov=P.get('overlay'),am=P.get('admin');if(sc)patch.screen=sc;if(lg)patch.lang=lg;if(cn)patch.conn=cn;if(ov)patch.overlay=ov;if(am==='1')patch.admin=true;if(ch==='0')patch.embedChrome=false;if(Object.keys(patch).length)this.setState(patch);}catch(e){} this._on=()=>this.setState({vw:window.innerWidth, vh:window.innerHeight}); window.addEventListener('resize', this._on); if(!(this.props.embed||this.props.vw)){ this._tk=setInterval(()=>this._tick(),1100); } this._i18nL=()=>this.forceUpdate(); window.addEventListener('sym-i18n', this._i18nL); if(typeof window!=='undefined'&&window.SYM_BRIDGE){ try{ window.SYM_BRIDGE.boot(this); }catch(e){} } }
   componentWillUnmount(){ if(this._on) window.removeEventListener('resize', this._on); if(this._tk) clearInterval(this._tk); if(this._i18nL) window.removeEventListener('sym-i18n', this._i18nL); if(this._kcT) clearTimeout(this._kcT); if(this._payT) clearTimeout(this._payT); if(this._whT) clearTimeout(this._whT); if(this._cdT) clearInterval(this._cdT); }
   _tick(){ const c=this.state.conn; if(c!=='connected'&&c!=='blocking') return; this.setState(s=>{ const r=(a,b)=>Math.round((a+Math.random()*(b-a))*10)/10; const ping=Math.max(28,Math.min(58,Math.round(38+(Math.random()*8-4)))); const down=r(8,42), up=r(1.5,6); const hist=[...s.live.hist.slice(-24),ping]; const rx=s.live.rx+(down/8*1.1)/1024; return { live:{...s.live, ping, down, up, hist, rx} }; }); }
   go(s){ this.setState({screen:s}); }
@@ -1575,8 +1576,9 @@ class Component extends DCLogic {
   spinWheel(){ if(this.state.wheelPhase) return; var _W=[300,250,180,120,80,40,24,6],_r=Math.floor(Math.random()*1000),_ac=0,win=7; for(var _i=0;_i<8;_i++){ _ac+=_W[_i]; if(_r<_ac){win=_i;break;} } this.setState({wheelPhase:'spinning', wheelWin:win, wheelAngle:360*6 - win*45}); clearTimeout(this._whT); this._whT=setTimeout(()=>{ this.setState({wheelPhase:'done', wheelNextAt:Date.now()+24*3600*1000}); clearInterval(this._cdT); this._cdT=setInterval(()=>this.forceUpdate(),1000); },4300); }
   setField(k,v){ this.setState({[k]:v}); }
   _resolveKey(code){ const c=(code||'').toUpperCase().trim(); const demo={'SYMB-7K2Q-9XR4.MT8V':'valid','SYMB-3F8D-2WQ7.KP1X':'redeemed','SYMB-9N4R-6YT2.BV5L':'expired','SYMB-0X1C-8ZM3.QH7D':'revoked'}; if(demo[c]) return demo[c]; if(!/^SYMB-[A-Z0-9]{4}-[A-Z0-9]{4}\.[A-Z0-9]{4}$/.test(c)) return 'invalid'; let h=0; for(let i=0;i<c.length;i++){ h=(h*31+c.charCodeAt(i))>>>0; } return ['valid','redeemed','expired','not_found'][h%4]; }
-  openKeyCheck(){ const code=((this.state.actInput||'').trim()||'SYMB-7K2Q-9XR4.MT8V').toUpperCase(); clearTimeout(this._kcT); this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcT=setTimeout(()=>this.setState({kcPhase:'done', kcStatus:this._resolveKey(code)}), 1500); }
-  tryKey(code){ clearTimeout(this._kcT); this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcT=setTimeout(()=>this.setState({kcPhase:'done', kcStatus:this._resolveKey(code)}), 1500); }
+  _kcRun(code){ const done=(st)=>this.setState({kcPhase:'done', kcStatus:st}); clearTimeout(this._kcT); const live=(typeof window!=='undefined'&&window.SYM_LIVE&&window.SYM_LIVE()); if(live){ const t0=Date.now(); window.SYM_API.keyCheck(code).then(r=>{ const st=(r&&r.status)||'invalid'; const wait=Math.max(0,700-(Date.now()-t0)); this._kcT=setTimeout(()=>done(st),wait); }).catch(()=>{ this._kcT=setTimeout(()=>done(this._resolveKey(code)),700); }); } else { this._kcT=setTimeout(()=>done(this._resolveKey(code)),1500); } }
+  openKeyCheck(){ const code=((this.state.actInput||'').trim()||'SYMB-7K2Q-9XR4.MT8V').toUpperCase(); this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcRun(code); }
+  tryKey(code){ this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcRun(code); }
   closeKeyCheck(){ clearTimeout(this._kcT); this.setState({kcOpen:false, kcPhase:null, kcStatus:null}); }
   _kcMsg(k){ const M={ru:{empty:'Введите ключ',ok:'Ключ активирован',bad:'Этот ключ нельзя активировать'},en:{empty:'Enter a key',ok:'Key activated',bad:'This key can’t be activated'},es:{empty:'Introduce una clave',ok:'Clave activada',bad:'No se puede activar'},de:{empty:'Schlüssel eingeben',ok:'Schlüssel aktiviert',bad:'Nicht aktivierbar'}}; return (M[this.state.lang]||M.en)[k]; }
   activateKey(){ const code=(this.state.actInput||'').trim(); if(!code){ this.toast(this._kcMsg('empty'),'warn'); return; } const st=this._resolveKey(code); if(st==='valid'){ this.toast(this._kcMsg('ok'),'ok'); this.setState({actInput:'', kcOpen:false, kcPhase:null, kcStatus:null}); } else { this.toast(this._kcMsg('bad'),'error'); this.openKeyCheck(); } }
@@ -2233,8 +2235,8 @@ class Component extends DCLogic {
       JP:{ru:'Токио',en:'Tokyo',es:'Tokio',de:'Tokio'}
     };
     const G=(typeof window!=='undefined'&&window.SYM_I18N&&window.SYM_I18N[lng]&&window.SYM_I18N[lng].geo)||{};
-    const L=(o,code,kind)=>(G[kind]&&G[kind][code])||o[lng]||o.en;
-    const B=[
+    const L=(o,code,kind,fb)=>(G[kind]&&G[kind][code])||(o&&(o[lng]||o.en))||fb||code;
+    const _demo=[
       {code:'NL', host:'ams-03.symbiont.net', ping:38, load:34, fav:true},
       {code:'DE', host:'fra-01.symbiont.net', ping:46, load:58, fav:true},
       {code:'FI', host:'hel-02.symbiont.net', ping:31, load:22, fav:false},
@@ -2244,7 +2246,10 @@ class Component extends DCLogic {
       {code:'US', host:'nyc-07.symbiont.net', ping:118, load:39, fav:false},
       {code:'JP', host:'tyo-01.symbiont.net', ping:142, load:93, fav:false}
     ];
-    return B.map(n=>({ ...n, country:L(C[n.code],n.code,'countries'), city:L(T[n.code],n.code,'cities') }));
+    // «Живые» узлы из манифеста бэкенда (мост), иначе демо-набор:
+    const _live=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.nodes);
+    const B=(_live&&_live.length)?_live:_demo;
+    return B.map(n=>({ ...n, country:L(C[n.code],n.code,'countries',n._country_en), city:L(T[n.code],n.code,'cities',n._country_en) }));
   }
 }
 </script>

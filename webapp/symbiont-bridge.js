@@ -1,0 +1,233 @@
+/*
+ * symbiont-bridge.js — мост между дизайн-оболочкой и реальным бэкендом/движком.
+ *
+ * Оболочка (Симбионт.dc.html) остаётся неизменной по вёрстке: renderVals() и
+ * шаблоны не трогаем. Мост лишь подменяет ДАННЫЕ и ДЕЙСТВИЯ:
+ *   • window.SYM_API    — клиент REST /v1/* (см. symbiont_build/backend/API.md)
+ *   • window.SYM_ENGINE — абстракция VPN-движка (нативные обёртки её реализуют)
+ *   • window.SYM_DATA    — «живые» данные (узлы, тарифы…), которые методы
+ *                          оболочки читают ПЕРВЫМИ, откатываясь к демо-данным.
+ *   • window.SYM_BRIDGE  — загрузка: определить бэкенд, подтянуть манифест/тарифы,
+ *                          разбудить оболочку событием 'sym-data'.
+ *
+ * РЕЖИМЫ:
+ *   — Демо (нет бэкенда / live:false): оболочка работает как раньше, байт-в-байт.
+ *   — Живой (бэкенд отвечает): узлы/тарифы/ключи/колесо/оплата идут в сеть.
+ *
+ * Конфигурация — до загрузки этого файла:
+ *   window.SYM_CONFIG = { apiBase:'http://127.0.0.1:8600', live:true }
+ *   apiBase='' → тот же origin (когда бэкенд отдаёт и статику). live:false → демо.
+ */
+(function () {
+  'use strict';
+
+  var CFG = (typeof window !== 'undefined' && window.SYM_CONFIG) || {};
+  var BASE = CFG.apiBase != null ? String(CFG.apiBase) : '';   // '' => same-origin
+  var LIVE = CFG.live !== false;                               // явный live:false => демо
+  var LS_TOKEN = 'sym_token';
+
+  var TOKEN = null;
+  try { TOKEN = localStorage.getItem(LS_TOKEN) || null; } catch (e) {}
+
+  function u(p) { return (BASE || '') + p; }
+  function setToken(t) {
+    TOKEN = t || null;
+    try { if (t) localStorage.setItem(LS_TOKEN, t); else localStorage.removeItem(LS_TOKEN); } catch (e) {}
+  }
+  function authHeaders(extra) {
+    var h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+    return h;
+  }
+
+  async function req(method, path, body, opt) {
+    opt = opt || {};
+    var init = { method: method, headers: authHeaders(opt.headers) };
+    if (body !== undefined) init.body = JSON.stringify(body);
+    var r;
+    try {
+      r = await fetch(u(path), init);
+    } catch (netErr) {
+      var e0 = new Error('network'); e0.status = 0; e0.cause = netErr; throw e0;
+    }
+    var data = null;
+    try { data = await r.json(); } catch (e) { /* пустой/не-JSON ответ */ }
+    if (!r.ok) {
+      var e = new Error((data && (data.detail || data.message)) || ('http_' + r.status));
+      e.status = r.status; e.data = data; throw e;
+    }
+    return data;
+  }
+
+  // ── Proof-of-Work: sha256(challenge+nonce) с `bits` ведущими нулевыми hex-символами ──
+  async function sha256hex(str) {
+    var buf = new TextEncoder().encode(str);
+    var dig = await crypto.subtle.digest('SHA-256', buf);
+    var arr = Array.from(new Uint8Array(dig));
+    return arr.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+  }
+  async function solvePow(challenge, bits) {
+    bits = bits | 0;
+    if (!challenge || bits <= 0) return '0';               // bits=0 → любой nonce годится
+    var prefix = new Array(bits + 1).join('0');
+    for (var n = 0; n < 5000000; n++) {
+      var h = await sha256hex(String(challenge) + n);
+      if (h.slice(0, bits) === prefix) return String(n);
+    }
+    return '0';
+  }
+
+  // ── REST-клиент /v1/* ─────────────────────────────────────────────────────────
+  var API = {
+    base: BASE,
+    isLive: function () { return LIVE; },
+    hasToken: function () { return !!TOKEN; },
+    token: function () { return TOKEN; },
+    setToken: setToken,
+
+    // публичные
+    manifest: function (since) { return req('GET', '/v1/manifest' + (since ? ('?since=' + since) : '')); },
+    economy: function () { return req('GET', '/v1/config/economy'); },
+    pubkey: function () { return req('GET', '/v1/pubkey'); },
+    keyCheck: function (code) { return req('POST', '/v1/key/check', { code: code }); },
+
+    // аккаунт
+    anon: function (label) { return req('POST', '/v1/account/anon', { label: label || null }); },
+    pow: function () { return req('GET', '/v1/account/pow'); },
+    register: async function (opts) {
+      opts = opts || {};
+      var p = await API.pow();
+      var nonce = await solvePow(p.challenge, p.bits || p.difficulty || 0);
+      var body = Object.assign({
+        aliases: opts.aliases || [{ value: opts.nick || 'guest', kind: 'nick' }],
+        password: opts.password || null,
+        device: opts.device || { name: 'Устройство', platform: 'web' },
+        invite: opts.invite || null,
+        pow_challenge: p.challenge,
+        pow_nonce: nonce
+      }, {});
+      var res = await req('POST', '/v1/account/register', body);
+      if (res && res.token) setToken(res.token);
+      return res;
+    },
+    login: async function (opts) {
+      var res = await req('POST', '/v1/account/login', opts || {});
+      if (res && res.token) setToken(res.token);
+      return res;
+    },
+    recover: async function (opts) {
+      var res = await req('POST', '/v1/account/recover', opts || {});
+      if (res && res.token) setToken(res.token);
+      return res;
+    },
+    logout: function () { setToken(null); },
+
+    // устройства
+    devices: function () { return req('GET', '/v1/account/devices'); },
+    revokeDevice: function (id) { return req('POST', '/v1/account/devices/revoke', { device_id: id }); },
+    promoteDevice: function (id) { return req('POST', '/v1/account/devices/promote', { device_id: id }); },
+
+    // колесо
+    wheel: function () { return req('GET', '/v1/wheel'); },
+    wheelSpin: function () { return req('POST', '/v1/wheel/spin', {}); },
+
+    // биллинг
+    billingStatus: function () { return req('GET', '/v1/billing/status'); },
+    billingLedger: function () { return req('GET', '/v1/billing/ledger'); },
+    billingPurchase: function (opts) { return req('POST', '/v1/billing/purchase', opts || {}); },
+    payment: function (id) { return req('GET', '/v1/billing/payment/' + encodeURIComponent(id)); },
+    keyRedeem: function (code) { return req('POST', '/v1/key/redeem', { code: code }); },
+
+    // рефералы
+    referral: function () { return req('GET', '/v1/referral'); },
+
+    // поддержка
+    supportThread: function () { return req('GET', '/v1/support/thread'); },
+    supportSend: function (text) { return req('POST', '/v1/support/message', { text: text }); }
+  };
+
+  // ── Движок VPN: в браузере/веб-портале его нет; нативные обёртки внедряют свой. ──
+  // Ожидаемая форма: { connect(node), disconnect(), status():Promise<{conn,stage,ping...}>,
+  //                    onEvent(cb) }.  null → оболочка использует симуляцию каскада.
+  if (typeof window.SYM_ENGINE === 'undefined') window.SYM_ENGINE = null;
+
+  // ── Преобразование манифеста → узлы в форме, которую понимает _nodes() оболочки ──
+  // Манифест: {id, country, code, loadPct, protocols, roles, whiteIp?}.
+  // Оболочка сама локализует страну/город по code; мы даём code/host/load/ping/fav.
+  function nodesFromManifest(man) {
+    if (!man || !Array.isArray(man.nodes)) return null;
+    var out = [];
+    man.nodes.forEach(function (n) {
+      // Реле-узлы (role=relay) — часть каскада, не выбираются вручную: пропускаем в списке.
+      var roles = n.roles || [];
+      if (roles.indexOf('relay') !== -1 && roles.length === 1) return;
+      out.push({
+        code: (n.code || '').toUpperCase(),
+        host: (n.id || n.code || 'node') + '.symbiont.net',
+        // ping манифест не отдаёт (меряется на клиенте) — оценка от нагрузки для показа
+        ping: Math.max(18, Math.round(24 + (n.loadPct || 0) * 0.9)),
+        load: n.loadPct || 0,
+        fav: false,
+        id: n.id,
+        protocols: n.protocols || [],
+        _country_en: n.country || null
+      });
+    });
+    return out.length ? out : null;
+  }
+
+  // ── Загрузка: определить бэкенд, подтянуть данные, разбудить оболочку ───────────
+  var _comps = [];            // все смонтированные экземпляры оболочки
+  var _bootPromise = null;    // single-flight: сколько бы экземпляров ни звало boot()
+
+  var BRIDGE = {
+    ready: false,
+    config: { apiBase: BASE, live: LIVE },
+
+    // Надёжный признак «живого» режима: не изменяемый флаг (его гонки затирают),
+    // а факт наличия загруженного манифеста от бэкенда.
+    isLive: function () { return LIVE && !!(window.SYM_DATA && window.SYM_DATA.manifest); },
+    get live() { return this.isLive(); },
+
+    attach: function (comp) { if (comp && _comps.indexOf(comp) === -1) _comps.push(comp); },
+
+    _wake: function () {
+      // Оболочка перерисуется: _nodes() и пр. прочитают window.SYM_DATA.
+      _comps.forEach(function (c) { try { if (c && c.forceUpdate && c._isMounted !== false) c.forceUpdate(); } catch (e) {} });
+      try { window.dispatchEvent(new Event('sym-data')); } catch (e) {}
+    },
+
+    boot: function (comp) {
+      if (comp) this.attach(comp);
+      window.SYM_DATA = window.SYM_DATA || {};
+      if (_bootPromise) return _bootPromise;      // уже грузим/загрузили — не дублируем
+      var self = this;
+      _bootPromise = (async function () {
+        if (!LIVE) { self.ready = true; return; }
+        try {
+          var man = await API.manifest();
+          var nodes = nodesFromManifest(man);
+          if (nodes) window.SYM_DATA.nodes = nodes;
+          window.SYM_DATA.manifest = man;           // ← отсюда isLive() = true
+        } catch (e) {
+          // Бэкенд недоступен → тихий откат в демо-режим (важно для оффлайн-показа).
+          window.SYM_DATA.offlineBackend = true;
+          self.ready = true;
+          self._wake();
+          return;
+        }
+        try { window.SYM_DATA.economy = await API.economy(); } catch (e) {}
+        self.ready = true;
+        self._wake();
+      })();
+      return _bootPromise;
+    }
+  };
+
+  // Глобальный помощник для гейтинга «живых» действий в оболочке.
+  window.SYM_LIVE = function () { return !!(window.SYM_API && window.SYM_API.isLive() && window.SYM_DATA && window.SYM_DATA.manifest); };
+
+  window.SYM_API = API;
+  window.SYM_BRIDGE = BRIDGE;
+  window.SYM_DATA = window.SYM_DATA || {};
+})();
