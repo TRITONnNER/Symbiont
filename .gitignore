@@ -38,6 +38,9 @@ nodes.json
 economy.json
 payments.json
 node_health.json
+symbiont_state.db
+symbiont_state.db-wal
+symbiont_state.db-shm
 
 # ── Misc ──
 .DS_Store

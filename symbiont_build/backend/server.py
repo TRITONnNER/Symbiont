@@ -80,7 +80,7 @@ ROLLOUT = 100                # текущая волна canary-выкатки, 
 NODE_STALE_SEC = int(os.environ.get("SYMBIONT_NODE_STALE_SEC", "150"))
 _node_health: dict[str, dict] = persist.jload("node_health.json", {})  # id -> {last_seen, load_pct}
 def _save_node_health(): persist.jsave("node_health.json", _node_health)
-_node_rev = 1 if os.path.exists("nodes.json") else 0   # версия += при смене НАБОРА узлов
+_node_rev = 1 if persist.exists("nodes.json") else 0   # версия += при смене НАБОРА узлов
 
 def _healthy_ids() -> set:
     """id узлов, которые сейчас показываем клиенту: со свежим heartbeat, ЛИБО без
@@ -105,7 +105,7 @@ def _build_manifest():
     global MANIFEST_VERSION
     MANIFEST_VERSION = MANIFEST_BASE + _node_rev
     body = demo_manifest(MANIFEST_VERSION)
-    if os.path.exists("nodes.json"):
+    if persist.exists("nodes.json"):
         try:
             data = persist.jload("nodes.json", {"nodes": []})
             real = data.get("nodes") if isinstance(data, dict) else data

@@ -20,9 +20,9 @@ check(server.ADMIN_TOKEN not in ("demo-admin-token", "", None) and len(server.AD
 check(server.NODE_SECRET not in ("demo-node-secret", "", None) and len(server.NODE_SECRET) >= 16, "NODE_SECRET сгенерирован (не дефолт)")
 check(server.WHEEL_SEED not in ("dev-wheel-seed", "", None), "WHEEL_SEED сгенерирован (не дефолт)")
 
-# 2. секреты сохранены в secrets.json и стабильны
-check(os.path.exists("secrets.json"), "secrets.json создан")
-saved = json.load(open("secrets.json"))
+# 2. секреты сохранены в реальной БД (persist → SQLite) и стабильны
+check(server.persist.exists("secrets.json"), "секреты сохранены в БД (persist)")
+saved = server.persist.jload("secrets.json", {})
 check(saved.get("admin_token") == server.ADMIN_TOKEN, "ADMIN_TOKEN сохранён стабильно")
 
 # 3. env переопределяет (приоритет окружения)
