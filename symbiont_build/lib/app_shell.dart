@@ -11,6 +11,7 @@ import 'store.dart';
 import 'responsive.dart';
 import 'log.dart';
 import 'design/tokens.dart';
+import 'i18n/languages.dart';
 import 'engine/engine.dart';
 import 'errors.dart';
 import 'screens/home_screen.dart';

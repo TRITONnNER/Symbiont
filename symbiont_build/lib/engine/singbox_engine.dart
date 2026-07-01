@@ -99,7 +99,8 @@ class SingboxEngine implements SymbiontEngine {
   @override
   Future<NodeInfo> fastestNode() async {
     final nodes = await listNodes();
-    return nodes.reduce((a, b) => a.pingMs <= b.pingMs ? a : b);
+    // pingMs может быть null (узел ещё не измерен) — считаем такой пинг «худшим».
+    return nodes.reduce((a, b) => (a.pingMs ?? 1 << 30) <= (b.pingMs ?? 1 << 30) ? a : b);
   }
 
   @override

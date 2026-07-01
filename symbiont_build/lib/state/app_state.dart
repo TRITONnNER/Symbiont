@@ -328,7 +328,7 @@ class AppState extends ChangeNotifier {
         try {
           res = await api.register(aliases: [{'value': aliasVal, 'kind': 'nick'}], device: device);
         } on ApiError catch (e) {
-          if (e.code == 409) {
+          if (e.status == 409) {
             // ник занят — добавим короткий суффикс и повторим
             final alt = '$aliasVal-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).substring(6)}';
             res = await api.register(aliases: [{'value': alt, 'kind': 'nick'}], device: device);
