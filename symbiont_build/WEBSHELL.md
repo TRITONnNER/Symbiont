@@ -60,6 +60,26 @@ flutter run -d windows
 (Любой WebView2-плагин, включая `webview_windows`, требует NuGet — это про
 тулчейн, не про выбор плагина.)
 
+## Свежий MSVC: ошибка `<experimental/coroutine>` (STL1011 / C2338)
+
+На новых тулчейнах MSVC (VS 2022 17.10+/VS «18», MSVC 14.4x+) `<experimental/coroutine>`
+стал жёсткой ошибкой, и нативка `flutter_inappwebview_windows` не компилируется:
+`error C2338: ... STL1011 ... _SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS`.
+Обход — определить этот макрос при сборке.
+
+Быстро (текущая сессия, без правок файлов):
+```powershell
+$env:CL = "/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS"
+flutter run -d windows
+```
+
+Постоянно — одна строка в `windows\CMakeLists.txt` сразу под `project(symbiont LANGUAGES CXX)`:
+```cmake
+add_compile_definitions(_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS)
+```
+(`windows/` гитигнорится и генерится `flutter create`, так что правку применяйте
+локально после генерации; `flutter clean` её не трогает.)
+
 ## Известные нюансы
 
 - WebView на Windows в `flutter_inappwebview` использует WebView2. Если на вашей
