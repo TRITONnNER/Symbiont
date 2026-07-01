@@ -36,6 +36,7 @@ threads.json
 keys_registry.json
 nodes.json
 economy.json
+payments.json
 
 # ── Misc ──
 .DS_Store

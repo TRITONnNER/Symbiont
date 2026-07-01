@@ -70,6 +70,40 @@
 // → { "checkoutUrl": "https://pay.example/...", "ref": "anon_ref" }
 ```
 
+### POST /v1/billing/purchase  (auth)
+Покупка продукта. В sandbox (`SYMBIONT_SANDBOX_PAY=1`) платёж авто-подтверждается;
+в проде возвращает `pending` — подтверждение придёт вебхуком.
+```json
+{ "product": "premium_month", "method": "sbp" }
+// sandbox → { "payment_id":"…", "status":"completed", "sandbox":true, "subscription":{…} }
+// prod    → { "payment_id":"…", "status":"pending", "method":"sbp" }
+```
+`product ∈ premium_month|premium_year|ultimate_month|ultimate_year|balance_100h|balance_300h`.
+`method ∈ sbp|mir|visa|mastercard|yoomoney|crypto`.
+
+### GET /v1/billing/payment/{payment_id}  (auth)
+Статус конкретного платежа — для экрана «Платёж обрабатывается» → «Оплачено».
+`{ "payment_id":"…", "status":"pending|completed|failed", "product":"…", "method":"…", … }`.
+Виден только владельцу (иначе `404`).
+
+### POST /v1/billing/webhook
+Колбэк платёжного провайдера: подтверждает/проваливает pending-платёж. Тело подписано
+HMAC-SHA256 на `PAY_WEBHOOK_SECRET`, заголовок `x-pay-sig`. **Идемпотентно**.
+```json
+{ "payment_id": "…", "status": "completed" }   // или "failed"
+// → { "ok":true, "status":"completed", "subscription":{…} }
+// повтор того же события → { "ok":true, "status":"completed", "idempotent":true }
+```
+
+### GET /v1/billing/ledger  (auth)
+История начислений/списаний (экран «История начислений»).
+```json
+{ "entries": [ { "at": 1790000000, "kind": "purchase", "product":"…", "days":30, "tier":"premium" },
+               { "at": 1789990000, "kind": "wheel", "minutes": 120 } ],
+  "subscription": {…} }
+```
+`kind ∈ purchase | grant | wheel | ref_earn | debit`. Новые записи — сверху.
+
 ---
 
 ## 3. Подписанный манифест (узлы + правила)

@@ -16,6 +16,7 @@ threads.json
 keys_registry.json
 nodes.json
 economy.json
+payments.json
 
 # ── Python ──
 __pycache__/

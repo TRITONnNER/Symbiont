@@ -48,6 +48,9 @@ ADMIN_TOKEN = _resolve_secret("SYMBIONT_ADMIN_TOKEN", "admin_token")
 # в ответ получает СВОЙ пер-узловой секрет для дальнейших вызовов.
 NODE_SECRET = _resolve_secret("SYMBIONT_NODE_SECRET", "node_enroll_secret")
 WHEEL_SEED = _resolve_secret("SYMBIONT_WHEEL_SEED", "wheel_seed")
+# секрет подписи вебхука платёжного провайдера (в проде — секрет из кабинета
+# провайдера). Провайдер подписывает им колбэк, бэкенд подтверждает pending-платёж.
+PAY_WEBHOOK_SECRET = _resolve_secret("SYMBIONT_PAY_WEBHOOK_SECRET", "pay_webhook_secret")
 # секрет HMAC алиасов — тоже из хранилища (не предсказуемый дефолт identity.py)
 identity.ALIAS_SECRET = _resolve_secret("SYMBIONT_ALIAS_SECRET", "alias_secret").encode()
 
@@ -431,6 +434,18 @@ PRODUCTS = {
 ALLOWED_METHODS = {"sbp", "mir", "visa", "mastercard", "yoomoney", "crypto"}
 SANDBOX_PAY = os.environ.get("SYMBIONT_SANDBOX_PAY", "1") == "1"
 
+# Платежи: payment_id → {account_id, product, method, status, created_at, …}.
+# status ∈ pending | completed | failed. Персистентно (переживает рестарт).
+PAYMENTS_FILE = "payments.json"
+payments: dict[str, dict] = persist.jload(PAYMENTS_FILE, {})
+def _save_payments(): persist.jsave(PAYMENTS_FILE, payments)
+
+def _ledger_add(aid: str, kind: str, **fields):
+    """Записать движение баланса/подписки в журнал аккаунта (История начислений).
+    kind ∈ purchase | grant | wheel | ref_earn | debit. Только идентити-слой (aid)."""
+    idaccounts.setdefault(aid, {}).setdefault("ledger", []).append(
+        {"at": int(time.time()), "kind": kind, **fields})
+
 def _sub(aid: str) -> dict:
     acc = idaccounts[aid]
     if "sub" not in acc:
@@ -477,6 +492,9 @@ def _grant_days(aid: str, days: int, reason: str, tier: str = "premium"):
     idaccounts[aid]["tier"] = sub["tier"]
     idaccounts[aid].setdefault("bonus_log", []).append(
         {"days": days, "reason": reason, "at": int(time.time())})
+    # журнал: колесо / реферальная награда / прочий грант
+    kind = "wheel" if reason == "wheel" else "ref_earn" if reason.startswith("ref") else "grant"
+    _ledger_add(aid, kind, days=days, reason=reason)
 
 def _ensure_referral_fields(aid: str):
     acc = idaccounts[aid]
@@ -484,35 +502,25 @@ def _ensure_referral_fields(aid: str):
     acc.setdefault("referrals", [])
     acc.setdefault("paid_months", 0)
 
-class PurchaseReq(BaseModel):
-    product: str
-    method: str
-
-@app.post("/v1/billing/purchase")
-def purchase(req: PurchaseReq, token: str = Depends(auth)):
-    """PaymentProvider-абстракция. В dev (sandbox) платёж авто-подтверждается."""
-    aid = _account_of(token)
-    if not aid:
-        raise HTTPException(400, "no_account")
-    if req.product not in PRODUCTS:
-        raise HTTPException(422, "unknown_product")
-    if req.method not in ALLOWED_METHODS:
-        raise HTTPException(422, "unknown_method")
-    pay_id = b32(secrets.token_bytes(8))
-    if not SANDBOX_PAY:
-        # боевой провайдер вернул бы ссылку/QR; статус придёт вебхуком
-        return {"payment_id": pay_id, "status": "pending", "method": req.method}
-    p = PRODUCTS[req.product]
+def _apply_purchase(aid: str, product: str, method: str) -> dict:
+    """Начислить эффект оплаченного продукта на подписку аккаунта. Общий путь для
+    sandbox-подтверждения и вебхука провайдера. Идемпотентность — на вызывающем
+    (по статусу платежа). Пишет запись в журнал (ledger)."""
+    p = PRODUCTS[product]
     sub = _sub(aid)
     if "add_minutes" in p:
         sub["mode"] = "balance"; sub["active_minutes_left"] += p["add_minutes"]
+        _ledger_add(aid, "purchase", product=product, method=method,
+                    minutes=p["add_minutes"], tier=p["tier"])
     else:
         sub["mode"] = "period"; sub["days_left"] += p["add_days"]
-    sub["tier"] = p["tier"]; sub["source"] = req.method
+        _ledger_add(aid, "purchase", product=product, method=method,
+                    days=p["add_days"], tier=p["tier"])
+    sub["tier"] = p["tier"]; sub["source"] = method
     idaccounts[aid]["tier"] = p["tier"]
     # комбо: копим оплаченные месяцы, бонус на порогах 3/6/12
     add_months = {"premium_month": 1, "ultimate_month": 1,
-                  "premium_year": 12, "ultimate_year": 12}.get(req.product, 0)
+                  "premium_year": 12, "ultimate_year": 12}.get(product, 0)
     if add_months:
         _ensure_referral_fields(aid)
         before = idaccounts[aid].get("paid_months", 0)
@@ -526,15 +534,91 @@ def purchase(req: PurchaseReq, token: str = Depends(auth)):
         inviter = idaccounts[aid].get("invited_by")
         if inviter and inviter in idaccounts and _can_payout(inviter):
             ref = DEFAULT_ECONOMY["referral"]
-            key = ("premium_year" if req.product == "premium_year" else
-                   "ultimate" if "ultimate" in req.product else "premium_month")
+            key = ("premium_year" if product == "premium_year" else
+                   "ultimate" if "ultimate" in product else "premium_month")
             r = ref.get(key, ref["premium_month"])
             _grant_days(inviter, r["inviter"], f"ref_{key}")
             _grant_days(aid, r["invitee"], f"ref_bonus_{key}")
             _record_payout(inviter)
     _save_idaccounts()
+    return sub
+
+class PurchaseReq(BaseModel):
+    product: str
+    method: str
+
+@app.post("/v1/billing/purchase")
+def purchase(req: PurchaseReq, token: str = Depends(auth)):
+    """PaymentProvider-абстракция. В dev (sandbox) платёж авто-подтверждается;
+    в проде возвращаем pending — подтверждение придёт вебхуком (/v1/billing/webhook)."""
+    aid = _account_of(token)
+    if not aid:
+        raise HTTPException(400, "no_account")
+    if req.product not in PRODUCTS:
+        raise HTTPException(422, "unknown_product")
+    if req.method not in ALLOWED_METHODS:
+        raise HTTPException(422, "unknown_method")
+    pay_id = b32(secrets.token_bytes(8))
+    now = int(time.time())
+    rec = {"payment_id": pay_id, "account_id": aid, "product": req.product,
+           "method": req.method, "created_at": now}
+    if not SANDBOX_PAY:
+        # боевой провайдер вернул бы ссылку/QR; статус придёт вебхуком.
+        rec["status"] = "pending"
+        payments[pay_id] = rec; _save_payments()
+        return {"payment_id": pay_id, "status": "pending", "method": req.method}
+    sub = _apply_purchase(aid, req.product, req.method)
+    rec.update(status="completed", completed_at=now, sandbox=True)
+    payments[pay_id] = rec; _save_payments()
     return {"payment_id": pay_id, "status": "completed", "sandbox": True,
             "method": req.method, "subscription": sub}
+
+@app.get("/v1/billing/payment/{payment_id}")
+def payment_status(payment_id: str, token: str = Depends(auth)):
+    """Статус конкретного платежа (для экрана «Платёж обрабатывается» → «Оплачено»)."""
+    aid = _account_of(token)
+    pay = payments.get(payment_id)
+    if not pay or pay.get("account_id") != aid:
+        raise HTTPException(404, "no_payment")
+    return {k: v for k, v in pay.items() if k != "account_id"}
+
+@app.post("/v1/billing/webhook")
+async def billing_webhook(request: Request):
+    """Колбэк платёжного провайдера: подтверждает (или проваливает) pending-платёж.
+    Подпись — HMAC-SHA256 сырого тела на PAY_WEBHOOK_SECRET. Идемпотентно
+    (повторная доставка того же события ничего не начисляет дважды)."""
+    raw = await request.body()
+    sig = request.headers.get("x-pay-sig", "")
+    expect = hmac.new(PAY_WEBHOOK_SECRET.encode(), raw, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expect):
+        raise HTTPException(401, "bad_pay_sig")
+    try:
+        data = json.loads(raw)
+    except Exception:
+        raise HTTPException(422, "bad_json")
+    pay = payments.get(data.get("payment_id"))
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay["status"] == "completed":
+        return {"ok": True, "status": "completed", "idempotent": True}
+    if data.get("status") == "failed":
+        pay.update(status="failed", completed_at=int(time.time()))
+        _save_payments()
+        return {"ok": True, "status": "failed"}
+    sub = _apply_purchase(pay["account_id"], pay["product"], pay["method"])
+    pay.update(status="completed", completed_at=int(time.time()))
+    _save_payments()
+    return {"ok": True, "status": "completed", "subscription": sub}
+
+@app.get("/v1/billing/ledger")
+def billing_ledger(token: str = Depends(auth)):
+    """История начислений/списаний (покупки, гранты, колесо, рефералы, расход времени)."""
+    aid = _account_of(token)
+    if not aid:
+        raise HTTPException(400, "no_account")
+    entries = sorted(idaccounts[aid].get("ledger", []),
+                     key=lambda e: e.get("at", 0), reverse=True)
+    return {"entries": entries, "subscription": _sub(aid)}
 
 @app.get("/v1/billing/status")
 def billing_status(token: str = Depends(auth)):
@@ -568,6 +652,8 @@ async def node_session(request: Request):
     sub = _sub(aid)
     if sub["mode"] == "balance":
         sub["active_minutes_left"] = max(0, sub["active_minutes_left"] - minutes)
+        if minutes:
+            _ledger_add(aid, "debit", minutes=minutes)
         _save_idaccounts()
     return {"ok": True, "active_minutes_left": sub["active_minutes_left"]}
 
@@ -671,9 +757,10 @@ def wheel_spin(token: str = Depends(auth)):
     idx = _wheel_index(aid, today)
     seg = _wheel_segments()[idx]
     if seg["kind"] == "days":
-        _grant_days(aid, seg["amount"], "wheel")
+        _grant_days(aid, seg["amount"], "wheel")   # ledger('wheel') внутри _grant_days
     else:
         sub = _sub(aid); sub["active_minutes_left"] += seg["amount"]
+        _ledger_add(aid, "wheel", minutes=seg["amount"])
     idaccounts[aid]["wheel"] = {"last_date": today, "last_index": idx, "last_prize": seg}
     _save_idaccounts()
     return {"index": idx, "prize": seg, "subscription": _sub(aid)}
