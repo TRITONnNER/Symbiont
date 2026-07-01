@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+</helmet>
+<div dir="{{ dir }}" style="{{ rootStyle }}">
+
+  <sc-if value="{{ hasHeader }}" hint-placeholder-val="{{ true }}">
+    <div style="{{ headerStyle }}">
+      <div style="{{ titleWrapStyle }}">
+        <span style="{{ titleStyle }}">{{ title }}</span>
+        <sc-if value="{{ hasSubtitle }}" hint-placeholder-val="{{ false }}"><span style="{{ subtitleStyle }}">{{ subtitle }}</span></sc-if>
+      </div>
+      <sc-if value="{{ showClose }}" hint-placeholder-val="{{ false }}"><span onClick="{{ onClose }}" role="button" style="{{ closeStyle }}">close</span></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ searchable }}" hint-placeholder-val="{{ false }}">
+    <div style="{{ searchWrapStyle }}">
+      <span style="{{ searchIconStyle }}">search</span>
+      <input value="{{ query }}" onChange="{{ onQuery }}" onFocus="{{ onFocus }}" onBlur="{{ onBlur }}" placeholder="{{ searchPlaceholder }}" style="{{ searchInputStyle }}" />
+      <sc-if value="{{ hasQuery }}" hint-placeholder-val="{{ false }}"><span onClick="{{ onClear }}" role="button" style="{{ clearStyle }}">close</span></sc-if>
+    </div>
+  </sc-if>
+
+  <div style="{{ listStyle }}" role="listbox">
+    <sc-for list="{{ vgroups }}" as="g" hint-placeholder-count="2">
+      <sc-if value="{{ g.hasLabel }}" hint-placeholder-val="{{ false }}">
+        <div style="{{ groupLabelStyle }}"><span style="{{ groupLabelTextStyle }}">{{ g.label }}</span><span style="{{ groupCountStyle }}">{{ g.count }}</span></div>
+      </sc-if>
+      <sc-for list="{{ g.options }}" as="o" hint-placeholder-count="4">
+        <div onClick="{{ o.onSelect }}" onMouseEnter="{{ o.onEnter }}" onMouseLeave="{{ o.onLeave }}" role="option" aria-selected="{{ o.selected }}" style="{{ o.rowStyle }}">
+          <sc-if value="{{ o.isFlag }}" hint-placeholder-val="{{ false }}"><div style="{{ o.flagStyle }}"></div></sc-if>
+          <sc-if value="{{ o.isDot }}" hint-placeholder-val="{{ false }}"><span style="{{ o.dotStyle }}"></span></sc-if>
+          <sc-if value="{{ o.isGlyph }}" hint-placeholder-val="{{ false }}"><span style="{{ o.glyphStyle }}">{{ o.glyphIcon }}</span></sc-if>
+          <sc-if value="{{ o.isTile }}" hint-placeholder-val="{{ false }}"><div style="{{ o.tileStyle }}"><span style="{{ o.tileIconStyle }}">{{ o.tileIcon }}</span></div></sc-if>
+          <div style="{{ o.bodyStyle }}">
+            <span style="{{ o.labelStyle }}">{{ o.label }}</span>
+            <sc-if value="{{ o.hasSub }}" hint-placeholder-val="{{ false }}"><span style="{{ o.subStyle }}">{{ o.sub }}</span></sc-if>
+          </div>
+          <sc-if value="{{ o.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="{{ o.badgeStyle }}">{{ o.badge }}</span></sc-if>
+          <sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}"><span style="{{ checkStyle }}">check</span></sc-if>
+        </div>
+      </sc-for>
+    </sc-for>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ emptyStyle }}"><span style="{{ emptyIconStyle }}">search_off</span><span>{{ emptyText }}</span></div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ hasFooter }}" hint-placeholder-val="{{ false }}"><div style="{{ footerStyle }}">{{ children }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:340,&quot;height&quot;:430},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Язык интерфейса&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;subtitle&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;18 языков · LTR + RTL&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;searchable&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;searchPlaceholder&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Поиск…&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;showClose&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;dir&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;ltr&quot;,&quot;options&quot;:[&quot;ltr&quot;,&quot;rtl&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;maxHeight&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Picker&quot;},&quot;groups&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{label?:string,count?:number,options:Opt[]}[]&quot;},&quot;options&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;Opt[]&quot;},&quot;selectedId&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;defaultId&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;onSelect&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(id:string)=&gt;void&quot;},&quot;onClose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;}}">
+class Component extends DCLogic {
+  state = { query:'', selId:undefined, hoverId:null, focus:false };
+  pick(id){ const p=this.props||{}; if(typeof p.onSelect==='function') p.onSelect(id); this.setState({ selId:id }); }
+  renderVals(){
+    const p = this.props || {};
+    const dir = p.dir || 'ltr';
+    const hexA = (h,a)=>{ if(!h) return 'transparent'; const n=String(h).replace('#',''); if(n.length<6) return h;
+      const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
+    const norm = s => String(s==null?'':s).toLowerCase();
+    const FF = "'Golos Text','Noto Sans','Noto Sans Arabic','Noto Sans SC',system-ui,sans-serif";
+    const MS = "'Material Symbols Rounded'";
+    const MONO = "'JetBrains Mono',monospace";
+
+    const C = {
+      txt:'#EAF1EF', sub:'#9DABA8', muted:'#6E7B8A', faint:'#566270', accent:'#34E5B0', bodyTxt:'#C2CCCA',
+      panel:'#0C1211', bd:'rgba(255,255,255,0.08)', hairline:'rgba(255,255,255,0.06)',
+      rowHover:'rgba(255,255,255,0.045)', activeBg:'rgba(52,229,176,0.08)', activeBd:'rgba(52,229,176,0.26)',
+      fieldBg:'rgba(255,255,255,0.04)'
+    };
+
+    // built-in language demo so the component stands alone
+    const demoGroups = [
+      { label:'Рекомендуемые', options:[
+        { id:'ru', lead:{kind:'flag',code:'ru'}, label:'Русский', sub:'Russian' },
+        { id:'en', lead:{kind:'flag',code:'gb'}, label:'English', sub:'English' } ] },
+      { label:'Все языки', options:[
+        { id:'ar', lead:{kind:'flag',code:'sa'}, label:'العربية', sub:'Arabic' },
+        { id:'de', lead:{kind:'flag',code:'de'}, label:'Deutsch', sub:'German' },
+        { id:'es', lead:{kind:'flag',code:'es'}, label:'Español', sub:'Spanish' },
+        { id:'fa', lead:{kind:'flag',code:'ir'}, label:'فارسی', sub:'Persian' },
+        { id:'fr', lead:{kind:'flag',code:'fr'}, label:'Français', sub:'French' },
+        { id:'tr', lead:{kind:'flag',code:'tr'}, label:'Türkçe', sub:'Turkish' },
+        { id:'zh', lead:{kind:'flag',code:'cn'}, label:'中文', sub:'Chinese' } ] }
+    ];
+    const rawGroups = p.groups || (p.options ? [{ options:p.options }] : demoGroups);
+    const isDemo = !p.groups && !p.options;
+
+    const total = rawGroups.reduce((n,g)=>n+((g.options&&g.options.length)||0),0);
+    const searchable = p.searchable!==undefined ? !!p.searchable : total>6;
+    const q = norm(this.state.query).trim();
+    const effSel = this.state.selId!==undefined ? this.state.selId
+      : (p.selectedId!==undefined ? p.selectedId : (p.defaultId!==undefined ? p.defaultId : (isDemo?'ru':undefined)));
+
+    const match = o => !q || norm(o.label).includes(q) || norm(o.sub).includes(q) || norm(o.keywords).includes(q) || norm(o.id).includes(q);
+
+    let visCount = 0;
+    const vgroups = rawGroups.map(g => {
+      const options = (g.options||[]).filter(match).map(o => {
+        const selected = effSel!=null && o.id===effSel;
+        const hover = this.state.hoverId===o.id;
+        visCount++;
+        const lead = o.lead || { kind:'none' };
+        const lk = lead.kind || 'none';
+        const lc = lead.color || C.muted;
+        const subWrap = !!o.subWrap;
+        const rowStyle = { display:'flex', alignItems:(subWrap?'flex-start':'center'), gap:'12px', paddingBlock:(subWrap?'10px':'9px'), paddingInline:'12px',
+          borderRadius:'10px', cursor:'pointer', minWidth:0,
+          background: selected?C.activeBg:(hover?C.rowHover:'transparent'),
+          border:'1px solid '+(selected?C.activeBd:'transparent'), transition:'background .12s ease' };
+        const flagStyle = { width:'26px', height:'18px', borderRadius:'4px', flex:'0 0 auto',
+          backgroundImage:'url(https://flagcdn.com/w40/'+norm(lead.code)+'.png)', backgroundSize:'cover', backgroundPosition:'center' };
+        const dotStyle = { width:'9px', height:'9px', borderRadius:'50%', background:lc, flex:'0 0 auto',
+          marginInline:'8px 9px', boxShadow: selected?('0 0 8px -1px '+lc):'none' };
+        const glyphStyle = { fontFamily:MS, fontSize:'21px', color:lead.color||C.sub, width:'26px', textAlign:'center', flex:'0 0 auto',
+          fontVariationSettings: lead.fill?"'FILL' 1":"'FILL' 0", lineHeight:1 };
+        const tileStyle = { width:'30px', height:'30px', borderRadius:'8px', flex:'0 0 auto', display:'flex', alignItems:'center', justifyContent:'center',
+          background: lead.tint || hexA(lead.color||C.accent,0.14) };
+        const tileIconStyle = { fontFamily:MS, fontSize:'18px', color:lead.color||C.accent, lineHeight:1, fontVariationSettings: lead.fill?"'FILL' 1":"'FILL' 0" };
+        const labelMono = !!o.labelMono;
+        const labelStyle = labelMono
+          ? { fontFamily:MONO, fontSize:'13.5px', fontWeight:500, color: selected?C.txt:C.bodyTxt, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', unicodeBidi:'plaintext' }
+          : { fontFamily:FF, fontSize:'14px', fontWeight:600, color: selected?C.txt:C.bodyTxt, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', unicodeBidi:'plaintext', letterSpacing:'-0.005em' };
+        const hasSub = o.sub!=null && String(o.sub).length>0;
+        const subStyle = subWrap
+          ? { fontFamily: o.subMono?MONO:FF, fontSize:'12px', lineHeight:1.4, color:C.muted, unicodeBidi:'plaintext' }
+          : { fontFamily: o.subMono?MONO:FF, fontSize:'12px', color:C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', unicodeBidi:'plaintext' };
+        const bodyStyle = { display:'flex', flexDirection:'column', gap:'1px', flex:'1 1 auto', minWidth:0 };
+        const hasBadge = o.badge!=null && String(o.badge).length>0;
+        const badgeAccent = o.badgeTone==='accent';
+        const badgeStyle = { fontFamily:MONO, fontSize:'10.5px', fontWeight:600, flex:'0 0 auto', paddingBlock:'3px', paddingInline:'7px', borderRadius:'6px',
+          color: badgeAccent?C.accent:C.faint, background: badgeAccent?hexA(C.accent,0.10):'rgba(255,255,255,0.04)',
+          border:'1px solid '+(badgeAccent?hexA(C.accent,0.24):'rgba(255,255,255,0.08)') };
+        return {
+          id:o.id, label:o.label, sub:o.sub, selected, hasSub, hasBadge, badge:o.badge,
+          isFlag:lk==='flag', isDot:lk==='dot', isGlyph:lk==='glyph', isTile:lk==='tile',
+          flagStyle, dotStyle, glyphStyle, glyphIcon:lead.icon||'', tileStyle, tileIconStyle, tileIcon:lead.icon||'',
+          rowStyle, labelStyle, subStyle, bodyStyle, badgeStyle,
+          onSelect:()=>this.pick(o.id), onEnter:()=>this.setState({hoverId:o.id}), onLeave:()=>this.setState({hoverId:null})
+        };
+      });
+      return { hasLabel: !!g.label, label:g.label||'', count: String(g.count!=null?g.count:options.length), options };
+    }).filter(g => g.options.length>0);
+    const empty = visCount===0;
+
+    const checkStyle = { fontFamily:MS, fontVariationSettings:"'FILL' 1", fontSize:'20px', color:C.accent, flex:'0 0 auto' };
+
+    // header
+    const hasHeader = !!p.title || !!p.showClose || typeof p.onClose==='function';
+    const headerStyle = { display:'flex', alignItems:'center', gap:'10px', paddingBlock:'13px', paddingInline:'16px', borderBlockEnd:'1px solid '+C.hairline, flex:'0 0 auto' };
+    const titleWrapStyle = { display:'flex', flexDirection:'column', gap:'2px', flex:'1 1 auto', minWidth:0 };
+    const titleStyle = { fontFamily:FF, fontSize:'15px', fontWeight:700, color:C.txt, letterSpacing:'-0.01em' };
+    const hasSubtitle = p.subtitle!=null && String(p.subtitle).length>0;
+    const subtitleStyle = { fontFamily:FF, fontSize:'12px', color:C.muted };
+    const showClose = !!p.showClose || typeof p.onClose==='function';
+    const closeStyle = { fontFamily:MS, fontSize:'20px', color:C.muted, flex:'0 0 auto', cursor:'pointer' };
+
+    // search
+    const searchWrapStyle = { display:'flex', alignItems:'center', gap:'10px', marginBlock:'12px 4px', marginInline:'12px', paddingBlock:'10px', paddingInline:'12px',
+      borderRadius:'11px', background:C.fieldBg, border:'1px solid '+(this.state.focus?C.activeBd:C.bd), flex:'0 0 auto' };
+    const searchIconStyle = { fontFamily:MS, fontSize:'19px', color:C.muted, flex:'0 0 auto' };
+    const searchInputStyle = { flex:'1 1 auto', minWidth:0, background:'transparent', border:'none', outline:'none', color:C.txt, fontFamily:FF, fontSize:'13.5px' };
+    const clearStyle = { fontFamily:MS, fontSize:'18px', color:C.muted, flex:'0 0 auto', cursor:'pointer' };
+    const hasQuery = (this.state.query||'').length>0;
+
+    // list
+    const listStyle = { display:'flex', flexDirection:'column', gap:'2px', paddingBlock:'6px 8px', paddingInline:'8px',
+      maxHeight: p.maxHeight?(p.maxHeight+'px'):'none', overflowY: p.maxHeight?'auto':'visible', flex:'1 1 auto' };
+    const groupLabelStyle = { display:'flex', alignItems:'baseline', gap:'8px', paddingBlock:'10px 5px', paddingInline:'12px' };
+    const groupLabelTextStyle = { fontFamily:FF, fontSize:'10.5px', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:C.faint, flex:'1 1 auto' };
+    const groupCountStyle = { fontFamily:MONO, fontSize:'10.5px', color:C.faint, flex:'0 0 auto' };
+    const emptyStyle = { display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', paddingBlock:'30px', color:C.muted, fontFamily:FF, fontSize:'13px' };
+    const emptyIconStyle = { fontFamily:MS, fontSize:'26px', color:C.faint };
+
+    // footer slot
+    const hasFooter = p.children!=null;
+    const footerStyle = { paddingBlock:'10px', paddingInline:'14px', borderBlockStart:'1px solid '+C.hairline, flex:'0 0 auto' };
+
+    const rootStyle = { display:'flex', flexDirection:'column', boxSizing:'border-box', minWidth:0,
+      background:C.panel, border:'1px solid '+C.bd, borderRadius:'16px', overflow:'hidden',
+      boxShadow:'0 24px 60px -18px rgba(0,0,0,0.6)' };
+
+    return {
+      dir, rootStyle, children:(p.children!=null?p.children:null),
+      hasHeader, headerStyle, titleWrapStyle, titleStyle, title:p.title!=null?p.title:(isDemo?'Язык интерфейса':''),
+      hasSubtitle, subtitleStyle, subtitle:p.subtitle!=null?p.subtitle:(isDemo?'18 языков · LTR + RTL':''),
+      showClose, onClose:p.onClose, closeStyle,
+      searchable, searchWrapStyle, searchIconStyle, searchInputStyle, clearStyle, hasQuery,
+      query:this.state.query, searchPlaceholder:p.searchPlaceholder!=null?p.searchPlaceholder:'Поиск…',
+      onQuery:(e)=>this.setState({query:e.target.value}), onClear:()=>this.setState({query:''}),
+      onFocus:()=>this.setState({focus:true}), onBlur:()=>this.setState({focus:false}),
+      listStyle, vgroups, empty, emptyStyle, emptyIconStyle, emptyText:'Ничего не найдено',
+      groupLabelStyle, groupLabelTextStyle, groupCountStyle, checkStyle,
+      hasFooter, footerStyle
+    };
+  }
+}
+</script>
+</body>
+</html>
