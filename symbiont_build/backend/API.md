@@ -46,6 +46,23 @@
 Логика — см. `key_redemption_reference.py`. Подделка исключается подписью+реестром;
 кража смягчается bind-on-redeem + одноразовостью + отзывом (том VI §4).
 
+### POST /v1/key/check
+Проверяет ключ **без активации** и **без авторизации** — публичный «чекер» (сайт/лендинг/
+экран аккаунта). Ничего не мутирует. Оффлайн-часть (подпись) ловит подделку/опечатку;
+реестр даёт статус в этой системе.
+```json
+// request
+{ "code": "SYMB-AB12-CD34-EF56" }
+// response 200 (всегда 200 — статус в теле)
+{ "status": "valid", "ok": true,
+  "message": "Ключ действителен и готов к активации",
+  "valid": true, "registered": true,
+  "grants": { "days": 30, "tier": "pro" },
+  "uses_left": 1, "uses_total": 1, "expires_at": 1790000000 }
+```
+`status ∈ valid | already_redeemed | expired | revoked | not_found | invalid`.
+`valid` — прошла ли криптоподпись (подлинность); `ok` — можно ли активировать прямо сейчас.
+
 ### POST /v1/subscription/checkout
 Открывает анонимную оплату через провайдера (Stripe/YooKassa). Возвращает ссылку/сессию.
 ```json

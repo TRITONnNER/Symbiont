@@ -703,6 +703,15 @@ def redeem(req: RedeemReq, token: str = Depends(auth)):
             "added": {"days": res["grant_days"]}, "idempotent": res["idempotent"]}
 
 
+# ── 2b. Проверка ключа БЕЗ активации (публичный game-style чекер) ─────────────
+# Не требует авторизации: можно звать с публичного сайта/лендинга до входа.
+# Ничего не мутирует — только читает подпись и реестр. Статусы для UI:
+# valid | already_redeemed | expired | revoked | not_found | invalid.
+@app.post("/v1/key/check")
+def key_check(req: RedeemReq):
+    return issuer.check(req.code)
+
+
 # ── 3. Подписанный манифест ───────────────────────────────────────────────────
 @app.get("/v1/manifest")
 def manifest(since: int = 0):

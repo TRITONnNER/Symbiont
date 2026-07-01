@@ -106,6 +106,52 @@ class Issuer:
             raise KeyError_("key_invalid")
         return KeyPayload(**json.loads(body))
 
+    # ── ПРОВЕРКА без погашения (game-style checker; НЕ мутирует, НЕ требует аккаунта) ──
+    # Статусы — чистый перечень для UI (сайт/приложение) и веб-чекера:
+    # valid | already_redeemed | expired | revoked | not_found | invalid.
+    _CHECK_MESSAGES = {
+        "valid":            "Ключ действителен и готов к активации",
+        "already_redeemed": "Ключ уже использован",
+        "expired":          "Срок действия ключа истёк",
+        "revoked":          "Ключ отозван",
+        "not_found":        "Код подлинный, но не зарегистрирован в этой системе",
+        "invalid":          "Недействительный код — подделка или опечатка",
+    }
+
+    def check(self, code: str) -> dict:
+        """Проверить код БЕЗ погашения и БЕЗ авторизации (как code-checker у игр).
+        Подпись ловит подделку/опечатку оффлайн; реестр даёт статус в этой системе.
+        Возвращает {status, ok, message, valid, grants{days,tier}, uses_left,
+        uses_total, expires_at, registered}. Ничего не меняет."""
+        def out(status: str, **extra) -> dict:
+            return {"status": status, "ok": status == "valid",
+                    "message": self._CHECK_MESSAGES[status], **extra}
+        try:
+            p = self._parse_verify(code)          # подпись + декод (бросит key_invalid)
+        except KeyError_:
+            return out("invalid", valid=False)
+        now = int(time.time())
+        base = {"valid": True, "kid": p.kid, "grants": {"days": p.grant_days, "tier": p.plan},
+                "uses_total": p.uses, "expires_at": p.expires_at}
+        with self._lock:
+            st = self._registry.get(p.kid)
+        if st is None:
+            # подписано нами, но в этом бэкенде нет (другая среда / не сохранён выпуск)
+            return out("not_found", registered=False, **base)
+        base["registered"] = True
+        base["uses_left"] = st.uses_left
+        if st.revoked:
+            return out("revoked", **base)
+        if p.expires_at < now:
+            return out("expired", **base)
+        if st.uses_left <= 0:
+            return out("already_redeemed", **base)
+        res = out("valid", **base)
+        if p.uses and p.uses > 1:
+            res["message"] = (f"Ключ действителен — осталось активаций: "
+                              f"{st.uses_left} из {p.uses}")
+        return res
+
     def redeem(self, code: str, account_token: str) -> dict:
         p = self._parse_verify(code)
         if p.expires_at < int(time.time()):
