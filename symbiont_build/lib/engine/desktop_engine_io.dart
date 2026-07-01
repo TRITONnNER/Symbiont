@@ -887,10 +887,16 @@ class _WinProxy {
   static Future<void> set(String proxyServer) async {
     if (!Platform.isWindows) return;
     try {
-      // сохранить прежнее состояние (для отката)
-      final prevEnable = await _query('ProxyEnable');
-      final prevServer = await _query('ProxyServer');
-      File(_backup).writeAsStringSync(jsonEncode({'enable': prevEnable, 'server': prevServer}));
+      // Бэкап пишем ТОЛЬКО если его ещё нет. Иначе повторный set() (реконнект/смена
+      // узла без disconnect) сохранит как «исходное» уже НАШ прокси 127.0.0.1, и
+      // restore() потом «восстановит» в мёртвый прокси → интернет останется сломан.
+      // Так бэкап всегда держит ПОДЛИННОЕ состояние пользователя до нашего вмешательства.
+      final b = File(_backup);
+      if (!b.existsSync()) {
+        final prevEnable = await _query('ProxyEnable');
+        final prevServer = await _query('ProxyServer');
+        b.writeAsStringSync(jsonEncode({'enable': prevEnable, 'server': prevServer}));
+      }
       await Process.run('reg', ['add', _key, '/v', 'ProxyServer', '/t', 'REG_SZ', '/d', proxyServer, '/f']);
       await Process.run('reg', ['add', _key, '/v', 'ProxyEnable', '/t', 'REG_DWORD', '/d', '1', '/f']);
     } catch (_) {}
