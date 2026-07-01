@@ -985,6 +985,19 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  /// Проверка ключа БЕЗ активации (публичный чекер). Read-only, ничего не меняет,
+  /// авторизация не нужна. Возвращает результат сервера {status, ok, message,
+  /// grants, uses_total, ...} или null, если бэкенд недоступен (проверка онлайн).
+  Future<Map<String, dynamic>?> checkKey(String code) async {
+    if (!backendOnline) return null;
+    try {
+      return await api.checkKey(code.trim());
+    } catch (e) {
+      lastError = '$e';
+      return null;
+    }
+  }
+
   String _keyError(String code) {
     switch (code) {
       case 'key_already_redeemed': return tr('key.already');

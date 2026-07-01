@@ -17,6 +17,7 @@ class _AccountScreenState extends State<AccountScreen> {
   final _label = TextEditingController();
   final _key = TextEditingController();
   bool _savingKey = false;
+  bool _checking = false;
 
   @override
   void initState() {
@@ -39,6 +40,55 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() => _savingKey = false);
     _toast(err ?? app.tr('activate.ok'));
     if (err == null) _key.clear();
+  }
+
+  /// «Проверить ключ» — статус БЕЗ активации (valid/used/expired/revoked/fake).
+  Future<void> _check() async {
+    if (_key.text.trim().isEmpty) return;
+    setState(() => _checking = true);
+    final res = await app.checkKey(_key.text);
+    if (!mounted) return;
+    setState(() => _checking = false);
+    if (res == null) { _toast(app.tr('check.offline')); return; }
+    _showCheckResult(res);
+  }
+
+  void _showCheckResult(Map<String, dynamic> res) {
+    final status = (res['status'] ?? 'invalid').toString();
+    final ok = res['ok'] == true;
+    final color = ok ? K.mint : (status == 'invalid' || status == 'revoked') ? K.rose : K.amber;
+    final icon = ok ? Icons.verified_outlined
+        : status == 'invalid' ? Icons.gpp_bad_outlined : Icons.info_outlined;
+    final grants = (res['grants'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final chips = <String>[];
+    final days = grants['days'];
+    if (days is int && days > 0) chips.add('$days ${app.tr('check.days')}');
+    final tier = grants['tier'];
+    if (tier != null && tier.toString().isNotEmpty) chips.add(tier.toString());
+    final uses = res['uses_total'];
+    if (uses is int && uses > 1) chips.add('$uses ${app.tr('check.uses')}');
+    showDialog(context: context, builder: (_) => AlertDialog(
+      backgroundColor: K.surface2,
+      title: Row(children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Expanded(child: Text(app.tr('check.$status'), style: TextStyle(color: color, fontSize: 16))),
+      ]),
+      content: chips.isEmpty
+        ? null
+        : Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(app.tr('check.gives'), style: const TextStyle(color: K.muted, fontSize: 11.5)),
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 6, children: chips.map((c) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(color: K.surface3, borderRadius: BorderRadius.circular(999), border: Border.all(color: K.line2)),
+              child: Text(c, style: mono(size: 12.5, color: K.txt)),
+            )).toList()),
+          ]),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(app.tr('common.ok'), style: const TextStyle(color: K.txt2))),
+      ],
+    ));
   }
 
   Future<void> _logout() async {
@@ -152,7 +202,13 @@ class _AccountScreenState extends State<AccountScreen> {
         const SizedBox(height: 10),
         _savingKey
           ? const Center(child: Padding(padding: EdgeInsets.all(6), child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, valueColor: AlwaysStoppedAnimation(K.mint)))))
-          : gradButton(app.tr('activate.btn'), _activate),
+          : Row(children: [
+              Expanded(child: gradButton(app.tr('activate.btn'), _activate)),
+              const SizedBox(width: 8),
+              Expanded(child: _checking
+                ? const Center(child: Padding(padding: EdgeInsets.all(6), child: SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, valueColor: AlwaysStoppedAnimation(K.mint)))))
+                : gradButton(app.tr('check.btn'), _check, ghost: true, icon: Icons.fact_check_outlined)),
+            ]),
       ])),
       sectionLabel(app.tr('invite.label')),
       cardBox(child: Row(children: [

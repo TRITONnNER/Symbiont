@@ -71,6 +71,17 @@ class ApiClient {
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
+  /// Проверить ключ БЕЗ активации (публичный чекер). Не требует авторизации и
+  /// ничего не мутирует. Возвращает {status, ok, message, grants, uses_left,
+  /// uses_total, expires_at, registered}. status ∈ valid|already_redeemed|
+  /// expired|revoked|not_found|invalid. Всегда 200 (статус — в теле).
+  Future<Map<String, dynamic>> checkKey(String code) async {
+    final r = await http.post(Uri.parse('$baseUrl/v1/key/check'),
+        headers: {'content-type': 'application/json'}, body: jsonEncode({'code': code}));
+    _need(r, 200);
+    return jsonDecode(utf8.decode(r.bodyBytes)) as Map<String, dynamic>;
+  }
+
   // ── 2b. Аккаунты через алиасы (крипто-личность) ─────────────────────────────
   /// PoW-челлендж для регистрации (анти-фрод). bits=0 → PoW выключен.
   Future<Map<String, dynamic>> getPow() async {
@@ -171,6 +182,22 @@ class ApiClient {
     final r = await http.get(Uri.parse('$baseUrl/v1/billing/status'), headers: _auth);
     _need(r, 200);
     return jsonDecode(r.body) as Map<String, dynamic>;
+  }
+
+  /// Статус конкретного платежа (экран «Платёж обрабатывается» → «Оплачено»).
+  /// status ∈ pending | completed | failed. 404 — чужой/несуществующий платёж.
+  Future<Map<String, dynamic>> paymentStatus(String paymentId) async {
+    final r = await http.get(Uri.parse('$baseUrl/v1/billing/payment/$paymentId'), headers: _auth);
+    _need(r, 200);
+    return jsonDecode(r.body) as Map<String, dynamic>;
+  }
+
+  /// История начислений/списаний (экран «История начислений»). Новые записи сверху.
+  /// Записи: {at, kind, ...}; kind ∈ purchase|grant|wheel|ref_earn|debit.
+  Future<List<Map<String, dynamic>>> ledger() async {
+    final r = await http.get(Uri.parse('$baseUrl/v1/billing/ledger'), headers: _auth);
+    _need(r, 200);
+    return (jsonDecode(utf8.decode(r.bodyBytes))['entries'] as List).cast<Map<String, dynamic>>();
   }
 
   Future<Map<String, dynamic>> referralInfo() async {
