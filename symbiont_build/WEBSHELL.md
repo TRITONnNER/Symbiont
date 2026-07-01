@@ -42,6 +42,24 @@ flutter run --dart-define=SYMBIONT_WEBSHELL=false
 ```
 Старый UI (`lib/screens/`, `app_shell.dart`) не удалён — остаётся как фолбэк.
 
+## Требование к тулчейну Windows: NuGet
+
+Плагин `flutter_inappwebview_windows` тянет нативные зависимости (WebView2, WIL,
+nlohmann.json) через **NuGet**. Если его нет, сборка падает с
+`Nuget is not installed!` и `NUGET-NOTFOUND ... error MSB3073`. Установить один раз:
+
+```powershell
+mkdir C:\tools -Force
+Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile C:\tools\nuget.exe
+[Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path","User") + ";C:\tools", "User")
+# перезапустить терминал, проверить `nuget help`, затем:
+flutter clean
+flutter run -d windows
+```
+
+(Любой WebView2-плагин, включая `webview_windows`, требует NuGet — это про
+тулчейн, не про выбор плагина.)
+
 ## Известные нюансы
 
 - WebView на Windows в `flutter_inappwebview` использует WebView2. Если на вашей
