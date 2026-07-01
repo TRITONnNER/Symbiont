@@ -23,7 +23,7 @@ def ok(name, cond):
     if not cond: FAILS += 1
 
 def fresh_server(bdir):
-    """(Пере)импортирует бэкенд с CWD=bdir — читает JSON-файлы состояния с диска."""
+    """(Пере)импортирует бэкенд с CWD=bdir — читает состояние из БД symbiont_state.db."""
     global NODE_SECRET
     for m in ("server", "manifest", "keys", "persist"):
         if m in sys.modules: del sys.modules[m]
@@ -51,8 +51,8 @@ def main():
         r = c.post("/v1/key/redeem", headers={"authorization": f"Bearer {tok}"}, json={"code": code})
         ok("ключ погашен (план pro)", r.status_code == 200 and r.json()["plan"] == "pro")
         c.post("/v1/support/message", headers={"authorization": f"Bearer {tok}"}, json={"text": "тест-сообщение"})
-        ok("файлы состояния на диске созданы",
-           all(os.path.exists(os.path.join(bdir, f)) for f in ("accounts.json", "threads.json", "keys_registry.json")))
+        ok("состояние сохранено в реальную БД (symbiont_state.db)",
+           os.path.exists(os.path.join(bdir, "symbiont_state.db")))
 
         # ── РЕСТАРТ ──
         server = fresh_server(bdir); c = TestClient(server.app)
