@@ -231,21 +231,32 @@ class ApiClient {
     final ok = await _verify(m, pub);
     if (!ok) throw ApiError(0, 'manifest_signature_invalid'); // отвергаем неподписанное
 
+    // Толерантные приведения: даже подписанный манифест мог сериализовать число
+    // как double/строку (напр. port:"443", loadPct:12.0) — жёсткий `as int` кинул
+    // бы CastError, и весь список узлов молча не загрузился бы. Коэрсим мягко.
+    int _asInt(Object? v, int fallback) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? fallback;
+      return fallback;
+    }
     NodeInfo _toNode(Map<String, dynamic> n) => NodeInfo(
-        id: n['id'], country: n['country'] ?? n['code'], code: n['code'],
+        id: '${n['id']}', country: '${n['country'] ?? n['code'] ?? ''}', code: '${n['code'] ?? ''}',
         pingMs: null, // РЕАЛЬНЫЙ пинг измерит клиент (если задан host)
-        loadPct: (n['loadPct'] ?? 0) as int,
-        host: n['host'] as String?, port: (n['port'] ?? 443) as int,
+        loadPct: _asInt(n['loadPct'], 0),
+        host: n['host'] as String?, port: _asInt(n['port'], 443),
         transport: (n['transport'] as Map?)?.cast<String, dynamic>());
 
-    final allNodes = (m['nodes'] as List).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    final allNodes = ((m['nodes'] as List?) ?? const [])
+        .map((e) => (e as Map).cast<String, dynamic>()).toList();
     bool isRelay(Map<String, dynamic> n) => (n['roles'] as List?)?.contains('relay') ?? false;
     // relay-узлы («белые» IP для detour) — инфраструктура, не точки выхода: в списке
     // пользователю их НЕ показываем, но движку отдаём (для обхода занавеса/whitelist).
     final nodes = allNodes.where((n) => !isRelay(n)).map(_toNode).toList();
     final relays = allNodes.where(isRelay).map(_toNode).toList();
-    final rules = (m['rules'] as List).map((e) => RoutingRule.fromJson((e as Map).cast<String, dynamic>())).toList();
-    return Manifest(version: m['version'] as int, rollout: (m['rollout'] as int?) ?? 100,
+    final rules = ((m['rules'] as List?) ?? const [])
+        .map((e) => RoutingRule.fromJson((e as Map).cast<String, dynamic>())).toList();
+    return Manifest(version: _asInt(m['version'], 0), rollout: _asInt(m['rollout'], 100),
         nodes: nodes, relays: relays, rules: rules, raw: m);
   }
 

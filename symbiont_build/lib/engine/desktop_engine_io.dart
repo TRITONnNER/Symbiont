@@ -48,8 +48,10 @@ class DesktopEngine implements SymbiontEngine {
     Log.w('engine', 'desktop engine создан: singbox=${singbox != null} goodbyedpi=${goodbyedpi != null} '
         'byedpi=${byedpi != null} zapret=${zapret != null}');
     if (zapret != null) Log.w('engine', 'zapret dir: $zapret');
-    // восстановление системного прокси, если прошлый сеанс рухнул, не откатив его
+    // восстановление системного прокси, если прошлый сеанс рухнул, не откатив его,
+    // и зачистка осиротевшего ByeDPI (держал бы порт 1080 → мёртвый прокси)
     _WinProxy.recover();
+    _killOrphanByeDpi();
   }
 
   void _emit(ConnStatus s) { _cur = s; if (!_ctrl.isClosed) _ctrl.add(s); }
@@ -258,6 +260,10 @@ class DesktopEngine implements SymbiontEngine {
   Future<void> connect({String? nodeId, CoverageMode? mode}) async {
     _mode = mode ?? _mode;
     if (_connecting) { Log.w('connect', 'уже идёт подключение — повторный вызов пропущен'); return; }
+    // Сброс счётчика watchdog делаем ТОЛЬКО здесь (пользовательское подключение).
+    // Раньше он был в _connectInner, который зовёт и watchdog → счётчик обнулялся
+    // каждый цикл и лимит «3 за 60с» не работал (бесконечная лавина перезапусков).
+    _restartCount = 0; _restartWindow = DateTime.now();
     _connecting = true;
     try {
       await _connectInner(nodeId: nodeId);
@@ -267,7 +273,6 @@ class DesktopEngine implements SymbiontEngine {
   }
 
   Future<void> _connectInner({String? nodeId}) async {
-    _restartCount = 0; _restartWindow = DateTime.now(); // новое подключение — watchdog снова активен
     // 1) ПРИОРИТЕТ: реальный VPN-узел из манифеста (есть transport + sing-box).
     final node = activeNode;
     if (node?.transport != null && singbox != null) {
@@ -438,6 +443,7 @@ class DesktopEngine implements SymbiontEngine {
       final args = _args('byedpi_args.txt', ['-p', '$byedpiPort', '--disorder', '1', '--auto=torst', '--tlsrec', '1+s']);
       final proc = await Process.start(byedpi!, args, workingDirectory: File(byedpi!).parent.path);
       _proc = proc;
+      _intentionalStop = false;   // новый запуск (после _stop) — снимаем флаг намеренной остановки
       proc.stdout.drain<void>().catchError((_) {});
       var lastErr = '';
       proc.stderr.transform(utf8.decoder).listen((s) { final t = s.trim(); if (t.isNotEmpty) lastErr = t; }, onError: (_) {});
@@ -451,7 +457,10 @@ class DesktopEngine implements SymbiontEngine {
         }
       });
       await Future.delayed(const Duration(milliseconds: 1500));
-      if (exited) return;
+      // За окно проверки мог прилететь disconnect/_stop (ставит _intentionalStop):
+      // тогда НЕ включаем системный прокси, иначе он остался бы висеть на мёртвом
+      // 127.0.0.1 после отключения → «нет интернета».
+      if (exited || _intentionalStop) { await _clearProxy(); return; }
       // ByeDPI поднялся → включаем системный прокси (без админа), с откатом
       await _WinProxy.set('socks=127.0.0.1:$byedpiPort');
       _proxyApplied = true;
@@ -541,7 +550,9 @@ class DesktopEngine implements SymbiontEngine {
       } else if (proto == 'bypass' && zapret != null) {
         await _runZapret();
       } else {
-        await connect(); // общий путь выберет лучший доступный
+        // watchdog зовёт _connectInner напрямую (НЕ public connect), иначе счётчик
+        // перезапусков обнулится и лимит перестанет работать.
+        await _connectInner(); // общий путь выберет лучший доступный
       }
     }
   }
@@ -555,10 +566,22 @@ class DesktopEngine implements SymbiontEngine {
     _intentionalStop = true; // гасим watchdog: завершение процесса ниже — наше, не крах
     final p = _proc; _proc = null;
     if (p != null) { try { p.kill(); } catch (_) {} }
-    // Подстраховка: убиваем осиротевшие sing-box от прошлых запусков/падений,
-    // иначе они держат порт 2080 и новый туннель не стартует
-    // («Only one usage of each socket address»).
+    // Подстраховка: убиваем осиротевшие sing-box И ByeDPI (ciadpi) от прошлых
+    // запусков/падений — иначе sing-box держит порт 2080, а ByeDPI порт 1080
+    // (тогда системный прокси указывает на мёртвый/чужой SOCKS → «нет интернета»).
     await _killOrphanSingbox();
+    await _killOrphanByeDpi();
+  }
+
+  // Убить осиротевший ByeDPI (ciadpi), держащий SOCKS-порт от прошлой сессии.
+  Future<void> _killOrphanByeDpi() async {
+    try {
+      if (Platform.isWindows) {
+        await Process.run('taskkill', ['/F', '/IM', 'ciadpi.exe', '/T']);
+      } else {
+        await Process.run('pkill', ['-f', 'ciadpi']);
+      }
+    } catch (_) {/* нет процесса — норма */}
   }
 
   // Убить чужие/зависшие процессы sing-box (не трогает другие приложения).
