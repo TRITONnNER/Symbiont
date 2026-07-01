@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://symbiont.example/schema/manifest.schema.json",
+  "title": "Symbiont signed manifest",
+  "description": "Подписанная конфигурация, раздаваемая клиентам: узлы, правила маршрутизации, категории. Подпись Ed25519 над канонической формой тела (без поля sig). См. backend/API.md §3.",
+  "type": "object",
+  "required": ["version", "issuedAt", "nodes", "rules", "categories", "sig"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "minimum": 1, "description": "Монотонная версия для since/304 и canary" },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "code", "protocols"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z]{2}-[0-9]{2,}$", "description": "напр. nl-01" },
+          "country": { "type": "string" },
+          "code": { "type": "string", "pattern": "^[A-Z]{2}$", "description": "ISO-страна для флага" },
+          "loadPct": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "protocols": {
+            "type": "array", "minItems": 1,
+            "items": { "enum": ["reality", "hysteria2", "ss2022", "wireguard", "xhttp"] }
+          },
+          "roles": {
+            "type": "array",
+            "items": { "enum": ["edge", "backbone", "gateway", "user-private", "user-public"] }
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "description": "Гранулярные правила. Приоритет на клиенте: domainExact > domainSuffix > tld > keyword > category.",
+      "items": {
+        "type": "object",
+        "required": ["kind", "match", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "enum": ["domainExact", "domainSuffix", "tld", "keyword", "processId"] },
+          "match": { "type": "string", "minLength": 1, "description": "sberbank.ru | .gov.ru | online.sberbank.ru | <process id>" },
+          "action": { "enum": ["direct", "tunnel", "bypass", "boost", "block"] },
+          "nodeId": { "type": "string", "description": "опционально закрепить узел (boost → игровой PoP)" }
+        }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "description": "Списки для DNS-этажа и классификации в «Анализе».",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } },
+      "properties": {
+        "ads": { "type": "array", "items": { "type": "string" } },
+        "trackers": { "type": "array", "items": { "type": "string" } },
+        "threats": { "type": "array", "items": { "type": "string" } },
+        "directApps": { "type": "array", "items": { "type": "string" } },
+        "bypassApps": { "type": "array", "items": { "type": "string" } },
+        "boostApps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "sig": {
+      "type": "string",
+      "pattern": "^ed25519:[A-Za-z0-9+/=]+$",
+      "description": "Подпись Ed25519 (base64) над канонической сериализацией тела без поля sig. Клиент отвергает манифест без валидной подписи."
+    }
+  }
+}

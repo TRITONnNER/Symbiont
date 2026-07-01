@@ -1,0 +1,6 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+cryptography>=42
+# Required by starlette.testclient (smoke_test.py / selftest_*.py). Also a
+# convenient runtime HTTP client. Without it the API self-tests cannot import.
+httpx>=0.27

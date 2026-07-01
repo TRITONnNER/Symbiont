@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Симбионт — Защита</title>
+<style>
+  :root{
+    --s0:#070B0C; --s1:#0A0F11; --accent:#34E5B0; --accent-text:#06231A;
+    --txt:#EAF1EF; --txt2:#C2CCCA; --txt3:#9DABA8; --muted:#7C8A99; --faint:#566270;
+    --line:rgba(255,255,255,0.07);
+    --ui:'Golos Text','Noto Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--ui); color:var(--txt); -webkit-font-smoothing:antialiased; background:var(--s1); height:100%}
+  .app{display:grid; grid-template-columns:212px 1fr; height:100vh; min-height:0}
+
+  /* РЕЙЛ */
+  .rail{background:var(--s0); border-right:1px solid var(--line); display:flex; flex-direction:column; padding:18px 12px; gap:4px; z-index:2}
+  .rl-brand{display:flex; align-items:center; gap:10px; padding:6px 8px 16px}
+  .rl-logo{width:30px; height:30px; border-radius:9px; background:var(--accent); flex:0 0 auto; display:flex; align-items:center; justify-content:center}
+  .rl-logo svg{width:18px; height:18px}
+  .rl-brand b{font-size:16px; font-weight:800; letter-spacing:-.01em}
+  .nav{display:flex; flex-direction:column; gap:3px}
+  .nav a{display:flex; align-items:center; gap:11px; padding:10px 11px; border-radius:11px; color:var(--txt3); text-decoration:none; cursor:pointer; transition:background .15s, color .15s}
+  .nav a .ic{width:19px; height:19px; flex:0 0 auto; opacity:.9}
+  .nav a .tx{display:flex; flex-direction:column; line-height:1.25}
+  .nav a .tx b{font-size:13.5px; font-weight:600}
+  .nav a .tx s{font-size:11px; color:var(--faint); text-decoration:none}
+  .nav a:hover{background:rgba(255,255,255,0.025); color:var(--txt2)}
+  .nav a.active{background:rgba(52,229,176,0.10); color:var(--accent)}
+  .nav a.active .tx s{color:rgba(52,229,176,0.6)}
+  .rl-foot{margin-top:auto; padding:10px 8px 2px; color:var(--faint); font-size:11px}
+
+  /* ОСНОВНОЕ */
+  .main{display:flex; flex-direction:column; min-width:0}
+  .topbar{height:54px; flex:0 0 auto; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 18px; position:relative; z-index:2; background:rgba(10,15,17,0.6)}
+  .pill{display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; border:2px solid rgba(52,229,176,0.22); background:rgba(52,229,176,0.10)}
+  .pill .pdot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px rgba(52,229,176,0.8)}
+  .pill b{font-size:12.5px; font-weight:600; color:var(--accent)}
+  .pill.off{border-color:rgba(255,255,255,0.10); background:rgba(255,255,255,0.04)}
+  .pill.off .pdot{background:var(--muted); box-shadow:none} .pill.off b{color:var(--muted)}
+  .pill.busy{border-color:rgba(245,196,81,0.24); background:rgba(245,196,81,0.10)}
+  .pill.busy .pdot{background:#F5C451; box-shadow:none} .pill.busy b{color:#F5C451}
+  .tb-right{display:flex; align-items:center; gap:6px}
+  .tb-right .ib{width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--txt3); cursor:pointer}
+  .tb-right .ib:hover{background:rgba(255,255,255,0.04); color:var(--txt2)}
+  .tb-right .ib svg{width:18px; height:18px}
+  .tb-right .lang{font-size:12px; font-weight:600; color:var(--txt3); padding:6px 9px; border-radius:8px; cursor:pointer}
+  .tb-right .lang:hover{background:rgba(255,255,255,0.04); color:var(--txt2)}
+
+  .content{flex:1; min-height:0; overflow:auto; position:relative;
+    background:linear-gradient(180deg,#0E1C18 0%, #0A1013 46%, #070B0C 100%);
+    display:flex; flex-direction:column; align-items:center; gap:34px; padding:46px 24px 44px}
+
+  /* АВРОРА */
+  .aurora{position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0}
+  .aurora .blob{position:absolute; left:50%; top:30%; width:600px; height:600px;
+    transform:translate(-50%,-50%); border-radius:50%;
+    background:radial-gradient(circle, rgba(52,229,176,0.16), transparent 60%);
+    filter:blur(54px); animation:aurora 14s ease-in-out infinite}
+  .aurora .blob.b2{top:8%; width:520px; height:360px; transform:translateX(-50%);
+    background:radial-gradient(circle, rgba(34,211,238,0.08), transparent 60%);
+    filter:blur(60px); animation:aurora2 18s ease-in-out infinite}
+  @keyframes aurora{0%,100%{transform:translate(-50%,-50%) scale(1); opacity:.85}50%{transform:translate(-50%,-50%) scale(1.14); opacity:1}}
+  @keyframes aurora2{0%,100%{transform:translateX(-50%) scale(1); opacity:.7}50%{transform:translateX(-50%) scale(1.1); opacity:.95}}
+
+  /* ── ЯДРО ── */
+  .core-wrap{position:relative; z-index:1}
+  .core{position:relative; width:300px; height:300px; cursor:pointer}
+  .core .ring-svg{position:absolute; inset:0; width:100%; height:100%}
+  .core .dash{transform-origin:150px 150px; animation:spin 44s linear infinite}
+  .core .dots{transform-origin:150px 150px; animation:spinR 90s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinR{to{transform:rotate(-360deg)}}
+  .core .hub{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:11px}
+  .core .hub .pw{width:38px; height:38px; color:var(--accent); filter:drop-shadow(0 0 10px rgba(52,229,176,0.5)); transition:color .3s}
+  .core .hub .lab{font-size:13px; font-weight:700; letter-spacing:.2em; color:var(--accent); transition:color .3s}
+  .core.on{animation:breath 3.2s ease-in-out infinite}
+  @keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.022)}}
+  /* состояния */
+  .core.busy .dash{animation:spin 2.4s linear infinite}
+  .core.busy .hub .pw, .core.busy .hub .lab{color:#F5C451}
+  .core.busy .hub .pw{filter:drop-shadow(0 0 10px rgba(245,196,81,0.5))}
+  .core.off .hub .pw, .core.off .hub .lab{color:var(--muted)}
+  .core.off .hub .pw{filter:none}
+  .core.off .dash, .core.off .dots{animation-play-state:paused}
+
+  /* КОЛОНКА */
+  .col{width:100%; max-width:540px; display:flex; flex-direction:column; gap:12px; position:relative; z-index:1}
+  .col.hidden{display:none}
+  .card{background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px}
+
+  .metrics{display:flex; gap:16px}
+  .metrics .m{flex:1; min-width:0; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:8px}
+  .metrics .m .k{font-size:11px; font-weight:600; letter-spacing:.07em; color:var(--muted)}
+  .metrics .m .v{display:flex; align-items:baseline; gap:4px}
+  .metrics .m .v b{font-family:var(--mono); font-weight:600; font-size:22px; color:var(--txt)}
+  .metrics .m .v b.mint{color:var(--accent)}
+  .metrics .m .v s{font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none}
+  .metrics .m .v b.proto{font-size:18px}
+
+  .node{display:flex; align-items:center; gap:16px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px; cursor:pointer; transition:border-color .18s, transform .18s}
+  .node:hover{border-color:rgba(52,229,176,0.28); transform:translateY(-1px)}
+  .node .flag{width:32px; height:23px; border-radius:5px; overflow:hidden; flex:0 0 auto}
+  .node .flag svg{display:block;width:100%;height:100%}
+  .node .nd{flex:1; min-width:0; display:flex; flex-direction:column; gap:2px}
+  .node .nd b{font-size:15px; font-weight:600; color:var(--txt)}
+  .node .nd s{font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none}
+  .node .rt{display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex:0 0 auto}
+  .node .rt .pg{font-family:var(--mono); font-weight:600; font-size:15px; color:#5BE5A6}
+  .node .rt .ld{display:flex; align-items:center; gap:8px}
+  .node .rt .ld .bar{width:50px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden}
+  .node .rt .ld .bar i{display:block; height:100%; width:34%; background:#5BE5A6}
+  .node .rt .ld s{font-family:var(--mono); font-weight:600; font-size:12px; color:#5BE5A6; text-decoration:none}
+  .node .chev{color:var(--faint); flex:0 0 auto}
+
+  .speed{background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px; transition:border-color .18s}
+  .speed:hover{border-color:rgba(52,229,176,0.28)}
+  .speed .sh{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+  .speed .sh .lbl{display:flex; align-items:center; gap:8px}
+  .speed .sh .lbl svg{width:17px;height:17px;color:var(--accent)}
+  .speed .sh .lbl span{font-size:11px; font-weight:600; letter-spacing:.07em; color:var(--muted)}
+  .speed .sh .sp{display:flex; gap:16px}
+  .speed .sh .sp span{display:flex; align-items:center; gap:4px}
+  .speed .sh .sp span svg{width:14px;height:14px}
+  .speed .sh .sp .num{font-family:var(--mono); font-size:13px; color:var(--txt)}
+  .speed .sh .sp .un{font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .speed svg.spark{width:100%; height:42px; display:block}
+
+  .triple{display:flex; gap:12px}
+  .triple .t{flex:1; min-width:0; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px; display:flex; align-items:center; gap:8px}
+  .triple .t svg{width:18px;height:18px;flex:0 0 auto}
+  .triple .t .tb b{font-family:var(--mono); font-weight:600; font-size:15px; color:var(--txt); display:block}
+  .triple .t .tb b.sm{font-size:13px}
+  .triple .t .tb b s{font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none; font-weight:400}
+  .triple .t .tb span{font-size:11px; color:var(--muted)}
+
+  .actions{display:flex; gap:12px}
+  .actions .an{flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background:rgba(255,255,255,0.02); cursor:pointer; transition:border-color .15s}
+  .actions .an:hover{border-color:rgba(255,255,255,0.2)}
+  .actions .an svg{width:19px;height:19px;color:var(--accent)}
+  .actions .an span{font-weight:600; font-size:13px; color:var(--txt2)}
+  .actions .dc{flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 20px; border-radius:14px; border:1px solid rgba(255,107,107,0.22); background:rgba(255,107,107,0.06); cursor:pointer; transition:border-color .15s}
+  .actions .dc:hover{border-color:rgba(255,107,107,0.45)}
+  .actions .dc svg{width:18px;height:18px;color:#FF8E8E}
+  .actions .dc span{font-weight:600; font-size:13px; color:#FF8E8E}
+
+  .idle{display:flex; flex-direction:column; gap:12px; width:100%; max-width:540px; position:relative; z-index:1}
+  .idle.hidden{display:none}
+  .idle .go{display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:16px; border-radius:14px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); box-shadow:0 6px 20px rgba(31,166,125,0.28); cursor:pointer; transition:filter .15s}
+  .idle .go:hover{filter:brightness(1.06)}
+  .idle .go svg{width:20px;height:20px}
+  .idle .go span{font-weight:700; font-size:15px; color:var(--accent-text)}
+  .idle .hint{text-align:center; font-size:13px; color:var(--muted)}
+
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important} }
+  @media (max-width:820px){ .app{grid-template-columns:1fr} .rail{display:none} }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="rl-brand">
+      <span class="rl-logo"><svg viewBox="0 0 24 24" fill="none"><path d="M7.5 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c1.9 0 2.8-1.6 3.8-3 1-1.4 1.9-3 3.7-3 1.7 0 3 1.3 3 3s-1.3 3-3 3c-1.9 0-2.8-1.6-3.8-3-1-1.4-1.9-3-3.7-3z" stroke="#06231A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <b>Симбионт</b>
+    </div>
+    <nav class="nav">
+      <a class="active"><svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tx"><b>Защита</b><s>Подключение и статус</s></span></a>
+      <a><svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="5" cy="18" r="2.4" stroke="currentColor" stroke-width="1.8"/><circle cx="19" cy="18" r="2.4" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.4v4M10.5 13l-3.6 3M13.5 13l3.6 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="tx"><b>Узлы</b><s>Выбор сервера</s></span></a>
+      <a><svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M5 18V9a3 3 0 0 1 3-3h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 3l3 3-3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5" cy="19" r="2" stroke="currentColor" stroke-width="1.8"/></svg><span class="tx"><b>Маршрутизация</b><s>Куда какой трафик</s></span></a>
+      <a><svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 16l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tx"><b>Анализ</b><s>Диагностика и скорость</s></span></a>
+      <a><svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-3.3 3.1-5 7-5s7 1.7 7 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="tx"><b>Аккаунт</b><s>Профиль и план</s></span></a>
+      <a><svg class="ic" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.7-.9 1.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="16.5" r="1" fill="currentColor"/></svg><span class="tx"><b>Поддержка</b><s>Помощь и вопросы</s></span></a>
+    </nav>
+    <div class="rl-foot">Симбионт 2.4.0 · движок 1.18</div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="pill" id="pill"><span class="pdot"></span><b id="pillText">Защищено · VPN</b></span>
+      <div class="tb-right">
+        <span class="lang">RU</span>
+        <span class="ib" title="Словарь"><svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H18v16H6.5A1.5 1.5 0 0 1 5 18.5v-13z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 9h6M9 12h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <span class="ib" title="Вопросы"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.3 2.4c-.7.3-.9.7-.9 1.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="16.4" r="1" fill="currentColor"/></svg></span>
+        <span class="ib" title="Настройки"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="aurora"><div class="blob"></div><div class="blob b2"></div></div>
+
+      <div class="core-wrap">
+        <div class="core on" id="core" role="button" tabindex="0" aria-label="Переключить подключение">
+          <svg class="ring-svg" viewBox="0 0 300 300">
+            <defs>
+              <radialGradient id="disc" cx="50%" cy="40%" r="65%">
+                <stop offset="0%" stop-color="#15271F"/><stop offset="100%" stop-color="#091310"/>
+              </radialGradient>
+            </defs>
+            <circle cx="150" cy="150" r="146" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            <g class="dots">
+              <circle cx="150" cy="13" r="3" fill="#34E5B0"/>
+              <circle cx="150" cy="287" r="2.4" fill="rgba(52,229,176,0.5)"/>
+              <circle cx="13" cy="150" r="2.4" fill="rgba(52,229,176,0.5)"/>
+              <circle cx="287" cy="150" r="2.4" fill="rgba(52,229,176,0.5)"/>
+              <circle cx="53" cy="53" r="2" fill="rgba(52,229,176,0.35)"/>
+              <circle cx="247" cy="53" r="2" fill="rgba(52,229,176,0.35)"/>
+              <circle cx="53" cy="247" r="2" fill="rgba(52,229,176,0.35)"/>
+              <circle cx="247" cy="247" r="2" fill="rgba(52,229,176,0.35)"/>
+            </g>
+            <circle cx="150" cy="150" r="125" fill="none" stroke="rgba(52,229,176,0.10)" stroke-width="1"/>
+            <circle class="dash" cx="150" cy="150" r="113" fill="none" stroke="#34E5B0" stroke-width="2.5" stroke-dasharray="2 11" stroke-linecap="round" opacity="0.92"/>
+            <circle cx="150" cy="150" r="96" fill="url(#disc)" stroke="rgba(52,229,176,0.16)" stroke-width="1"/>
+            <circle cx="150" cy="150" r="96" fill="none" stroke="rgba(52,229,176,0.06)" stroke-width="10"/>
+          </svg>
+          <div class="hub">
+            <svg class="pw" viewBox="0 0 24 24" fill="none"><path d="M12 3v9" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><path d="M6.6 6.8a8 8 0 1 0 10.8 0" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+            <span class="lab" id="coreLab">REALITY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- подключено -->
+      <div class="col" id="liveCol">
+        <div class="metrics">
+          <div class="m"><span class="k">ПИНГ</span><div class="v"><b class="mint">38</b><s>мс</s></div></div>
+          <div class="m"><span class="k">ПОТЕРИ</span><div class="v"><b>0</b><s>%</s></div></div>
+          <div class="m"><span class="k">ПРОТОКОЛ</span><div class="v"><b class="mint proto">reality</b></div></div>
+        </div>
+
+        <div class="node">
+          <span class="flag"><svg viewBox="0 0 32 23"><rect width="32" height="7.7" fill="#AE1C28"/><rect y="7.7" width="32" height="7.6" fill="#fff"/><rect y="15.3" width="32" height="7.7" fill="#21468B"/></svg></span>
+          <div class="nd"><b>Нидерланды</b><s>ams-03.symbiont.net</s></div>
+          <div class="rt"><span class="pg">38 мс</span><div class="ld"><span class="bar"><i></i></span><s>34%</s></div></div>
+          <svg class="chev" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+
+        <div class="speed">
+          <div class="sh">
+            <div class="lbl"><svg viewBox="0 0 24 24" fill="none"><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM12 10V6M5 18a9 9 0 1 1 14 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>СКОРОСТЬ</span></div>
+            <div class="sp">
+              <span><svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M6 13l6 6 6-6" stroke="#5BE5A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num">18.4</span><span class="un">Мбит</span></span>
+              <span><svg viewBox="0 0 24 24" fill="none"><path d="M12 19V5M6 11l6-6 6 6" stroke="#FF8E8E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="num">3.2</span><span class="un">Мбит</span></span>
+            </div>
+          </div>
+          <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none">
+            <polygon points="0,30 0,13 12,10 25,15 38,8 50,12 63,7 75,14 88,9 100,11 100,30" fill="rgba(52,229,176,0.10)"/>
+            <polyline points="0,13 12,10 25,15 38,8 50,12 63,7 75,14 88,9 100,11" fill="none" stroke="#34E5B0" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+          </svg>
+        </div>
+
+        <div class="triple">
+          <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#34E5B0"><circle cx="12" cy="13" r="7.5" stroke-width="1.8"/><path d="M12 9v4l2.5 2M9.5 3h5" stroke-width="1.8" stroke-linecap="round"/></svg><div class="tb"><b class="sm">0:14:32</b><span>в сети</span></div></div>
+          <div class="t"><svg viewBox="0 0 24 24" fill="none" stroke="#5BE5A6"><path d="M7 8l-3 3 3 3M4 11h16M17 16l3-3-3-3M20 13H4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="tb"><b class="sm">1.33<s> GB</s></b><span>трафик</span></div></div>
+          <div class="t"><svg viewBox="0 0 24 24" fill="#34E5B0"><path d="M12 1a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm3 8H9V6a3 3 0 0 1 6 0v3z"/></svg><div class="tb"><b class="sm">AES-256</b><span>шифр</span></div></div>
+        </div>
+
+        <div class="actions">
+          <div class="an" id="toAnalysis"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Анализ</span></div>
+          <div class="dc" id="disconnect"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M6.6 6.8a8 8 0 1 0 10.8 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Отключиться</span></div>
+        </div>
+      </div>
+
+      <!-- отключено -->
+      <div class="idle hidden" id="idleCol">
+        <div class="go" id="connectBtn"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v9" stroke="#06231A" stroke-width="2.3" stroke-linecap="round"/><path d="M6.6 6.8a8 8 0 1 0 10.8 0" stroke="#06231A" stroke-width="2.3" stroke-linecap="round"/></svg><span>Подключиться</span></div>
+        <div class="hint">Каскад сам подберёт путь: прямой → обход → VPN → реле.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var core=document.getElementById('core'), pill=document.getElementById('pill'), pillText=document.getElementById('pillText');
+  var liveCol=document.getElementById('liveCol'), idleCol=document.getElementById('idleCol'), coreLab=document.getElementById('coreLab');
+  function setState(s){
+    core.className='core '+(s==='connected'?'on':s==='connecting'?'busy':'off');
+    pill.className='pill'+(s==='connected'?'':s==='connecting'?' busy':' off');
+    pillText.textContent = s==='connected'?'Защищено · VPN' : s==='connecting'?'Подключаюсь…' : 'Не защищено';
+    coreLab.textContent = s==='connected'?'REALITY' : s==='connecting'?'СВЯЗЬ…' : 'ВЫКЛ';
+    liveCol.classList.toggle('hidden', s!=='connected');
+    idleCol.classList.toggle('hidden', s==='connected');
+  }
+  function connect(){ setState('connecting'); setTimeout(function(){ setState('connected'); }, 1300); }
+  function disconnect(){ setState('idle'); }
+  core.addEventListener('click', function(){ core.classList.contains('on')?disconnect():connect(); });
+  document.getElementById('disconnect').addEventListener('click', function(e){ e.stopPropagation(); disconnect(); });
+  document.getElementById('connectBtn').addEventListener('click', connect);
+  document.getElementById('toAnalysis').addEventListener('click', function(e){ e.stopPropagation(); });
+</script>
+</body>
+</html>

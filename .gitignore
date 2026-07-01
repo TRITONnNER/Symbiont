@@ -1,0 +1,42 @@
+# Symbiont — repository-root ignores (see symbiont_build/.gitignore for the client subtree).
+
+# ── Secrets (must never be committed — server-side only) ──
+secrets.json
+node_secrets.json
+signing.key
+*.key
+.env
+
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ── Go build artifacts ──
+engine/symbiont-engine.exe
+engine/*.exe
+*.test
+
+# ── Flutter / Dart ──
+.dart_tool/
+build/
+out/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+
+# ── Backend runtime state (generated) ──
+accounts.json
+idaccounts.json
+aliases.json
+devices.json
+threads.json
+keys_registry.json
+nodes.json
+economy.json
+
+# ── Misc ──
+.DS_Store
+*.log

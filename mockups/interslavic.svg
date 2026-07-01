@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="60" height="40" role="img" aria-label="Флаг межславянского языка">
+  <!-- Флаг межславянского (Medžuslovjansky): прямоугольник, рассечённый двумя диагоналями
+       на 4 треугольника. Расположение по эталону: ВЕРХ синий, ЛЕВО жёлтое, НИЗ красный,
+       ПРАВО белое. -->
+  <defs><clipPath id="r"><rect x="0" y="0" width="60" height="40" rx="3"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <polygon points="0,0 60,0 30,20"  fill="#16278E"/>  <!-- верх: синий -->
+    <polygon points="60,0 60,40 30,20" fill="#FFFFFF"/>  <!-- право: белый -->
+    <polygon points="0,40 60,40 30,20" fill="#E01F2D"/>  <!-- низ: красный -->
+    <polygon points="0,0 0,40 30,20"  fill="#F8C300"/>  <!-- лево: жёлтый -->
+  </g>
+  <rect x="0.5" y="0.5" width="59" height="39" rx="3" fill="none" stroke="#262C36" stroke-width="1"/>
+</svg>
