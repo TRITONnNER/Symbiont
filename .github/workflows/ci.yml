@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend + control-plane self-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend deps
+        run: pip install -r symbiont_build/backend/requirements.txt
+      - name: Backend self-tests
+        working-directory: symbiont_build/backend
+        run: |
+          python smoke_test.py
+          for f in selftest_*.py; do echo "== $f =="; python "$f"; done
+      - name: Control-plane self-tests
+        working-directory: symbiont_build/server
+        run: |
+          for f in selftest_*.py; do echo "== $f =="; python "$f"; done
+
+  engine:
+    name: Go DPI engine (cross-compile + vet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+      - name: Cross-compile for windows/amd64 and vet
+        working-directory: engine
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: |
+          go build ./...
+          go vet ./...
+
+  client:
+    name: Flutter analyze (advisory)
+    runs-on: ubuntu-latest
+    # Advisory only: the client is built/run on Windows (flutter run -d windows).
+    # This job surfaces Dart issues in the logs but must not red the PR on SDK
+    # drift unrelated to a change, so it is allowed to fail.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Resolve dependencies
+        working-directory: symbiont_build
+        run: flutter pub get
+      - name: Analyze (errors are fatal; infos/warnings are not)
+        working-directory: symbiont_build
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
