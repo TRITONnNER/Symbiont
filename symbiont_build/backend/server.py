@@ -158,6 +158,21 @@ def _mint_session(account_id: str, label: str, device_id: str = None) -> str:
 
 app = FastAPI(title="Symbiont backend (reference)", version="0.1")
 
+# CORS: публичный веб-чекер ключа (web/check.html) и лендинг живут на другом
+# origin и должны звать API из браузера. Безопасно, потому что авторизация — по
+# заголовку Authorization: Bearer (НЕ по кукам), и allow_credentials=False:
+# сторонний сайт не может «одолжить» токен пользователя (ambient-креденшелов нет),
+# а все чувствительные эндпоинты требуют Bearer, которого у него нет.
+from fastapi.middleware.cors import CORSMiddleware
+_cors_origins = os.environ.get("SYMBIONT_CORS_ORIGINS", "*").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in _cors_origins if o.strip()],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["*"],
+)
+
 
 # ── авторизация по токену ─────────────────────────────────────────────────────
 def auth(authorization: str = Header(default="")) -> str:

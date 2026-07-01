@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Симбионт — связь, которая подстраивается</title>
+<meta name="description" content="Симбионт — не тумблер «вкл/выкл», а живой каскад: прямой → обход DPI → VPN → реле. Детектит занавес и сам выбирает путь. Аккаунт без личных данных.">
+<style>
+  :root{
+    --ink:#070B0C; --ink2:#0A0F11; --card:rgba(255,255,255,.025); --cardh:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.12);
+    --txt:#EAF1EF; --txt2:#C2CCCA; --txt3:#9DABA8; --muted:#7C8A99; --faint:#566270;
+    --mint:#34E5B0; --mint-ink:#06231A; --mint-bg:rgba(52,229,176,.10); --mint-line:rgba(52,229,176,.24);
+    --direct:#5BE5A6; --bypass:#F5C451; --tunnel:#34E5B0; --relay:#A78BFA; --bad:#FF6B6B;
+    --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0; background:var(--ink); color:var(--txt); font-family:var(--sans); line-height:1.55;
+    -webkit-font-smoothing:antialiased}
+  a{color:inherit; text-decoration:none}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 22px}
+
+  /* ── аврора-фон ── */
+  .bg{position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background:linear-gradient(180deg,#0E1C18 0%,#0A1013 42%,#070B0C 100%)}
+  .bg::before{content:""; position:absolute; width:900px; height:900px; left:50%; top:-360px;
+    transform:translateX(-50%); border-radius:50%; filter:blur(90px);
+    background:radial-gradient(circle,rgba(52,229,176,.16),rgba(52,229,176,0) 62%);
+    animation:breathe 9s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.75; transform:translateX(-50%) scale(1)}
+    50%{opacity:1; transform:translateX(-50%) scale(1.06)}}
+
+  /* ── шапка ── */
+  header{position:sticky; top:0; z-index:10; backdrop-filter:blur(10px);
+    background:rgba(7,11,12,.55); border-bottom:1px solid var(--line)}
+  .nav{display:flex; align-items:center; gap:14px; height:62px}
+  .logo{display:flex; align-items:center; gap:11px; font-weight:700; letter-spacing:.02em}
+  .logo .mark{width:30px; height:30px; border-radius:9px; background:var(--mint-bg);
+    border:1px solid var(--mint-line); display:grid; place-items:center; color:var(--mint); font-size:17px}
+  .nav .sp{flex:1}
+  .nav a.link{color:var(--txt3); font-size:14px; padding:8px 12px; border-radius:9px}
+  .nav a.link:hover{color:var(--txt); background:var(--card)}
+  .btn{display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px;
+    padding:11px 18px; border-radius:12px; cursor:pointer; border:1px solid transparent; transition:.15s}
+  .btn.primary{background:linear-gradient(180deg,#3ef0bb,#2ad19e); color:var(--mint-ink)}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{border-color:var(--line2); color:var(--txt2)}
+  .btn.ghost:hover{background:var(--card); color:var(--txt)}
+
+  /* ── герой ── */
+  .hero{padding:82px 0 54px; text-align:center}
+  .pill{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--mint);
+    background:var(--mint-bg); border:1px solid var(--mint-line); border-radius:999px; padding:6px 13px;
+    letter-spacing:.02em}
+  .pill .d{width:7px; height:7px; border-radius:50%; background:var(--mint);
+    box-shadow:0 0 0 0 rgba(52,229,176,.5); animation:pulse 2.6s ease-out infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,229,176,.45)}70%{box-shadow:0 0 0 9px rgba(52,229,176,0)}100%{box-shadow:0 0 0 0 rgba(52,229,176,0)}}
+  h1{font-size:clamp(34px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:22px 0 0; font-weight:700}
+  h1 .em{color:var(--mint)}
+  .lede{color:var(--txt2); font-size:clamp(16px,2.2vw,19px); max-width:60ch; margin:18px auto 0}
+  .cta{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:30px}
+  .note{color:var(--faint); font-size:12.5px; margin-top:16px}
+
+  /* ── каскад ── */
+  section{padding:56px 0}
+  .eyebrow{font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
+    font-weight:600; text-align:center}
+  h2{font-size:clamp(24px,3.4vw,34px); letter-spacing:-.015em; margin:10px 0 8px; text-align:center; font-weight:700}
+  .sub{color:var(--txt3); text-align:center; max-width:56ch; margin:0 auto 34px}
+  .cascade{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+  @media(max-width:760px){.cascade{grid-template-columns:1fr 1fr}}
+  @media(max-width:440px){.cascade{grid-template-columns:1fr}}
+  .stage{position:relative; background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:20px 18px; transition:.18s}
+  .stage:hover{background:var(--cardh); border-color:var(--line2); transform:translateY(-2px)}
+  .stage .idx{font-family:var(--mono); font-size:12px; color:var(--faint)}
+  .stage .dot{width:11px; height:11px; border-radius:50%; margin:10px 0 12px}
+  .stage h3{font-size:16px; margin:0 0 6px; font-weight:650}
+  .stage p{font-size:13.5px; color:var(--txt3); margin:0}
+  .stage.s1 .dot{background:var(--direct)} .stage.s1 .arw{color:var(--direct)}
+  .stage.s2 .dot{background:var(--bypass)} .stage.s2 .arw{color:var(--bypass)}
+  .stage.s3 .dot{background:var(--tunnel); box-shadow:0 0 14px rgba(52,229,176,.5)}
+  .stage.s4 .dot{background:var(--relay)}
+  .stage .arw{position:absolute; right:-11px; top:50%; transform:translateY(-50%); font-size:16px;
+    color:var(--muted); z-index:2}
+  @media(max-width:760px){.stage .arw{display:none}}
+
+  /* ── фичи ── */
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:16px}
+  @media(max-width:760px){.grid3{grid-template-columns:1fr}}
+  .feat{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px}
+  .feat .ic{width:38px; height:38px; border-radius:11px; background:var(--mint-bg); border:1px solid var(--mint-line);
+    display:grid; place-items:center; color:var(--mint); margin-bottom:14px}
+  .feat h3{font-size:16px; margin:0 0 6px; font-weight:650}
+  .feat p{font-size:13.5px; color:var(--txt3); margin:0}
+
+  /* ── приватность ── */
+  .privacy{background:var(--card); border:1px solid var(--line); border-radius:20px; padding:34px;
+    display:grid; grid-template-columns:1.1fr 1fr; gap:28px; align-items:center}
+  @media(max-width:760px){.privacy{grid-template-columns:1fr; padding:24px}}
+  .privacy h2{text-align:left; margin-top:0}
+  .privacy .sub{text-align:left; margin:0 0 18px}
+  .plist{list-style:none; padding:0; margin:0; display:grid; gap:12px}
+  .plist li{display:flex; gap:11px; font-size:14px; color:var(--txt2)}
+  .plist .ok{color:var(--mint); flex:none}
+  .recovery{background:var(--ink2); border:1px solid var(--line2); border-radius:14px; padding:20px}
+  .recovery .lab{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .recovery .code{font-family:var(--mono); font-size:19px; color:var(--txt); letter-spacing:.08em; margin:8px 0 6px}
+  .recovery .hint{font-size:12.5px; color:var(--faint)}
+
+  footer{border-top:1px solid var(--line); padding:34px 0; color:var(--muted); font-size:13px}
+  .foot{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+  .foot .sp{flex:1}
+  .foot a{color:var(--txt3)} .foot a:hover{color:var(--txt)}
+
+  @media (prefers-reduced-motion: reduce){
+    .bg::before,.pill .d{animation:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top"><span class="mark">∞</span> Симбионт</a>
+    <span class="sp"></span>
+    <a class="link" href="#cascade">Как работает</a>
+    <a class="link" href="#privacy">Приватность</a>
+    <a class="btn ghost" href="check.html">Проверить ключ</a>
+  </div>
+</header>
+
+<a id="top"></a>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="pill"><span class="d"></span>прямой → обход DPI → VPN → реле</span>
+    <h1>Связь, которая <span class="em">подстраивается</span></h1>
+    <p class="lede">Не тумблер «вкл/выкл», а живой каскад. Симбионт сам находит рабочий путь
+       сквозь блокировки, детектит «занавес» и переключается прежде, чем вы это заметите.</p>
+    <div class="cta">
+      <a class="btn primary" href="#cascade">Как это работает →</a>
+      <a class="btn ghost" href="check.html">Проверить ключ</a>
+    </div>
+    <div class="note">Аккаунт без личных данных. Код восстановления — единственный ключ, и он ваш.</div>
+  </div>
+
+  <section id="cascade">
+    <div class="eyebrow">Каскад связи</div>
+    <h2>Один путь не проходит — идём следующим</h2>
+    <p class="sub">Обычный VPN — это «включено/выключено». Симбионт пробует ступени по порядку и
+       останавливается на первой рабочей. Автоматически, за миллисекунды.</p>
+    <div class="cascade">
+      <div class="stage s1">
+        <div class="idx">01</div><div class="dot"></div>
+        <h3>Прямой</h3>
+        <p>Обычное соединение без обёртки. Самое быстрое — пробуем первым, если сеть свободна.</p>
+        <span class="arw">→</span>
+      </div>
+      <div class="stage s2">
+        <div class="idx">02</div><div class="dot"></div>
+        <h3>Обход DPI</h3>
+        <p>Лёгкая маскировка пакетов, чтобы пройти простые фильтры без полного туннеля.</p>
+        <span class="arw">→</span>
+      </div>
+      <div class="stage s3">
+        <div class="idx">03</div><div class="dot"></div>
+        <h3>VPN · reality</h3>
+        <p>Шифрованный канал под видом обычного TLS к настоящему сайту. Незаметен для DPI.</p>
+        <span class="arw">→</span>
+      </div>
+      <div class="stage s4">
+        <div class="idx">04</div><div class="dot"></div>
+        <h3>Реле</h3>
+        <p>Резервный перевалочный узел. Включается, когда всё заблокировано — медленнее, но проходит.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Почему это работает</div>
+    <h2>Организм, а не выключатель</h2>
+    <p class="sub">Симбионт подстраивается под сеть-хозяина: измеряет, пробует, чинит сам.</p>
+    <div class="grid3">
+      <div class="feat">
+        <div class="ic">◎</div>
+        <h3>Детект занавеса</h3>
+        <p>Замечает усиление цензуры на лету и переходит на устойчивый путь до того, как связь оборвётся.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">⟳</div>
+        <h3>Само-починка узлов</h3>
+        <p>Мёртвые узлы выпадают из списка, ожившие возвращаются. Вы всегда видите только живые.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">⚡</div>
+        <h3>Умная маршрутизация</h3>
+        <p>Банк и госуслуги — напрямую, заблокированное — через туннель. По правилам и категориям.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="privacy">
+      <div>
+        <div class="eyebrow" style="text-align:left">Приватность</div>
+        <h2>Мы не знаем, кто вы</h2>
+        <p class="sub">Аккаунт создаётся без почты и телефона. Сервер видит длительность сессии —
+           но не то, куда и что вы отправляете.</p>
+        <ul class="plist">
+          <li><span class="ok">✓</span> Регистрация без личных данных — только анонимный токен.</li>
+          <li><span class="ok">✓</span> Код восстановления — единственный ключ, хранится только у вас.</li>
+          <li><span class="ok">✓</span> Конфигурация приходит подписанным манифестом (Ed25519).</li>
+          <li><span class="ok">✓</span> Проверка ключа идёт офлайн — код не уходит, пока вы не активируете.</li>
+        </ul>
+      </div>
+      <div class="recovery">
+        <div class="lab">Код восстановления</div>
+        <div class="code">SYMB·7K2Q·M4XE·9BQR</div>
+        <div class="hint">Запишите и храните офлайн. Без него доступ не восстановить — мы не храним ваши данные, а значит и не можем «сбросить пароль».</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap foot">
+    <span class="logo"><span class="mark">∞</span> Симбионт</span>
+    <span class="sp"></span>
+    <a href="check.html">Проверить ключ</a>
+    <a href="#cascade">Каскад</a>
+    <a href="#privacy">Приватность</a>
+    <span style="color:var(--faint)">Связь против блокировок</span>
+  </div>
+</footer>
+</body>
+</html>

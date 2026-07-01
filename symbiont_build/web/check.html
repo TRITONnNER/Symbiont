@@ -159,10 +159,23 @@
 
 <script>
 /* ── НАСТРОЙКА (заполнить при деплое) ──────────────────────────────────────── */
-// Открытый ключ подписи сервиса (raw Ed25519, base64) — отдаёт бэкенд: GET /v1/pubkey
-const PUBKEY_B64 = "REPLACE_WITH_ED25519_PUBKEY_BASE64";
-// База бэкенда для живого статуса активации. Пусто → только офлайн-проверка.
-const API_BASE   = "";   // напр. "https://api.example.com"
+// Открытый ключ подписи сервиса (raw Ed25519, base64) — отдаёт бэкенд: GET /v1/pubkey.
+// Можно оставить как есть: если не задан, а API_BASE доступен — ключ подтянется
+// автоматически (GET /v1/pubkey) при загрузке страницы.
+let PUBKEY_B64 = "REPLACE_WITH_ED25519_PUBKEY_BASE64";
+// База бэкенда для живого статуса активации и авто-загрузки ключа. Пусто → тот же
+// origin (когда страница отдаётся рядом с API). Переопределяется ?api=… в URL.
+let API_BASE   = "";   // напр. "https://api.example.com"
+try{ const q=new URLSearchParams(location.search).get("api"); if(q) API_BASE=q.replace(/\/+$/,""); }catch(e){}
+
+// Подтянуть открытый ключ подписи с бэкенда, если он не вшит вручную.
+async function ensurePubkey(){
+  if(PUBKEY_B64 && PUBKEY_B64!=="REPLACE_WITH_ED25519_PUBKEY_BASE64") return;
+  try{
+    const r=await fetch(`${API_BASE}/v1/pubkey`);
+    if(r.ok){ const j=await r.json(); if(j.ed25519) PUBKEY_B64=j.ed25519; }
+  }catch(e){ /* останется офлайн-режим без проверки подписи */ }
+}
 
 /* ── утилиты кодирования ──────────────────────────────────────────────────── */
 const B32="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -294,18 +307,24 @@ async function run(){
   let status = (p.expires_at && p.expires_at<now) ? "expired"
              : (sigOk===true ? "valid" : "offline_ok");
 
-  // 2) живой статус с сервера (если настроен)
-  if(API_BASE){
-    try{
-      const r=await fetch(`${API_BASE}/v1/voucher/check?code=`+encodeURIComponent(code));
-      if(r.ok){ const s=await r.json(); info.server=s;
-        if(["already_redeemed","revoked","expired","not_found","invalid"].includes(s.status))
-          status=s.status; }
-    }catch(e){ /* офлайн-результат остаётся */ }
-  }
+  // 2) живой статус с сервера (публичный чекер: POST /v1/key/check, без авторизации)
+  try{
+    const r=await fetch(`${API_BASE}/v1/key/check`,{
+      method:"POST", headers:{"content-type":"application/json"},
+      body:JSON.stringify({code})});
+    if(r.ok){ const s=await r.json(); info.server=s;
+      if(["already_redeemed","revoked","expired","not_found","invalid"].includes(s.status))
+        status=s.status;
+      // сервер видит грант/срок даже если браузер без Ed25519 — дополним карточку
+      if(s.grants){ if(!info.days) info.days=s.grants.days; if(!info.tier) info.tier=s.grants.tier; }
+      if(s.uses_total && !info.uses_total) info.uses_total=s.uses_total;
+      if(s.expires_at && !info.expires_b) info.expires_b=fmtDate(s.expires_at);
+    }
+  }catch(e){ /* офлайн-результат остаётся */ }
   render(status,info);
 }
 
+ensurePubkey();
 document.getElementById("go").addEventListener("click",run);
 document.getElementById("code").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
 document.getElementById("paste").addEventListener("click",async()=>{

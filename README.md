@@ -13,6 +13,7 @@
 symbiont_build/     Flutter-клиент + бэкенд + веб (как авторская сборка)
   lib/              приложение: экраны, state, движки (engine.dart контракт + mock/singbox/desktop)
   backend/          FastAPI: аккаунты, ключи (Ed25519), манифест, колесо, рефералы, устройства, поддержка
+  web/index.html    лендинг (каскад + приватность), самодостаточный, без CDN
   web/check.html    самодостаточная страница офлайн-проверки ключа (без CDN)
   schema/           JSON-схема подписанного манифеста
   assets/fonts/     JetBrains Mono (бандл для цифр/метрик)
