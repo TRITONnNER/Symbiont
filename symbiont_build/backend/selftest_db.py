@@ -131,6 +131,11 @@ def test_balance_ledger():
     check("balance: списание минут", left == 500)
     left = d.spend_minutes("acc", 9999)   # не уходит ниже нуля
     check("balance: не уходит < 0", left == 0)
+    # защита: отрицательное «списание» не начисляет баланс (было бы +100000)
+    d.apply_grant("acc", minutes=200, kind="purchase", reason="topup2")
+    before = d.balance("acc")["active_minutes_left"]
+    left = d.spend_minutes("acc", -100000)
+    check("spend_minutes: отрицательные НЕ начисляют", left == before)
     # сверка кэша с журналом
     s = d.ledger_sum("acc")
     bal = d.balance("acc")

@@ -402,6 +402,7 @@ class Database:
 
     def spend_minutes(self, account_id: str, minutes: int, *, ref: Optional[str] = None) -> int:
         """Списать активные минуты (узел отчитался). Не уходит ниже нуля. Возвращает остаток."""
+        minutes = max(0, int(minutes))   # защита: отрицательные «списания» не начисляют баланс
         c = self._begin()
         try:
             row = c.execute("SELECT active_minutes_left, sub_mode FROM accounts WHERE account_id=?",
