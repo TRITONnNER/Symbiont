@@ -12,12 +12,21 @@ server.py — референс-бэкенд «Симбионта» (FastAPI). Р
 (создаётся при старте). ADMIN_TOKEN — из переменной окружения (по умолчанию demo).
 """
 from __future__ import annotations
-import os, json, secrets, base64, time
+import os, json, secrets, base64, time, threading
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, Response
 from pydantic import BaseModel
+
+# Порядок тиров (ранг). Гранты/ключи ПОВЫШАЮТ тир, но никогда не понижают:
+# премиум-пользователь, погасивший ultimate-ключ, становится ultimate.
+_TIER_RANK = {"free": 0, "premium": 1, "ultimate": 2}
+
+# Сериализация read-modify-write над общими in-memory словарями. Синхронные
+# (`def`) эндпоинты FastAPI исполняются в общем пуле потоков, поэтому «проверить,
+# затем начислить» без лока допускает гонку (напр. двойной спин колеса за день).
+_state_lock = threading.RLock()
 
 import hmac, hashlib
 from fastapi import Request
@@ -583,7 +592,8 @@ def _grant_days(aid: str, days: int, reason: str, tier: str = "premium"):
     """Начислить бонус-дни (премиум-время). Free поднимается до premium на срок."""
     sub = _sub(aid)
     sub["mode"] = "period"; sub["days_left"] += days
-    if sub["tier"] == "free":
+    # Повышаем тир по рангу (free→premium→ultimate); понижения не бывает.
+    if _TIER_RANK.get(tier, 0) > _TIER_RANK.get(sub["tier"], 0):
         sub["tier"] = tier
     idaccounts[aid]["tier"] = sub["tier"]
     idaccounts[aid].setdefault("bonus_log", []).append(
@@ -865,17 +875,20 @@ def wheel_spin(token: str = Depends(auth)):
     if not aid:
         raise HTTPException(400, "no_account")
     today = _today()
-    if idaccounts[aid].get("wheel", {}).get("last_date") == today:
-        raise HTTPException(409, "already_spun_today")
-    idx = _wheel_index(aid, today)
-    seg = _wheel_segments()[idx]
-    if seg["kind"] == "days":
-        _grant_days(aid, seg["amount"], "wheel")   # ledger('wheel') внутри _grant_days
-    else:
-        sub = _sub(aid); sub["active_minutes_left"] += seg["amount"]
-        _ledger_add(aid, "wheel", minutes=seg["amount"])
-    idaccounts[aid]["wheel"] = {"last_date": today, "last_index": idx, "last_prize": seg}
-    _save_idaccounts()
+    # Критическая секция под локом: без неё два одновременных спина за день оба
+    # проходят проверку и начисляют дважды (дневной лимит обходится).
+    with _state_lock:
+        if idaccounts[aid].get("wheel", {}).get("last_date") == today:
+            raise HTTPException(409, "already_spun_today")
+        idx = _wheel_index(aid, today)
+        seg = _wheel_segments()[idx]
+        if seg["kind"] == "days":
+            _grant_days(aid, seg["amount"], "wheel")   # ledger('wheel') внутри _grant_days
+        else:
+            sub = _sub(aid); sub["active_minutes_left"] += seg["amount"]
+            _ledger_add(aid, "wheel", minutes=seg["amount"])
+        idaccounts[aid]["wheel"] = {"last_date": today, "last_index": idx, "last_prize": seg}
+        _save_idaccounts()
     return {"index": idx, "prize": seg, "subscription": _sub(aid)}
 
 
@@ -930,7 +943,9 @@ def key_check(req: RedeemReq):
 def manifest(since: int = 0):
     _sync_manifest_health()   # ленивый свип протухших/вернувшихся узлов
     if since >= MANIFEST_VERSION:
-        raise HTTPException(304, "not_modified")
+        # 304 не должен нести тело (HTTP-семантика). HTTPException(304) прикрутил бы
+        # JSON {"detail":...}, что некоторые прокси/CDN обрабатывают неверно.
+        return Response(status_code=304)
     return _manifest_signed
 
 @app.get("/v1/pubkey")

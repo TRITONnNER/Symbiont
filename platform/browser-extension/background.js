@@ -41,7 +41,19 @@ function ask(payload) {
 
 chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
   if (!msg || !msg.type) return;
-  if (msg.type === 'status') { sendResponse({ conn: lastConn }); return; }
+  if (msg.type === 'status') {
+    // Если хост уже подключён — спросим у него свежий статус (активирует ветку
+    // status в native-хосте), иначе мгновенно отвечаем из кэша, не поднимая хост
+    // на пустом месте. При ошибке/таймауте хоста тоже откатываемся на кэш.
+    if (port) {
+      ask({ cmd: 'status' }).then(function (m) {
+        sendResponse(m && m.conn && m.conn !== 'error' ? m : { conn: lastConn });
+      });
+      return true;
+    }
+    sendResponse({ conn: lastConn });
+    return;
+  }
   if (msg.type === 'connect') { ask({ cmd: 'connect', node: msg.node }).then(sendResponse); return true; }
   if (msg.type === 'disconnect') { ask({ cmd: 'disconnect' }).then(sendResponse); return true; }
 });

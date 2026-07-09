@@ -91,9 +91,10 @@ class SymEngineChannel {
     };
     final ev = <String, dynamic>{
       'conn': phaseMap[s.phase] ?? 'idle',
-      // Ступень каскада: по умолчанию tunnel в состоянии on. Если движок
-      // сообщает relay/bypass — прокиньте здесь через s.protocol/mode.
-      'stage': s.phase == ConnPhase.on ? 'tunnel' : 'tunnel',
+      // Ступень каскада сообщаем только когда реально подключены (иначе idle не
+      // должен «светить» tunnel). ConnStatus не различает relay/bypass — при
+      // появлении такого сигнала прокиньте его здесь через s.protocol/mode.
+      if (s.phase == ConnPhase.on) 'stage': 'tunnel',
       if (s.pingMs != null) 'ping': s.pingMs,
       if (s.error != null) 'toast': s.error,
       if (s.error != null) 'toastKind': 'error',

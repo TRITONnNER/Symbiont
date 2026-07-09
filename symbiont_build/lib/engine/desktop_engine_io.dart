@@ -123,7 +123,6 @@ class DesktopEngine implements SymbiontEngine {
   @override
   void setActiveNode(NodeInfo? node) { activeNode = node; }
 
-  @override
   bool _connecting = false; // защита от лавины повторных connect
   bool _intentionalStop = false; // true, когда мы сами останавливаем процесс (не крах)
   String _protoPref = 'auto'; // выбор протокола: auto|reality|hysteria2|ss2022
@@ -257,6 +256,7 @@ class DesktopEngine implements SymbiontEngine {
     }
   }
 
+  @override
   Future<void> connect({String? nodeId, CoverageMode? mode}) async {
     _mode = mode ?? _mode;
     if (_connecting) { Log.w('connect', 'уже идёт подключение — повторный вызов пропущен'); return; }
@@ -743,7 +743,6 @@ class DesktopEngine implements SymbiontEngine {
   Future<NodeInfo> fastestNode() async => throw StateError('not used');
   @override
   Future<void> setCoverage(CoverageMode mode) async { _mode = mode; if (mode == CoverageMode.off) await disconnect(); }
-  @override
   @override
   Future<void> applyRules(List<RoutingRule> rules) async {
     _rules = List.of(rules);
