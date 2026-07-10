@@ -588,13 +588,17 @@ def _can_payout(aid: str) -> bool:
 def _record_payout(aid: str):
     idaccounts[aid].setdefault("payout_log", []).append(time.time())
 
+def _raise_tier(sub: dict, tier: str) -> None:
+    """Повысить тир подписки по рангу (free→premium→ultimate). Никогда не понижает —
+    грант/ключ/покупка меньшего тира не сбивают уже действующий более высокий."""
+    if _TIER_RANK.get(tier, 0) > _TIER_RANK.get(sub["tier"], 0):
+        sub["tier"] = tier
+
 def _grant_days(aid: str, days: int, reason: str, tier: str = "premium"):
     """Начислить бонус-дни (премиум-время). Free поднимается до premium на срок."""
     sub = _sub(aid)
     sub["mode"] = "period"; sub["days_left"] += days
-    # Повышаем тир по рангу (free→premium→ultimate); понижения не бывает.
-    if _TIER_RANK.get(tier, 0) > _TIER_RANK.get(sub["tier"], 0):
-        sub["tier"] = tier
+    _raise_tier(sub, tier)
     idaccounts[aid]["tier"] = sub["tier"]
     idaccounts[aid].setdefault("bonus_log", []).append(
         {"days": days, "reason": reason, "at": int(time.time())})
@@ -789,9 +793,20 @@ def admin_grant(req: GrantReq, _: None = Depends(admin)):
         raise HTTPException(404, "no_account")
     g = {"tier": req.tier, "expires": req.days, "source": "owner_grant", "reason": req.reason}
     idaccounts[req.account_id]["granted_tier"] = g
-    idaccounts[req.account_id]["tier"] = req.tier
+    # Единая модель тира: грант отражается и в ПОДПИСКЕ, а не только в granted_tier —
+    # иначе GET /v1/billing/status показывал бы free/старый тир (два источника правды).
+    # По рангу: грант не понижает уже оплаченный более высокий тир.
+    sub = _sub(req.account_id)
+    _raise_tier(sub, req.tier)
+    sub["source"] = "owner_grant"
+    if req.days is None:
+        sub["lifetime"] = True            # пожизненный грант — не привязан к days_left
+    else:
+        sub["mode"] = "period"; sub["days_left"] += int(req.days)
+        _ledger_add(req.account_id, "grant", days=int(req.days), reason=req.reason, tier=req.tier)
+    idaccounts[req.account_id]["tier"] = sub["tier"]   # верхнеуровневый тир = тир подписки
     _save_idaccounts()
-    return {"ok": True, "granted_tier": g}
+    return {"ok": True, "granted_tier": g, "subscription": sub}
 
 
 # ── Рефералы и репутация (видны пользователю) ─────────────────────────────────

@@ -324,14 +324,32 @@ class AppState extends ChangeNotifier {
         final aliasVal = (label == 'guest')
             ? 'sym-${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}'
             : label;
+        // Одна попытка регистрации: берём СВЕЖИЙ PoW-челлендж и решаем его, если
+        // сервер его требует (bits>0). Свежий — потому что челлендж одноразовый и
+        // сервер гасит его даже при последующем отказе 409 (ник занят).
+        Future<Map<String, dynamic>> registerOnce(String av) async {
+          String? powChallenge, powNonce;
+          try {
+            final pow = await api.getPow();
+            final bits = (pow['bits'] as num?)?.toInt() ?? 0;
+            if (bits > 0) {
+              powChallenge = pow['challenge'] as String?;
+              powNonce = await api.solvePow(powChallenge!, bits);
+            }
+          } catch (_) {
+            // PoW-эндпоинт недоступен — пробуем без него (сервер сам решит, нужен ли).
+          }
+          return api.register(aliases: [{'value': av, 'kind': 'nick'}], device: device,
+              powChallenge: powChallenge, powNonce: powNonce);
+        }
         Map<String, dynamic> res;
         try {
-          res = await api.register(aliases: [{'value': aliasVal, 'kind': 'nick'}], device: device);
+          res = await registerOnce(aliasVal);
         } on ApiError catch (e) {
           if (e.status == 409) {
-            // ник занят — добавим короткий суффикс и повторим
+            // ник занят — добавим короткий суффикс и повторим (со свежим PoW)
             final alt = '$aliasVal-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).substring(6)}';
-            res = await api.register(aliases: [{'value': alt, 'kind': 'nick'}], device: device);
+            res = await registerOnce(alt);
           } else {
             rethrow;
           }
@@ -371,6 +389,33 @@ class AppState extends ChangeNotifier {
       backendOnline = await api.ping();
       Store.onboarded = true;
       onboarded = true;
+      await refreshFromBackend();
+      return true;
+    } catch (e) {
+      lastError = '$e';
+      return false;
+    } finally {
+      _setBusy(false);
+    }
+  }
+
+  /// Восстановление аккаунта по recovery-коду (переустановка/новое устройство).
+  /// Код выдаётся один раз при регистрации; сервер по нему выдаёт свежий токен.
+  Future<bool> loginWithRecovery(String recoveryCode, {String? baseUrl}) async {
+    _setBusy(true);
+    try {
+      if (baseUrl != null && baseUrl.trim().isNotEmpty) {
+        Store.baseUrl = baseUrl.trim();
+        api = ApiClient(baseUrl.trim(), trustedPubKeyB64: kTrustedPubKey.isEmpty ? null : kTrustedPubKey);
+      }
+      final platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+      final res = await api.recover(recoveryCode.trim(),
+          device: {'name': label.isEmpty ? 'guest' : label, 'platform': platform});
+      Store.token = api.token!;                 // токен выставлен внутри recover()
+      Store.onboarded = true;
+      onboarded = true;
+      lastError = null;
+      Log.w('account', 'вход по recovery: ${res['account_id']} (устройство ${res['device_id']})');
       await refreshFromBackend();
       return true;
     } catch (e) {

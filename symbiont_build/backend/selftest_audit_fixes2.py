@@ -81,4 +81,22 @@ led = c.get("/v1/billing/ledger", headers=hdr(sp)).json()["entries"]
 wheel_entries = [e for e in led if e.get("kind") == "wheel"]
 check(len(wheel_entries) == 1, "в журнале ровно одна запись 'wheel' (нет двойного начисления)")
 
+# ── 4) admin/grant отражается в подписке, а не только в granted_tier (единая модель) ──
+gt = register("granted")
+aid_g = c.get("/v1/billing/status", headers=hdr(gt)).json()["account_id"]
+g = c.post("/v1/admin/grant",
+           json={"account_id": aid_g, "tier": "ultimate", "days": None, "reason": "founder"},
+           headers=ADMIN)
+check(g.status_code == 200, "admin/grant → 200")
+stt = c.get("/v1/billing/status", headers=hdr(gt)).json()
+check(stt["granted_tier"]["tier"] == "ultimate", "granted_tier = ultimate (аудит-запись на месте)")
+check(stt["subscription"]["tier"] == "ultimate",
+      "подписка тоже ultimate (был баг: billing/status показывал free)")
+check(stt["subscription"].get("lifetime") is True, "пожизненный грант помечен lifetime")
+# грант меньшего тира поверх ultimate НЕ понижает
+c.post("/v1/admin/grant", json={"account_id": aid_g, "tier": "premium", "days": 30, "reason": "x"},
+       headers=ADMIN)
+check(c.get("/v1/billing/status", headers=hdr(gt)).json()["subscription"]["tier"] == "ultimate",
+      "premium-грант поверх ultimate не понижает подписку")
+
 print(f"\n=== ИТОГ: {ok} OK, 0 FAIL ===")

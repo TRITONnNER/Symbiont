@@ -18,19 +18,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _label = TextEditingController();
   final _server = TextEditingController(text: kDefaultBaseUrl);
   final _token = TextEditingController();
+  final _recovery = TextEditingController();
   bool _advanced = false;
   bool _loginMode = false;
+  bool _recoveryMode = false;   // в режиме входа: false=токен, true=recovery-код
 
   @override
-  void dispose() { _label.dispose(); _server.dispose(); _token.dispose(); super.dispose(); }
+  void dispose() {
+    _label.dispose(); _server.dispose(); _token.dispose(); _recovery.dispose();
+    super.dispose();
+  }
 
   void _toast(String m) => ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(content: Text(m), backgroundColor: K.surface3, behavior: SnackBarBehavior.floating));
 
+  /// Небольшая сегментная кнопка выбора способа входа (токен / recovery-код).
+  Widget _segBtn(String label, bool active, VoidCallback onTap) => Semantics(
+    button: true, selected: active, label: label,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? K.surface3 : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: active ? K.mint : K.line2)),
+        child: Text(label, textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12.5, color: active ? K.txt : K.muted,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w400)),
+      ),
+    ),
+  );
+
   Future<void> _submit() async {
-    final ok = _loginMode
-        ? await app.loginWithToken(_token.text, baseUrl: _advanced ? _server.text : null)
-        : await app.register(_label.text, baseUrl: _advanced ? _server.text : null);
+    final base = _advanced ? _server.text : null;
+    final bool ok;
+    if (!_loginMode) {
+      ok = await app.register(_label.text, baseUrl: base);
+    } else if (_recoveryMode) {
+      ok = await app.loginWithRecovery(_recovery.text, baseUrl: base);
+    } else {
+      ok = await app.loginWithToken(_token.text, baseUrl: base);
+    }
     if (!ok && mounted) _toast(app.lastError ?? app.tr('onb.error'));
   }
 
@@ -87,9 +118,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 6),
             Text(app.tr('onb.label.note'), style: const TextStyle(fontSize: 11.5, color: K.muted)),
           ] else ...[
-            sectionLabel(app.tr('onb.token')),
-            TextField(controller: _token, style: mono(size: 13, color: K.txt),
-              decoration: fieldDeco('symb-xxxxxxxx')),
+            // выбор способа входа: по токену или по recovery-коду
+            Row(children: [
+              Expanded(child: _segBtn(app.tr('onb.byToken'), !_recoveryMode,
+                  () => setState(() => _recoveryMode = false))),
+              const SizedBox(width: 8),
+              Expanded(child: _segBtn(app.tr('onb.byRecovery'), _recoveryMode,
+                  () => setState(() => _recoveryMode = true))),
+            ]),
+            const SizedBox(height: 12),
+            if (!_recoveryMode) ...[
+              sectionLabel(app.tr('onb.token')),
+              TextField(controller: _token, style: mono(size: 13, color: K.txt),
+                textInputAction: TextInputAction.done, onSubmitted: (_) => _submit(),
+                decoration: fieldDeco('symb-xxxxxxxx')),
+            ] else ...[
+              sectionLabel(app.tr('onb.recovery')),
+              TextField(controller: _recovery, style: mono(size: 13, color: K.txt),
+                textInputAction: TextInputAction.done, onSubmitted: (_) => _submit(),
+                decoration: fieldDeco(app.tr('onb.recovery.hint'))),
+            ],
           ],
 
           // расширенно: адрес сервера

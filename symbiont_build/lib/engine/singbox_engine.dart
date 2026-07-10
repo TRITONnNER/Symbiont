@@ -15,22 +15,15 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/services.dart';   // MethodChannel / EventChannel — реальный мост к нативу
 import 'engine.dart';
 import 'singbox_config.dart';
 
-// Псевдо-импорт каналов (в реальном проекте — package:flutter/services.dart):
-//   import 'package:flutter/services.dart';
-// Здесь объявлены заглушки типов, чтобы файл читался автономно.
-class MethodChannel {
-  final String name;
-  const MethodChannel(this.name);
-  Future<T?> invokeMethod<T>(String m, [dynamic args]) async => null; // TODO: native
-}
-class EventChannel {
-  final String name;
-  const EventChannel(this.name);
-  Stream<dynamic> receiveBroadcastStream() => const Stream.empty(); // TODO: native
-}
+// Каналы — настоящие Flutter MethodChannel/EventChannel. Dart-сторона моста боевая;
+// остаётся реализовать НАТИВНУЮ сторону (Android VpnService + libbox; iOS/macOS
+// NetworkExtension) — обработчики канала 'symbiont/engine' и поток статуса
+// 'symbiont/engine/status'. До появления натива движок не подключён в main.dart
+// (мобильные сборки идут на MockEngine), поэтому MissingPluginException не возникает.
 
 class SingboxEngine implements SymbiontEngine {
   static const _cmd = MethodChannel('symbiont/engine');       // команды → нативу

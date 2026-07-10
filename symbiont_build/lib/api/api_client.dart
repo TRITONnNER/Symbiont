@@ -90,6 +90,31 @@ class ApiClient {
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
+  /// Решить PoW-челлендж: найти nonce, у которого sha256("challenge:nonce") имеет
+  /// >= [bits] ведущих нулевых бит. 1:1 с backend identity.pow_ok
+  /// (там: int(sha256) < 2^(256-bits)). bits<=0 → PoW выключен, ответ не нужен.
+  Future<String?> solvePow(String challenge, int bits) async {
+    if (bits <= 0) return null;
+    final sha = Sha256();
+    for (var i = 0;; i++) {
+      final h = await sha.hash(utf8.encode('$challenge:$i'));
+      if (_leadingZeroBits(h.bytes) >= bits) return '$i';
+    }
+  }
+
+  static int _leadingZeroBits(List<int> bytes) {
+    var count = 0;
+    for (final b in bytes) {
+      if (b == 0) { count += 8; continue; }
+      for (var mask = 0x80; mask != 0; mask >>= 1) {
+        if ((b & mask) != 0) return count;
+        count++;
+      }
+      break;
+    }
+    return count;
+  }
+
   /// Регистрация: любые алиасы [{value,kind}], опц. пароль/устройство/инвайт/PoW.
   Future<Map<String, dynamic>> register({
     required List<Map<String, String>> aliases,
