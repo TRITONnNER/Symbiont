@@ -1,0 +1,19 @@
+# Добавьте в pubspec.yaml приложения (symbiont_build/ или отдельный пакет
+# symbiont_flutter_host). Ключевое — flutter_inappwebview (Win/mac/Linux/Android/iOS)
+# и вшивание оболочки в assets.
+
+dependencies:
+  flutter_inappwebview: ^6.1.5   # WebView для всех пяти платформ
+
+flutter:
+  assets:
+    # Вшитая оболочка (скопирована из webapp/ скриптом sync_webapp.sh).
+    - assets/webapp/
+    - assets/webapp/fonts/
+    - assets/webapp/flags/
+    - assets/webapp/icons/
+    # Мост движка, внедряемый в WebView.
+    - assets/sym_engine_bridge.js
+
+# Примечание: flutter требует перечислять подкаталоги ассетов явно (как выше).
+# Если добавите новые вложенные папки в webapp/, продублируйте их здесь.

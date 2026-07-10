@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./fonts.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(120% 90% at 50% -10%, #0C1614, #070A0F 60%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; padding:54px 32px 90px;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:30px;">
+
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:46px; height:46px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:26px; color:#06231A;">account_tree</span></div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <h1 style="margin:0; font-size:30px; font-weight:800; letter-spacing:-0.02em; color:#EAF1EF;">Симбионт — карта системы</h1>
+          <span style="font-size:14px; color:#7C8A99;">Каждый экран, окно, блок, компонент и уведомление — с ID и привязкой к платформам</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="Симбионт.dc.html" style="display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:11px; background:rgba(52,229,176,0.10); border:1px solid rgba(52,229,176,0.28); color:#34E5B0; font-size:13px; font-weight:600; text-decoration:none;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">open_in_new</span>Живое приложение</a>
+        <a href="Симбионт - платформы.dc.html" style="display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:11px; background:rgba(91,155,255,0.10); border:1px solid rgba(91,155,255,0.28); color:#5B9BFF; font-size:13px; font-weight:600; text-decoration:none;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">devices</span>Витрина платформ</a>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:22px; padding:14px 18px; border-radius:14px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex; align-items:center; gap:8px;"><span style="color:#34E5B0; font-weight:700; font-size:14px;">✓</span><span style="font-size:12.5px; color:#9DABA8;">есть</span></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="color:#F4B740; font-weight:700; font-size:14px;">◐</span><span style="font-size:12.5px; color:#9DABA8;">частично / иначе</span></div>
+        <div style="display:flex; align-items:center; gap:8px;"><span style="color:#3A4651; font-weight:700; font-size:14px;">·</span><span style="font-size:12.5px; color:#9DABA8;">нет</span></div>
+        <div style="width:1px; height:18px; background:rgba(255,255,255,0.1);"></div>
+        <span style="font-size:12.5px; color:#7C8A99;">{{ totalCount }} элементов · 5 групп · 7 платформ</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <div style="width:34px; height:34px; border-radius:10px; background:rgba(124,138,153,0.14); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#C2CCCA;">grid_view</span></div>
+        <div style="display:flex; flex-direction:column;"><span style="font-weight:700; font-size:17px; color:#EAF1EF;">Платформенная матрица</span><span style="font-size:12.5px; color:#7C8A99;">Что и где доступно</span></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:6px 8px; overflow-x:auto;">
+        <div style="min-width:720px;">
+          <div style="display:grid; grid-template-columns:172px repeat(7, 1fr); gap:2px; align-items:center; padding:10px 10px 12px; border-bottom:1px solid rgba(255,255,255,0.07);">
+            <span style="font-size:11px; font-weight:700; color:#7C8A99; letter-spacing:0.04em;">ПЛАТФОРМА</span>
+            <sc-for list="{{ matrixCaps }}" as="c" hint-placeholder-count="7"><span style="font-size:10.5px; font-weight:600; color:#9DABA8; text-align:center;">{{ c }}</span></sc-for>
+          </div>
+          <sc-for list="{{ matrixRows }}" as="r" hint-placeholder-count="7">
+            <div style="display:grid; grid-template-columns:172px repeat(7, 1fr); gap:2px; align-items:center; padding:11px 10px; border-bottom:1px solid rgba(255,255,255,0.04);">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#C2CCCA; flex:0 0 auto;">{{ r.icon }}</span><span style="font-size:13.5px; font-weight:600; color:#EAF1EF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.name }}</span></div>
+              <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="7"><span style="{{ c.style }}">{{ c.glyph }}</span></sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:center; gap:11px;">
+          <div style="{{ g.sqStyle }}"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:20px;">{{ g.icon }}</span></div>
+          <div style="display:flex; flex-direction:column; flex:1; min-width:0;"><div style="display:flex; align-items:center; gap:9px;"><span style="font-weight:700; font-size:17px; color:#EAF1EF;">{{ g.title }}</span><span style="{{ g.countStyle }}">{{ g.count }}</span></div><span style="font-size:12.5px; color:#7C8A99;">{{ g.sub }}</span></div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(264px, 1fr)); gap:12px;">
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="12">
+            <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:15px 16px; display:flex; flex-direction:column; gap:11px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="{{ it.idStyle }}">{{ it.id }}</span>
+                <span style="flex:1;"></span>
+                <sc-for list="{{ it.platChips }}" as="p" hint-placeholder-count="1"><span style="{{ p.style }}">{{ p.label }}</span></sc-for>
+              </div>
+              <div style="display:flex; align-items:center; gap:11px;">
+                <span style="{{ it.iconStyle }}">{{ it.icon }}</span>
+                <span style="font-weight:600; font-size:14.5px; color:#EAF1EF; line-height:1.25;">{{ it.title }}</span>
+              </div>
+              <span style="font-size:12px; line-height:1.5; color:#8E9A9F;">{{ it.desc }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const PL={ios:'iOS',and:'And',mac:'mac',win:'Win',lin:'Lin',web:'Web',ext:'Ext'};
+    const chipBase={fontSize:'9.5px',fontWeight:'700',padding:'2px 7px',borderRadius:'5px',whiteSpace:'nowrap',letterSpacing:'0.03em',flex:'0 0 auto'};
+    function mkChips(p){
+      if(p==='all'||!p) return [{label:'ВСЕ', style:Object.assign({},chipBase,{background:'rgba(52,229,176,0.13)',color:'#34E5B0'})}];
+      return p.map(k=>({label:PL[k], style:Object.assign({},chipBase,{background:'rgba(124,138,153,0.12)',color:'#9DABA8'})}));
+    }
+    const pad=(n)=>(n<10?'0':'')+n;
+
+    // ---- Platform matrix ----
+    const matrixCaps=['Экран','Бар / трей','Виджет','Per-app','Уведомл.','Always-on','VPN-дост.'];
+    const _cell=(v)=>{ const m={1:{g:'✓',c:'#34E5B0',b:'rgba(52,229,176,0.10)'},2:{g:'◐',c:'#F4B740',b:'rgba(244,183,64,0.10)'},0:{g:'·',c:'#3A4651',b:'transparent'}}[v]; return { glyph:m.g, style:{textAlign:'center',fontWeight:'700',fontSize:'14px',color:m.c,background:m.b,borderRadius:'7px',padding:'6px 0'} }; };
+    const _rows=[
+      {name:'iOS',icon:'phone_iphone',v:[1,0,1,2,1,1,1]},
+      {name:'Android',icon:'android',v:[1,0,1,1,1,1,1]},
+      {name:'macOS',icon:'laptop_mac',v:[1,1,0,1,1,1,2]},
+      {name:'Windows',icon:'desktop_windows',v:[1,1,1,1,1,1,2]},
+      {name:'Linux',icon:'dns',v:[1,1,1,1,1,1,2]},
+      {name:'Веб-портал',icon:'language',v:[2,0,0,0,2,0,0]},
+      {name:'Расширение',icon:'extension',v:[2,0,0,1,1,0,0]}
+    ];
+    const matrixRows=_rows.map(r=>({ name:r.name, icon:r.icon, cells:r.v.map(_cell) }));
+
+    // ---- Groups ----
+    const groupsRaw=[
+      {code:'SCR',color:'#34E5B0',icon:'web_asset',title:'Экраны',sub:'Полноэкранные окна навигации',items:[
+        {icon:'shield',title:'Главная / Защита',desc:'Ядро подключения, статус, метрики связи, выбор узла',plats:'all'},
+        {icon:'dns',title:'Узлы',desc:'Список узлов, само-починка, нагрузка, пинг, избранное',plats:'all'},
+        {icon:'alt_route',title:'Маршрутизация',desc:'Сервисы и приложения: напрямую / туннель / обход',plats:'all'},
+        {icon:'troubleshoot',title:'Анализ сети',desc:'Проверка DPI, гео, подбор обхода, deep-link в FAQ',plats:'all'},
+        {icon:'account_circle',title:'Аккаунт',desc:'Подписка, баланс, награды и доступ',plats:'all'},
+        {icon:'forum',title:'Поддержка',desc:'Чат поддержки и быстрые ответы',plats:'all'},
+        {icon:'tune',title:'Настройки',desc:'Защита и фильтры · система · протокол',plats:'all'},
+        {icon:'menu_book',title:'Глоссарий / FAQ',desc:'22 термина + 12 вопросов, поиск, аккордеон',plats:'all'},
+        {icon:'receipt_long',title:'Журнал',desc:'Лог подключений и событий каскада',plats:['mac','win','lin']},
+        {icon:'redeem',title:'Колесо удачи',desc:'Ежедневная награда, серия, шансы, таймер',plats:'all'},
+        {icon:'diversity_3',title:'Рефералы',desc:'Код, уровни репутации, статистика, выплаты',plats:'all'},
+        {icon:'devices',title:'Устройства',desc:'Сессии, владелец, отзыв, безлимит',plats:'all'},
+        {icon:'key',title:'Код восстановления',desc:'Единственный ключ к аккаунту, показ один раз',plats:'all'},
+        {icon:'admin_panel_settings',title:'Панель ваучеров',desc:'Выпуск и отзыв партий ключей',plats:['mac','win','lin','web']},
+        {icon:'lan',title:'Карта трафика',desc:'Живые соединения host→путь, скорость, состояния',plats:'all'},
+        {icon:'history',title:'История начислений',desc:'Движения баланса активного времени',plats:'all'}
+      ]},
+      {code:'OVL',color:'#5B9BFF',icon:'layers',title:'Окна и слои',sub:'Мини-окна поверх экрана (на мобильном — нижние листы)',items:[
+        {icon:'public',title:'Пикер узла',desc:'Поиск по странам, пинг/нагрузка, избранное',plats:'all'},
+        {icon:'vpn_key',title:'Пикер протокола',desc:'Авто-каскад + reality / hysteria2 / SS2022',plats:'all'},
+        {icon:'alt_route',title:'Пикер маршрута + охват',desc:'Действие + «что охватывает правило» (домен / *.домен)',plats:'all'},
+        {icon:'add_circle',title:'Шторка «Добавить»',desc:'Что добавить: сайт по ссылке или приложение',plats:'all'},
+        {icon:'travel_explore',title:'Добавить сайт',desc:'Поиск-подсказки, поддомены, выбор действия',plats:'all'},
+        {icon:'radar',title:'Сканер устройства',desc:'Авто-поиск установленных приложений по категориям',plats:['mac','win','lin','and']},
+        {icon:'fingerprint',title:'Проверка ключа',desc:'Скан-линия → криптопечать → вердикт (6 статусов)',plats:'all'},
+        {icon:'workspace_premium',title:'Подписка / тарифы',desc:'Free / Premium / Ultimate + баланс времени',plats:'all'},
+        {icon:'hourglass_top',title:'Оплата',desc:'Состояния: обрабатывается → оплачено',plats:'all'},
+        {icon:'waving_hand',title:'Онбординг',desc:'Первый запуск, ключ/восстановление, разрешения',plats:'all'},
+        {icon:'translate',title:'Меню языка',desc:'55 языков с флагами, регионы, RTL, межславянский',plats:'all'}
+      ]},
+      {code:'CMP',color:'#A78BFA',icon:'widgets',title:'Компоненты',sub:'Переиспользуемые блоки и контролы',items:[
+        {icon:'power_settings_new',title:'ConnectionCore',desc:'Кнопка-ядро + каскад прямой→обход→VPN→реле',plats:'all'},
+        {icon:'dashboard',title:'Card',desc:'Данные · панель · уведомление · действие',plats:'all'},
+        {icon:'view_list',title:'ListRow',desc:'Строка: лого/иконка, заголовок, под-текст, действие',plats:'all'},
+        {icon:'checklist',title:'Picker',desc:'Мини-окно выбора с поиском и группами',plats:'all'},
+        {icon:'smart_button',title:'Кнопка — основная',desc:'Мятный градиент, главное действие',plats:'all'},
+        {icon:'check_box_outline_blank',title:'Кнопка — вторичная',desc:'Контур / ghost, второстепенное действие',plats:'all'},
+        {icon:'dangerous',title:'Кнопка — опасная',desc:'Отзыв / удаление, красный акцент',plats:'all'},
+        {icon:'filter_list',title:'Чип-фильтр',desc:'Категории и фильтры списков',plats:'all'},
+        {icon:'label',title:'Чип-действие',desc:'Маршруты: напрямую / туннель / обход / блок',plats:'all'},
+        {icon:'pill',title:'Пилюля статуса',desc:'Цветной статус с точкой или иконкой',plats:'all'},
+        {icon:'toggle_on',title:'Тумблер',desc:'Вкл / выкл настройки',plats:'all'},
+        {icon:'edit',title:'Поле ввода',desc:'Текст / моно-код, фокус-акцент',plats:'all'},
+        {icon:'verified',title:'Бейдж',desc:'Владелец · вернулся · рек. · OWNER',plats:'all'},
+        {icon:'notifications_active',title:'Тост',desc:'Всплывающее подтверждение действия',plats:'all'},
+        {icon:'flag',title:'Флаг',desc:'55 языков + спец-эмблема межславянского',plats:'all'},
+        {icon:'linear_scale',title:'Прогресс-бар',desc:'Серии, партии ваучеров, уровни репутации',plats:'all'},
+        {icon:'tab',title:'Сегмент-таб',desc:'Переключатель Глоссарий / FAQ и пр.',plats:'all'},
+        {icon:'donut_large',title:'Колесо (SVG)',desc:'Ровные секторы, метки-гондолы, указатель',plats:'all'},
+        {icon:'local_fire_department',title:'Календарь серии',desc:'7 дней, вехи, заморозка, pity',plats:'all'},
+        {icon:'shield_lock',title:'Криптопечать',desc:'Гекс-печать результата проверки ключа',plats:'all'}
+      ]},
+      {code:'SYS',color:'#F4B740',icon:'notifications',title:'Уведомления и система',sub:'Системная интеграция платформ',items:[
+        {icon:'check_circle',title:'Уведомление: защита включена',desc:'reality · пинг · узел',plats:'all'},
+        {icon:'gpp_bad',title:'Уведомление: обрыв',desc:'Связь потеряна — Kill-switch рубит трафик',plats:'all'},
+        {icon:'swap_horiz',title:'Уведомление: каскад переключился',desc:'Прямой заблокирован → перешёл на VPN',plats:'all'},
+        {icon:'widgets',title:'Виджет подключения',desc:'Статус и быстрый тумблер на рабочем столе',plats:['ios','and']},
+        {icon:'dashboard_customize',title:'Плитка быстрого подключения',desc:'Шторка/Control Center — один тап',plats:['ios','and']},
+        {icon:'menu_open',title:'Меню-бар (macOS)',desc:'Статус, узел, авто-каскад, открыть/выход',plats:['mac']},
+        {icon:'bottom_navigation',title:'Трей (Windows / Linux)',desc:'Быстрое подключение из системного лотка',plats:['win','lin']},
+        {icon:'vpn_lock',title:'Запрос разрешения VPN',desc:'Системный диалог при первом подключении',plats:['ios','and']},
+        {icon:'apps',title:'Per-app split-tunnel',desc:'Выбор приложений в туннеле / напрямую',plats:['and']}
+      ]},
+      {code:'STT',color:'#FF8FA3',icon:'toggle_on',title:'Состояния',sub:'Состояния подключения и пустые экраны',items:[
+        {icon:'power_settings_new',title:'idle — отключено',desc:'Ядро в покое, призыв подключиться',plats:'all'},
+        {icon:'pending',title:'connecting — подключение',desc:'Анимация каскада, подбор пути',plats:'all'},
+        {icon:'verified_user',title:'protected — защищено',desc:'Активный путь, метрики, узел',plats:'all'},
+        {icon:'block',title:'blocking — обход',desc:'DPI обходится, путь переключается',plats:'all'},
+        {icon:'error',title:'error — ошибка',desc:'Не удалось встать, подсказка и повтор',plats:'all'},
+        {icon:'cloud_off',title:'Пусто: нет узлов',desc:'Фильтр/поиск ничего не дал',plats:'all'},
+        {icon:'lan',title:'Пусто: трафик',desc:'«Нужно подключиться» с кнопкой',plats:'all'},
+        {icon:'search_off',title:'Пусто: поиск',desc:'Глоссарий/сервисы — ничего не найдено',plats:'all'},
+        {icon:'desktop_windows',title:'Доступно на десктопе',desc:'Честный пустой стейт для функций без платформы',plats:['ios','and','web','ext']}
+      ]}
+    ];
+
+    let total=0;
+    const groups=groupsRaw.map(g=>{
+      total+=g.items.length;
+      return {
+        code:g.code, title:g.title, sub:g.sub, count:String(g.items.length), icon:g.icon,
+        sqStyle:{width:'34px',height:'34px',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto',background:g.color+'22',color:g.color},
+        countStyle:{fontFamily:"'JetBrains Mono',monospace",fontWeight:'700',fontSize:'11px',color:g.color,background:g.color+'18',padding:'1px 8px',borderRadius:'999px'},
+        items:g.items.map((it,i)=>({
+          id:g.code+'-'+pad(i+1),
+          idStyle:{fontFamily:"'JetBrains Mono',monospace",fontWeight:'700',fontSize:'10.5px',color:g.color,background:g.color+'18',padding:'2px 8px',borderRadius:'6px',letterSpacing:'0.04em'},
+          icon:it.icon,
+          iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'24px',color:g.color,flex:'0 0 auto'},
+          title:it.title, desc:it.desc,
+          platChips:mkChips(it.plats)
+        }))
+      };
+    });
+
+    return { matrixCaps, matrixRows, groups, totalCount:String(total) };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+# Симбионт — что НЕ коммитить.
+
+# ── СЕКРЕТЫ (критично — держать только на сервере) ──
+secrets.json
+node_secrets.json
+signing.key
+*.key
+.env
+
+# ── Состояние/«БД» бэкенда (генерится в рантайме) ──
+accounts.json
+idaccounts.json
+aliases.json
+devices.json
+threads.json
+keys_registry.json
+nodes.json
+economy.json
+payments.json
+node_health.json
+symbiont_state.db
+symbiont_state.db-wal
+symbiont_state.db-shm
+
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ── Flutter / Dart ──
+.dart_tool/
+build/
+out/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+
+# ── Прочее ──
+.DS_Store
+*.log

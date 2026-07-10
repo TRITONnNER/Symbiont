@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./fonts.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  @keyframes ant-blob{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-44%,-46%) scale(1.15)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(120% 90% at 50% -10%, #0C1614, #070A0F 60%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; padding:54px 32px 90px;">
+  <div style="max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:40px;">
+
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <div style="width:46px; height:46px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:25px; color:#06231A;">layers</span></div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+          <h1 style="margin:0; font-size:29px; font-weight:800; letter-spacing:-0.02em;">Симбионт — разбор интерфейса</h1>
+          <span style="font-size:14px; color:#7C8A99;">Собранный «лего-набор», разъединённый на детали: что, где и в каком порядке лежит</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:10px;">
+        <a href="Симбионт.dc.html" style="display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:11px; background:rgba(52,229,176,0.10); border:1px solid rgba(52,229,176,0.28); color:#34E5B0; font-size:13px; font-weight:600; text-decoration:none;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">open_in_new</span>Собранное приложение</a>
+        <a href="Симбионт - карта системы.dc.html" style="display:inline-flex; align-items:center; gap:8px; padding:9px 16px; border-radius:11px; background:rgba(124,138,153,0.10); border:1px solid rgba(124,138,153,0.28); color:#C2CCCA; font-size:13px; font-weight:600; text-decoration:none;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">account_tree</span>Карта системы</a>
+      </div>
+    </div>
+
+    <!-- ============ EXPLODED STACK ============ -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#34E5B0; background:rgba(52,229,176,0.14); padding:3px 10px; border-radius:7px;">01</span>
+        <span style="font-weight:700; font-size:19px;">Экран «Главная» — послойно</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:36px; align-items:center; background:rgba(255,255,255,0.018); border:1px solid rgba(255,255,255,0.06); border-radius:20px; padding:30px 28px;">
+        <div style="flex:1 1 440px; min-width:330px; perspective:1700px; height:560px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:relative; width:300px; height:188px; transform-style:preserve-3d; transform:rotateX(56deg) rotateZ(-42deg);">
+
+            <div style="position:absolute; inset:0; transform:translateZ(0px); border-radius:14px; overflow:hidden; background:#070A0F; border:1px solid rgba(31,166,125,0.45); box-shadow:0 40px 60px -25px rgba(0,0,0,0.8);">
+              <div style="position:absolute; left:30%; top:30%; width:150px; height:150px; border-radius:50%; background:radial-gradient(circle,rgba(52,229,176,0.5),transparent 70%); filter:blur(14px); animation:ant-blob 7s ease-in-out infinite;"></div>
+              <div style="position:absolute; right:18%; bottom:14%; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,rgba(91,155,255,0.35),transparent 70%); filter:blur(16px);"></div>
+              <div style="position:absolute; top:9px; left:9px; width:26px; height:26px; border-radius:50%; background:#1FA67D; color:#06231A; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; transform:rotateZ(42deg) rotateX(-56deg);">1</div>
+            </div>
+
+            <div style="position:absolute; inset:0; transform:translateZ(62px); border-radius:14px; border:1px solid rgba(91,155,255,0.5); background:rgba(10,16,18,0.5); box-shadow:0 30px 50px -25px rgba(0,0,0,0.6);">
+              <div style="position:absolute; top:9px; left:12px; right:12px; height:7px; display:flex; align-items:center; justify-content:flex-end; gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#FF5F57;"></span><span style="width:6px;height:6px;border-radius:50%;background:#FEBC2E;"></span><span style="width:6px;height:6px;border-radius:50%;background:#28C840;"></span></div>
+              <div style="position:absolute; left:11px; top:28px; bottom:14px; width:36px; border-radius:9px; background:rgba(91,155,255,0.10); border:1px solid rgba(91,155,255,0.22); display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:9px;"><span style="width:18px;height:5px;border-radius:3px;background:rgba(52,229,176,0.7);"></span><span style="width:18px;height:5px;border-radius:3px;background:rgba(255,255,255,0.18);"></span><span style="width:18px;height:5px;border-radius:3px;background:rgba(255,255,255,0.18);"></span><span style="width:18px;height:5px;border-radius:3px;background:rgba(255,255,255,0.18);"></span></div>
+              <div style="position:absolute; top:9px; left:9px; width:26px; height:26px; border-radius:50%; background:#5B9BFF; color:#06231A; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; transform:rotateZ(42deg) rotateX(-56deg);">2</div>
+            </div>
+
+            <div style="position:absolute; inset:0; transform:translateZ(124px); border-radius:14px; border:1px solid rgba(52,229,176,0.5); background:rgba(8,14,13,0.4); box-shadow:0 30px 50px -25px rgba(0,0,0,0.6);">
+              <div style="position:absolute; left:64px; right:14px; top:18px; display:flex; flex-direction:column; align-items:center; gap:9px;">
+                <span style="width:52px; height:52px; border-radius:50%; background:radial-gradient(circle,#34E5B0,#1FA67D); box-shadow:0 0 16px rgba(52,229,176,0.5);"></span>
+                <div style="display:flex; gap:6px;"><span style="width:34px;height:18px;border-radius:5px;background:rgba(255,255,255,0.07);"></span><span style="width:34px;height:18px;border-radius:5px;background:rgba(255,255,255,0.07);"></span><span style="width:34px;height:18px;border-radius:5px;background:rgba(255,255,255,0.07);"></span></div>
+                <span style="width:150px; height:20px; border-radius:7px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);"></span>
+              </div>
+              <div style="position:absolute; top:9px; left:9px; width:26px; height:26px; border-radius:50%; background:#34E5B0; color:#06231A; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; transform:rotateZ(42deg) rotateX(-56deg);">3</div>
+            </div>
+
+            <div style="position:absolute; inset:0; transform:translateZ(196px); border-radius:14px; border:1px solid rgba(167,139,250,0.55); background:rgba(4,8,10,0.55); box-shadow:0 30px 50px -25px rgba(0,0,0,0.6);">
+              <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:140px; height:108px; border-radius:12px; background:#101A1D; border:1px solid rgba(167,139,250,0.4); display:flex; flex-direction:column; gap:7px; padding:13px;"><span style="width:60%;height:8px;border-radius:4px;background:rgba(255,255,255,0.18);"></span><span style="width:100%;height:13px;border-radius:5px;background:rgba(255,255,255,0.06);"></span><span style="width:100%;height:13px;border-radius:5px;background:rgba(52,229,176,0.18);"></span><span style="width:100%;height:13px;border-radius:5px;background:rgba(255,255,255,0.06);"></span></div>
+              <div style="position:absolute; top:9px; left:9px; width:26px; height:26px; border-radius:50%; background:#A78BFA; color:#06231A; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; transform:rotateZ(42deg) rotateX(-56deg);">4</div>
+            </div>
+
+            <div style="position:absolute; inset:0; transform:translateZ(268px); border-radius:14px; border:1px solid rgba(244,183,64,0.5); background:rgba(4,8,10,0.25); box-shadow:0 30px 50px -25px rgba(0,0,0,0.5);">
+              <div style="position:absolute; right:12px; top:12px; width:120px; height:34px; border-radius:9px; background:rgba(30,34,40,0.95); border:1px solid rgba(244,183,64,0.3); display:flex; align-items:center; gap:7px; padding:0 10px;"><span style="width:8px;height:8px;border-radius:50%;background:#34E5B0;"></span><span style="flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,0.2);"></span></div>
+              <div style="position:absolute; top:9px; left:9px; width:26px; height:26px; border-radius:50%; background:#F4B740; color:#06231A; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; transform:rotateZ(42deg) rotateX(-56deg);">5</div>
+            </div>
+
+          </div>
+        </div>
+
+        <div style="flex:1 1 330px; min-width:300px; display:flex; flex-direction:column; gap:10px;">
+          <sc-for list="{{ layers }}" as="l" hint-placeholder-count="5">
+            <div style="display:flex; gap:13px; padding:13px 15px; border-radius:13px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06);">
+              <span style="{{ l.numStyle }}">{{ l.num }}</span>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;">
+                <div style="display:flex; align-items:center; gap:8px;"><span style="font-weight:700; font-size:14.5px; color:#EAF1EF;">{{ l.name }}</span><span style="{{ l.zStyle }}">{{ l.z }}</span></div>
+                <span style="font-size:12.5px; color:#9DABA8; line-height:1.45;">{{ l.desc }}</span>
+                <span style="font-size:11.5px; color:#6E7B8A; line-height:1.45;">⊕ {{ l.build }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ASSEMBLY ============ -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#34E5B0; background:rgba(52,229,176,0.14); padding:3px 10px; border-radius:7px;">02</span>
+        <span style="font-weight:700; font-size:19px;">Инструкция по сборке</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px; background:rgba(255,255,255,0.018); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:22px 24px;">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex; align-items:flex-start; gap:14px;">
+            <span style="width:28px; height:28px; border-radius:9px; background:rgba(52,229,176,0.14); color:#34E5B0; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;">{{ s.n }}</span>
+            <span style="flex:1; font-size:14px; line-height:1.55; color:#C2CCCA; padding-top:3px;">{{ s.text }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ============ COMPONENT ANATOMY ============ -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#A78BFA; background:rgba(167,139,250,0.14); padding:3px 10px; border-radius:7px;">03</span>
+        <span style="font-weight:700; font-size:19px;">Анатомия блоков</span>
+        <span style="font-size:13px; color:#7C8A99;">— из чего собран каждый компонент</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:14px;">
+        <sc-for list="{{ anatomy }}" as="a" hint-placeholder-count="4">
+          <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; align-items:center; gap:11px;">
+              <span style="{{ a.iconStyle }}">{{ a.icon }}</span>
+              <div style="display:flex; flex-direction:column; min-width:0;"><span style="font-weight:700; font-size:15px; color:#EAF1EF;">{{ a.name }}</span><span style="font-size:11.5px; color:#7C8A99;">{{ a.tag }}</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:7px;">
+              <sc-for list="{{ a.parts }}" as="p" hint-placeholder-count="4">
+                <div style="display:flex; align-items:baseline; gap:10px;">
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; color:#A78BFA; flex:0 0 auto; width:20px;">{{ p.k }}</span>
+                  <span style="font-weight:600; font-size:13px; color:#EAF1EF; flex:0 0 auto;">{{ p.label }}</span>
+                  <span style="flex:1; font-size:11.5px; color:#7C8A99; text-align:right; line-height:1.4;">{{ p.desc }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex; align-items:flex-start; gap:8px; padding:10px 12px; border-radius:10px; background:rgba(167,139,250,0.07); border:1px solid rgba(167,139,250,0.18);">
+              <span style="font-family:'Material Symbols Rounded'; font-size:15px; color:#A78BFA; flex:0 0 auto;">build</span>
+              <span style="font-size:11.5px; line-height:1.45; color:#C8BBEA;">{{ a.edit }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ============ CONTROL ANATOMY ============ -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#5B9BFF; background:rgba(91,155,255,0.14); padding:3px 10px; border-radius:7px;">04</span>
+        <span style="font-weight:700; font-size:19px;">Контролы — детали и состояния</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:14px;">
+        <sc-for list="{{ controls }}" as="c" hint-placeholder-count="5">
+          <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 17px; display:flex; flex-direction:column; gap:12px;">
+            <span style="font-weight:700; font-size:14px; color:#EAF1EF;">{{ c.name }}</span>
+            <div style="display:flex; align-items:center; justify-content:center; min-height:48px; padding:10px; border-radius:11px; background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.05);">{{ c.demo }}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+              <sc-for list="{{ c.layers }}" as="ly" hint-placeholder-count="3"><span style="font-size:10.5px; font-weight:600; color:#9DABA8; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); padding:3px 8px; border-radius:6px;">{{ ly }}</span></sc-for>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:5px;">
+              <sc-for list="{{ c.states }}" as="st" hint-placeholder-count="2"><span style="{{ st.style }}">{{ st.label }}</span></sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ============ TOKENS ============ -->
+    <div style="display:flex; flex-direction:column; gap:18px;">
+      <div style="display:flex; align-items:center; gap:11px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:12px; color:#F4B740; background:rgba(244,183,64,0.14); padding:3px 10px; border-radius:7px;">05</span>
+        <span style="font-weight:700; font-size:19px;">Токены — что менять глобально</span>
+      </div>
+      <div style="display:flex; flex-wrap:wrap; gap:26px; background:rgba(255,255,255,0.018); border:1px solid rgba(255,255,255,0.06); border-radius:18px; padding:22px 24px;">
+        <div style="flex:1 1 300px; min-width:280px; display:flex; flex-direction:column; gap:11px;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ЦВЕТА</span>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ tokenColors }}" as="t" hint-placeholder-count="6">
+              <div style="display:flex; align-items:center; gap:11px;">
+                <span style="{{ t.sw }}"></span>
+                <span style="font-weight:600; font-size:13px; color:#EAF1EF; flex:0 0 auto;">{{ t.name }}</span>
+                <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#7C8A99; text-align:right;">{{ t.hex }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1 1 300px; min-width:280px; display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">ШРИФТЫ</span>
+            <div style="display:flex; align-items:baseline; gap:10px;"><span style="font-family:'Golos Text',sans-serif; font-weight:700; font-size:16px;">Golos Text</span><span style="font-size:12px; color:#7C8A99;">— интерфейс, заголовки</span></div>
+            <div style="display:flex; align-items:baseline; gap:10px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:#34E5B0;">JetBrains Mono</span><span style="font-size:12px; color:#7C8A99;">— числа, коды, домены</span></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">РАДИУСЫ И ОТСТУПЫ</span>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <sc-for list="{{ tokenRadii }}" as="r" hint-placeholder-count="4"><span style="display:inline-flex; align-items:center; gap:7px; padding:6px 11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px;"><span style="{{ r.box }}"></span><span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#C2CCCA;">{{ r.label }}</span></span></sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals(){
+    const _num=(c)=>({width:'26px',height:'26px',borderRadius:'50%',background:c,color:'#06231A',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'800',fontSize:'13px',flex:'0 0 auto'});
+    const _z=(c)=>({fontFamily:"'JetBrains Mono',monospace",fontSize:'10px',fontWeight:'700',color:c,background:c+'1c',padding:'1px 7px',borderRadius:'5px'});
+
+    const layers=[
+      {num:'1',c:'#1FA67D',name:'Подложка',z:'z 0',desc:'Тёмная база и аврора-свечение — задний фон всего окна.',build:'Фон #070A0F + 2 радиальных пятна, position:fixed, не скроллится.'},
+      {num:'2',c:'#5B9BFF',name:'Каркас',z:'z 10',desc:'Тайтл-бар с оконными кнопками + рейл/таб-бар навигации.',build:'Рейл слева (десктоп) → нижний таб-бар на мобайле (<720px).'},
+      {num:'3',c:'#34E5B0',name:'Контент',z:'z 20',desc:'Сам экран: ядро подключения, плитки метрик, строка узла.',build:'Скролл-колонка: ConnectionCore → метрики → ListRow узла.'},
+      {num:'4',c:'#A78BFA',name:'Слой-оверлей',z:'z 250',desc:'Мини-окна: пикеры, шторки, проверка ключа.',build:'Затемнение (scrim) + панель по центру → нижний лист на мобайле.'},
+      {num:'5',c:'#F4B740',name:'Система',z:'z 400',desc:'Тосты, уведомления, виджет, трей — поверх всего.',build:'Авто-исчезают; виджет и трей живут вне окна приложения.'}
+    ].map(l=>({ num:l.num, name:l.name, z:l.z, desc:l.desc, build:l.build, numStyle:_num(l.c), zStyle:_z(l.c) }));
+
+    const steps=[
+      {n:'1',text:'Залить подложку: тёмный фон + аврора. Слой фиксирован, не двигается при скролле контента.'},
+      {n:'2',text:'Положить каркас навигации: на десктопе — вертикальный рейл слева и оконные кнопки сверху; на мобайле (<720px) рейл превращается в нижний таб-бар, оконные кнопки скрываются.'},
+      {n:'3',text:'В свободную область — контент-колонку экрана. Для Главной: по центру ConnectionCore, под ним плитки метрик (пинг · потери · протокол), затем строка текущего узла.'},
+      {n:'4',text:'Действия (выбор узла/протокола/маршрута, «Добавить», проверка ключа) открывают слой-оверлей: затемнение фона + панель. На десктопе — по центру, на мобайле — нижний лист (data-sheet).'},
+      {n:'5',text:'Тосты и системные уведомления — самый верхний слой, поверх оверлеев. Виджет, меню-бар и трей — отдельная платформенная интеграция вне окна.'}
+    ];
+
+    const _ic=(c)=>({fontFamily:"'Material Symbols Rounded'",fontSize:'22px',color:c,flex:'0 0 auto'});
+    const anatomy=[
+      {icon:'power_settings_new',color:'#34E5B0',name:'ConnectionCore',tag:'ядро подключения',parts:[
+        {k:'a',label:'Кольцо',desc:'прогресс/пульс вокруг'},
+        {k:'b',label:'Кнопка-ядро',desc:'градиент, тап = вкл/выкл'},
+        {k:'c',label:'Иконка',desc:'состояние подключения'},
+        {k:'d',label:'Статус',desc:'подпись под кнопкой'},
+        {k:'e',label:'Каскад',desc:'степпер прямой→VPN→реле'},
+        {k:'f',label:'Метрика',desc:'моно: пинг/протокол'}
+      ],edit:'Цвет ядра и свечение — по состоянию (idle/protected/error). Менять в renderVals ConnectionCore.'},
+      {icon:'view_list',color:'#34E5B0',name:'ListRow',tag:'строка списка',parts:[
+        {k:'a',label:'Лид',desc:'иконка / лого / тайл'},
+        {k:'b',label:'Заголовок',desc:'основной текст'},
+        {k:'c',label:'Под-текст',desc:'домен / описание'},
+        {k:'d',label:'Действие',desc:'пилюля / тумблер / шеврон'}
+      ],edit:'Вид лида и действия — пропсы lead/action. Один компонент на все списки.'},
+      {icon:'dashboard',color:'#34E5B0',name:'Card',tag:'контейнер',parts:[
+        {k:'a',label:'Оболочка',desc:'фон + бордер + радиус'},
+        {k:'b',label:'Капс-заголовок',desc:'мелкий, разрядка'},
+        {k:'c',label:'Тело / слот',desc:'контент или вложенное'},
+        {k:'d',label:'Акцент',desc:'иконка / полоса статуса'}
+      ],edit:'4 варианта: данные · панель · уведомление · действие. Меняется пропсом variant.'},
+      {icon:'layers',color:'#A78BFA',name:'Оверлей (Picker)',tag:'мини-окно',parts:[
+        {k:'a',label:'Scrim',desc:'затемнение фона'},
+        {k:'b',label:'Панель',desc:'центр → нижний лист'},
+        {k:'c',label:'Шапка',desc:'тайтл + закрыть'},
+        {k:'d',label:'Поиск',desc:'опционально'},
+        {k:'e',label:'Опции',desc:'лид + лейбл + чек'}
+      ],edit:'Поведение листа на мобайле — атрибут data-sheet + медиа-запрос <720px.'}
+    ].map(a=>({ icon:a.icon, name:a.name, tag:a.tag, iconStyle:_ic(a.color), parts:a.parts, edit:a.edit }));
+
+    const _stOn={fontSize:'10.5px',fontWeight:'700',color:'#34E5B0',background:'rgba(52,229,176,0.12)',border:'1px solid rgba(52,229,176,0.28)',padding:'3px 8px',borderRadius:'6px'};
+    const _stOff={fontSize:'10.5px',fontWeight:'600',color:'#9DABA8',background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',padding:'3px 8px',borderRadius:'6px'};
+    const _h=React.createElement;
+    const controls=[
+      {name:'Кнопка — основная', demo:_h('div',{style:{display:'flex',alignItems:'center',gap:'8px',padding:'10px 18px',borderRadius:'11px',background:'linear-gradient(135deg,#3DF0BB,#1FA67D)'}}, _h('span',{style:{fontFamily:"'Material Symbols Rounded'",fontSize:'17px',color:'#06231A'}},'bolt'), _h('span',{style:{fontWeight:'700',fontSize:'13px',color:'#06231A'}},'Подключить')),
+        layers:['фон-градиент','радиус 11','иконка','лейбл'], states:[{label:'default',style:_stOn},{label:'hover: ярче',style:_stOff},{label:'active',style:_stOff}]},
+      {name:'Тумблер', demo:_h('div',{style:{width:'44px',height:'25px',borderRadius:'999px',background:'#34E5B0',position:'relative'}}, _h('div',{style:{position:'absolute',top:'3px',left:'22px',width:'19px',height:'19px',borderRadius:'50%',background:'#06231A'}})),
+        layers:['дорожка','кружок'], states:[{label:'вкл · мятный',style:_stOn},{label:'выкл · серый',style:_stOff}]},
+      {name:'Чип-фильтр', demo:_h('div',{style:{display:'flex',gap:'6px'}}, _h('span',{style:{fontSize:'12px',fontWeight:'600',color:'#34E5B0',background:'rgba(52,229,176,0.12)',border:'1px solid rgba(52,229,176,0.3)',padding:'6px 13px',borderRadius:'999px'}},'Все'), _h('span',{style:{fontSize:'12px',color:'#9DABA8',background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.1)',padding:'6px 13px',borderRadius:'999px'}},'Видео')),
+        layers:['фон-tint','бордер','лейбл'], states:[{label:'активный',style:_stOn},{label:'обычный',style:_stOff}]},
+      {name:'Пилюля статуса', demo:_h('div',{style:{display:'flex',alignItems:'center',gap:'7px',padding:'6px 13px',borderRadius:'999px',background:'rgba(52,229,176,0.1)',border:'1px solid rgba(52,229,176,0.28)'}}, _h('span',{style:{width:'8px',height:'8px',borderRadius:'50%',background:'#34E5B0'}}), _h('span',{style:{fontSize:'12px',fontWeight:'600',color:'#34E5B0'}},'Туннель')),
+        layers:['точка/иконка','лейбл','цвет=статус'], states:[{label:'5 цветов действий',style:_stOff}]},
+      {name:'Поле ввода', demo:_h('div',{style:{width:'100%',padding:'9px 13px',borderRadius:'10px',background:'rgba(255,255,255,0.04)',border:'1px solid rgba(52,229,176,0.3)',fontFamily:"'JetBrains Mono',monospace",fontSize:'12px',color:'#EAF1EF'}},'SYMB-7K2Q…'),
+        layers:['фон','бордер','текст','каретка'], states:[{label:'фокус · акцент',style:_stOn},{label:'покой',style:_stOff}]},
+      {name:'Бейдж', demo:_h('span',{style:{display:'inline-flex',alignItems:'center',gap:'4px',padding:'3px 9px',borderRadius:'999px',background:'rgba(52,229,176,0.12)',border:'1px solid rgba(52,229,176,0.28)'}}, _h('span',{style:{fontFamily:"'Material Symbols Rounded'",fontSize:'12px',color:'#34E5B0'}},'restart_alt'), _h('span',{style:{fontSize:'9.5px',fontWeight:'700',color:'#34E5B0',textTransform:'uppercase'}},'вернулся')),
+        layers:['иконка','лейбл-капс'], states:[{label:'Владелец',style:_stOff},{label:'рек.',style:_stOff}]}
+    ];
+
+    const tokenColors=[
+      {name:'Фон',hex:'#070A0F',c:'#070A0F'},
+      {name:'Акцент (мята)',hex:'#34E5B0',c:'#34E5B0'},
+      {name:'Инфо',hex:'#5B9BFF',c:'#5B9BFF'},
+      {name:'Премиум',hex:'#A78BFA',c:'#A78BFA'},
+      {name:'Внимание',hex:'#F4B740',c:'#F4B740'},
+      {name:'Опасность',hex:'#FF6B7A',c:'#FF6B7A'}
+    ].map(t=>({ name:t.name, hex:t.hex, sw:{width:'26px',height:'26px',borderRadius:'7px',background:t.c,border:'1px solid rgba(255,255,255,0.12)',flex:'0 0 auto'} }));
+
+    const tokenRadii=[
+      {label:'8 чип',r:'6px'},{label:'11 кнопка',r:'8px'},{label:'14 карта',r:'10px'},{label:'20 окно',r:'12px'}
+    ].map(t=>({ label:t.label, box:{width:'18px',height:'18px',background:'rgba(52,229,176,0.18)',border:'1px solid rgba(52,229,176,0.4)',borderRadius:t.r,flex:'0 0 auto'} }));
+
+    return { layers, steps, anatomy, controls, tokenColors, tokenRadii };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./fonts.css">
+<style>
+@keyframes sym-breath { 0%,100%{transform:scale(1)} 50%{transform:scale(1.022)} }
+@keyframes sym-spin { to { transform: rotate(360deg) } }
+@keyframes sym-pulse { 0%,100%{opacity:.45} 50%{opacity:1} }
+</style>
+</helmet>
+<div style="display:flex; flex-direction:column; align-items:center; gap:22px; font-family:'Golos Text','Noto Sans','Noto Sans Arabic','Noto Sans SC','Noto Sans Devanagari',system-ui,sans-serif;">
+  <div style="{{ coreStyle }}">
+    <sc-for list="{{ rings }}" as="r" hint-placeholder-count="4">
+      <div style="{{ r.style }}"></div>
+    </sc-for>
+    <sc-if value="{{ showSweep }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ sweepStyle }}"></div>
+    </sc-if>
+    <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; text-align:center;">
+      <div style="{{ centerStyle }}">
+        <span style="{{ iconStyle }}">{{ icon }}</span>
+        <div style="{{ statusStyle }}">{{ statusWord }}</div>
+        <div style="{{ monoStyle }}">{{ monoDetail }}</div>
+      </div>
+    </div>
+  </div>
+  <sc-if value="{{ showStepper }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; align-items:flex-start;">
+      <sc-for list="{{ steps }}" as="s" hint-placeholder-count="4">
+        <div style="display:flex; align-items:flex-start;">
+          <div style="{{ s.connector }}"></div>
+          <div onClick="{{ s.onClick }}" style="{{ s.colStyle }}" style-hover="transform:translateY(-2px)">
+            <div style="{{ s.dot }}"></div>
+            <span style="{{ s.label }}">{{ s.name }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:360,&quot;height&quot;:420},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;connected&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;measuring&quot;,&quot;connecting&quot;,&quot;connected&quot;,&quot;blocking&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;stage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;tunnel&quot;,&quot;options&quot;:[&quot;direct&quot;,&quot;bypass&quot;,&quot;tunnel&quot;,&quot;relay&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:320,&quot;tsType&quot;:&quot;number&quot;},&quot;ping&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:38,&quot;tsType&quot;:&quot;number&quot;},&quot;protocol&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;reality&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showStepper&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const size = Number(p.size) || 320;
+    const state = p.state || 'connected';
+    const order = ['direct','bypass','tunnel','relay'];
+    const SC = { direct:'#5BE5A6', bypass:'#F5C451', tunnel:'#34E5B0', relay:'#A78BFA' };
+    const L = (p.lang||'ru');
+    const SLA = {
+      ru:{direct:'Прямой',bypass:'Обход',tunnel:'VPN',relay:'Реле'},
+      en:{direct:'Direct',bypass:'Bypass',tunnel:'VPN',relay:'Relay'},
+      es:{direct:'Directo',bypass:'Evasión',tunnel:'VPN',relay:'Relé'},
+      de:{direct:'Direkt',bypass:'Umgehung',tunnel:'VPN',relay:'Relais'},
+      tr:{direct:'Doğrudan',bypass:'Atlatma',tunnel:'VPN',relay:'Röle'},uk:{direct:'Прямий',bypass:'Обхід',tunnel:'VPN',relay:'Реле'},be:{direct:'Прамы',bypass:'Абыход',tunnel:'VPN',relay:'Рэле'},kk:{direct:'Тікелей',bypass:'Айналып өту',tunnel:'VPN',relay:'Реле'},uz:{direct:'To‘g‘ridan',bypass:'Chetlab',tunnel:'VPN',relay:'Rele'},fr:{direct:'Direct',bypass:'Contournement',tunnel:'VPN',relay:'Relais'},pt:{direct:'Direto',bypass:'Desvio',tunnel:'VPN',relay:'Relay'},fa:{direct:'مستقیم',bypass:'دور زدن',tunnel:'VPN',relay:'رله'},ar:{direct:'مباشر',bypass:'تجاوز',tunnel:'VPN',relay:'ترحيل'},zh:{direct:'直连',bypass:'绕过',tunnel:'VPN',relay:'中继'},hi:{direct:'सीधा',bypass:'बायपास',tunnel:'VPN',relay:'रिले'},vi:{direct:'Trực tiếp',bypass:'Vượt',tunnel:'VPN',relay:'Relay'},id:{direct:'Langsung',bypass:'Lewati',tunnel:'VPN',relay:'Relay'},isv:{direct:'Prosto',bypass:'Obhod',tunnel:'VPN',relay:'Rele'}
+    };
+    const SL = SLA[L]||SLA.ru;
+    const stage = p.stage || 'tunnel';
+    const ai = order.indexOf(stage);
+    const showStepper = !(p.showStepper === false || p.showStepper === 'false');
+    const fr = [1.0, 0.785, 0.585, 0.40];
+    const connected = state === 'connected';
+    const connecting = state === 'connecting' || state === 'measuring';
+    const blocking = state === 'blocking';
+    const idle = state === 'idle';
+    const error = state === 'error';
+
+    const rings = order.map((st, i) => {
+      const d = Math.round(size * fr[i]);
+      const off = Math.round((size - d) / 2);
+      let border = 'rgba(255,255,255,0.06)', glow = 'none', breath = false, dash = 'solid', op = 1;
+      if (idle) {
+        border = i === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)';
+      } else if (connecting) {
+        border = 'rgba(255,255,255,0.08)';
+      } else if (blocking) {
+        border = i <= ai ? 'rgba(255,107,107,' + (0.7 - i * 0.13) + ')' : 'rgba(255,255,255,0.06)';
+        if (i === ai) { glow = '0 0 30px -6px #FF6B6B'; breath = true; }
+      } else if (error) {
+        border = i <= 1 ? 'rgba(255,107,107,' + (0.42 - i * 0.13) + ')' : 'rgba(255,255,255,0.05)';
+      } else { // connected
+        if (i < ai) { border = SC[st]; op = 0.30; dash = 'dashed'; }
+        else if (i === ai) { border = SC[st]; glow = '0 0 52px -6px ' + SC[st] + ', inset 0 0 30px -10px ' + SC[st]; breath = true; }
+        else { border = 'rgba(255,255,255,0.05)'; }
+      }
+      return { style: {
+        position:'absolute', width:d+'px', height:d+'px', left:off+'px', top:off+'px',
+        borderRadius:'50%', border:'1.5px '+dash+' '+border, boxShadow:glow, opacity:op,
+        animation: breath ? 'sym-breath 2600ms ease-in-out infinite' : 'none'
+      } };
+    });
+
+    const showSweep = connecting;
+    const sweepStyle = {
+      position:'absolute', width:size+'px', height:size+'px', left:'0', top:'0', borderRadius:'50%',
+      background:'conic-gradient(from 0deg, transparent 0 70%, ' + (state==='measuring'?'#7FE3D0':'#F5C451') + ' 90%, transparent 100%)',
+      WebkitMask:'radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px))',
+      mask:'radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px))',
+      animation:'sym-spin 1.15s linear infinite'
+    };
+
+    const icon = idle ? 'gpp_bad' : error ? 'wifi_off' : connecting ? 'sync' : blocking ? 'gpp_maybe' : 'gpp_good';
+    const iconColor = idle ? 'rgba(255,255,255,0.40)' : (blocking||error) ? '#FF6B6B' : connecting ? '#9DABA8' : SC[stage];
+    const iconStyle = {
+      fontFamily:"'Material Symbols Rounded'", fontWeight:'normal', fontStyle:'normal',
+      fontFeatureSettings:"'liga'", WebkitFontSmoothing:'antialiased',
+      fontVariationSettings: connected ? "'FILL' 1, 'opsz' 40, 'wght' 400" : "'FILL' 0, 'opsz' 40, 'wght' 400",
+      fontSize: Math.round(size * 0.125) + 'px', color: iconColor, lineHeight:1,
+      animation: connecting ? 'sym-spin 1.6s linear infinite' : 'none'
+    };
+
+    const SWA = {
+      ru:{idle:'Не защищено',measuring:'Замеряю сеть',connecting:'Подключаюсь',blocking:'Блокировка',error:'Нет сети',connected:'Защищено'},
+      en:{idle:'Not protected',measuring:'Measuring',connecting:'Connecting',blocking:'Blocking',error:'No network',connected:'Protected'},
+      es:{idle:'Sin protección',measuring:'Midiendo',connecting:'Conectando',blocking:'Bloqueo',error:'Sin red',connected:'Protegido'},
+      de:{idle:'Ungeschützt',measuring:'Messe',connecting:'Verbinde',blocking:'Blockade',error:'Kein Netz',connected:'Geschützt'},
+      tr:{idle:'Korumasız',measuring:'Ağ ölçülüyor',connecting:'Bağlanıyor',blocking:'Engelleme',error:'Ağ yok',connected:'Korumalı'},uk:{idle:'Не захищено',measuring:'Вимірюю мережу',connecting:'Підключаюсь',blocking:'Блокування',error:'Немає мережі',connected:'Захищено'},be:{idle:'Не абаронена',measuring:'Вымяраю сетку',connecting:'Падключаюся',blocking:'Блакіроўка',error:'Няма сеткі',connected:'Абаронена'},kk:{idle:'Қорғалмаған',measuring:'Желіні өлшеу',connecting:'Қосылудамын',blocking:'Бұғаттау',error:'Желі жоқ',connected:'Қорғалған'},uz:{idle:'Himoyasiz',measuring:'Tarmoq o‘lchanmoqda',connecting:'Ulanmoqda',blocking:'Bloklash',error:'Tarmoq yo‘q',connected:'Himoyalangan'},fr:{idle:'Non protégé',measuring:'Mesure du réseau',connecting:'Connexion',blocking:'Blocage',error:'Pas de réseau',connected:'Protégé'},pt:{idle:'Desprotegido',measuring:'Medindo a rede',connecting:'Conectando',blocking:'Bloqueio',error:'Sem rede',connected:'Protegido'},fa:{idle:'محافظت‌نشده',measuring:'سنجش شبکه',connecting:'در حال اتصال',blocking:'مسدودسازی',error:'بدون شبکه',connected:'محافظت‌شده'},ar:{idle:'غير محمي',measuring:'قياس الشبكة',connecting:'جارٍ الاتصال',blocking:'حجب',error:'لا شبكة',connected:'محمي'},zh:{idle:'未保护',measuring:'测量网络',connecting:'连接中',blocking:'封锁',error:'无网络',connected:'已保护'},hi:{idle:'असुरक्षित',measuring:'नेटवर्क माप',connecting:'कनेक्ट हो रहा',blocking:'ब्लॉक',error:'नेटवर्क नहीं',connected:'सुरक्षित'},vi:{idle:'Chưa bảo vệ',measuring:'Đo mạng',connecting:'Đang kết nối',blocking:'Đang chặn',error:'Không có mạng',connected:'Đã bảo vệ'},id:{idle:'Tidak terlindungi',measuring:'Mengukur jaringan',connecting:'Menghubungkan',blocking:'Memblokir',error:'Tidak ada jaringan',connected:'Terlindungi'},isv:{idle:'Ne zaščiťeno',measuring:'Měrju sět',connecting:'Spojuju se',blocking:'Blokovańje',error:'Néma sěti',connected:'Zaščiťeno'}
+    };
+    const _sw = SWA[L]||SWA.ru;
+    const statusWord = idle ? _sw.idle : state==='measuring' ? _sw.measuring
+      : state==='connecting' ? _sw.connecting : blocking ? _sw.blocking : error ? _sw.error : _sw.connected;
+    const statusColor = idle ? '#9DABA8' : (blocking||error) ? '#FF6B6B' : connected ? '#EAF1EF' : '#C9D4D1';
+    const statusStyle = { fontSize: Math.round(size*0.078)+'px', fontWeight:700, color:statusColor, letterSpacing:'-0.015em', maxWidth:'100%', lineHeight:1.1 };
+
+    const MDA = {
+      ru:{ms:'мс',connecting:'обход → VPN…',measuring:'проверка DPI…',blocking:'ухожу на реле →',error:'каналы недоступны',idle:'нажмите для подключения'},
+      en:{ms:'ms',connecting:'bypass → VPN…',measuring:'checking DPI…',blocking:'switching to relay →',error:'channels unavailable',idle:'tap to connect'},
+      es:{ms:'ms',connecting:'evasión → VPN…',measuring:'comprobando DPI…',blocking:'cambiando a relé →',error:'canales no disponibles',idle:'toca para conectar'},
+      de:{ms:'ms',connecting:'Umgehung → VPN…',measuring:'prüfe DPI…',blocking:'wechsle zu Relais →',error:'Kanäle nicht verfügbar',idle:'zum Verbinden tippen'},
+      tr:{ms:'ms',connecting:'atlatma → VPN…',measuring:'DPI denetimi…',blocking:'röleye geçiliyor →',error:'kanallar yok',idle:'bağlanmak için dokunun'},uk:{ms:'мс',connecting:'обхід → VPN…',measuring:'перевірка DPI…',blocking:'переходжу на реле →',error:'канали недоступні',idle:'натисніть для підключення'},be:{ms:'мс',connecting:'абыход → VPN…',measuring:'праверка DPI…',blocking:'пераходжу на рэле →',error:'каналы недаступныя',idle:'націсніце для падключэння'},kk:{ms:'мс',connecting:'айналып өту → VPN…',measuring:'DPI тексеру…',blocking:'релеге өту →',error:'арналар қолжетімсіз',idle:'қосылу үшін басыңыз'},uz:{ms:'ms',connecting:'chetlab → VPN…',measuring:'DPI tekshiruvi…',blocking:'relega o‘tish →',error:'kanallar yo‘q',idle:'ulanish uchun bosing'},fr:{ms:'ms',connecting:'contournement → VPN…',measuring:'vérification DPI…',blocking:'passage au relais →',error:'canaux indisponibles',idle:'touchez pour vous connecter'},pt:{ms:'ms',connecting:'desvio → VPN…',measuring:'checando DPI…',blocking:'indo para o relay →',error:'canais indisponíveis',idle:'toque para conectar'},fa:{ms:'ms',connecting:'دور زدن → VPN…',measuring:'بررسی DPI…',blocking:'رفتن به رله →',error:'کانال‌ها در دسترس نیستند',idle:'برای اتصال بزنید'},ar:{ms:'ms',connecting:'تجاوز → VPN…',measuring:'فحص DPI…',blocking:'الانتقال إلى الترحيل →',error:'القنوات غير متاحة',idle:'انقر للاتصال'},zh:{ms:'ms',connecting:'绕过 → VPN…',measuring:'检测 DPI…',blocking:'切换到中继 →',error:'通道不可用',idle:'点按以连接'},hi:{ms:'ms',connecting:'बायपास → VPN…',measuring:'DPI जाँच…',blocking:'रिले पर जा रहे →',error:'चैनल अनुपलब्ध',idle:'कनेक्ट करने के लिए टैप करें'},vi:{ms:'ms',connecting:'vượt → VPN…',measuring:'kiểm tra DPI…',blocking:'chuyển sang relay →',error:'kênh không khả dụng',idle:'chạm để kết nối'},id:{ms:'ms',connecting:'lewati → VPN…',measuring:'cek DPI…',blocking:'beralih ke relay →',error:'kanal tak tersedia',idle:'ketuk untuk menghubungkan'},isv:{ms:'ms',connecting:'obhod → VPN…',measuring:'prověrka DPI…',blocking:'prehodžu na rele →',error:'kanaly nedostupne',idle:'natisni za spojeńje'}
+    };
+    const _md = MDA[L]||MDA.ru;
+    let monoDetail;
+    if (connected) monoDetail = SL[stage].toUpperCase() + ' · ' + (p.ping||38) + ' ' + _md.ms;
+    else if (state==='connecting') monoDetail = _md.connecting;
+    else if (state==='measuring') monoDetail = _md.measuring;
+    else if (blocking) monoDetail = _md.blocking;
+    else if (error) monoDetail = _md.error;
+    else monoDetail = _md.idle;
+    const monoStyle = {
+      fontFamily:"'JetBrains Mono',monospace", fontSize: Math.max(9, Math.round(size*0.041))+'px',
+      color: connected ? SC[stage] : (blocking||error) ? '#FF6B6B' : '#6E7B8A', letterSpacing:'0.01em', fontWeight:500,
+      maxWidth:'100%', lineHeight:1.35
+    };
+
+    const coreStyle = { position:'relative', width:size+'px', height:size+'px', cursor:'pointer', flex:'0 0 auto' };
+    const centerStyle = { display:'flex', flexDirection:'column', alignItems:'center', gap:'5px', maxWidth: Math.round(size*0.56)+'px', minWidth:0 };
+
+    const steps = order.map((st, i) => {
+      let dotBg='transparent', dotBorder='2px solid rgba(255,255,255,0.12)', dotShadow='none', labelColor='#6E7B8A', labelWeight=500, dotOpacity=1;
+      if (connected) {
+        if (i < ai) { dotBg = SC[stage]; dotBorder = '2px solid ' + SC[stage]; dotOpacity = 0.5; labelColor = '#7C8A99'; }
+        else if (i === ai) { dotBg = SC[stage]; dotBorder = '2px solid ' + SC[stage]; dotShadow = '0 0 16px -2px ' + SC[stage]; labelColor = SC[stage]; labelWeight = 700; }
+      } else if (blocking && i === 3) {
+        dotBg = '#A78BFA'; dotBorder = '2px solid #A78BFA'; dotShadow = '0 0 14px -2px #A78BFA'; labelColor = '#A78BFA'; labelWeight = 700;
+      } else if (connecting && i <= 2) {
+        dotBorder = '2px solid rgba(245,196,81,0.5)';
+      }
+      let connColor = 'rgba(255,255,255,0.10)';
+      if (connected && i <= ai) connColor = SC[stage] + '66';
+      const _clk = !!p.onStage;
+      return {
+        name: SL[st],
+        onClick: _clk ? (()=>p.onStage(st)) : null,
+        colStyle: { display:'flex', flexDirection:'column', alignItems:'center', gap:'7px', width:'58px', cursor:_clk?'pointer':'default', transition:'transform .12s ease' },
+        connector: { width: i===0?'0px':'26px', height:'2px', marginTop:'5px', background: i===0?'transparent':connColor },
+        dot: { width:'12px', height:'12px', borderRadius:'50%', background:dotBg, border:dotBorder, boxShadow:dotShadow, opacity:dotOpacity },
+        label: { fontSize:'11.5px', fontWeight:labelWeight, color:labelColor, letterSpacing:'0.01em' }
+      };
+    });
+
+    return { coreStyle, centerStyle, rings, showSweep, sweepStyle, icon, iconStyle, statusWord, statusStyle, monoDetail, monoStyle, steps, showStepper };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "com.symbiont.host",
+  "description": "Симбионт native-messaging host — мост браузер ↔ приложение",
+  "path": "host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://REPLACE_WITH_EXTENSION_ID/"
+  ]
+}

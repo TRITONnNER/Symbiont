@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Symbiont · проверка ключа</title>
+<style>
+  :root{
+    --ink-900:#0E1116; --ink-850:#11161D; --ink-800:#161B22; --line:#262C36;
+    --txt:#E6EAF0; --muted:#8A93A2; --faint:#5A6472;
+    --signal:#5BC8E6;            /* «сигнал» — акцент проверки */
+    --ok:#3FB950; --warn:#D29922; --bad:#F85149;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #16202c 0%, rgba(22,32,44,0) 60%),
+      var(--ink-900);
+    color:var(--txt); font-family:var(--sans); line-height:1.5;
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:32px 20px 56px;
+  }
+  .wrap{width:100%; max-width:560px}
+
+  /* шапка */
+  .brand{display:flex; align-items:center; gap:10px; color:var(--muted);
+    font-size:13px; letter-spacing:.12em; text-transform:uppercase}
+  .brand .glyph{width:18px; height:18px}
+  .brand b{color:var(--txt); font-weight:600; letter-spacing:.12em}
+
+  h1{font-size:clamp(26px,5.4vw,36px); line-height:1.12; margin:26px 0 10px;
+    font-weight:650; letter-spacing:-.015em}
+  h1 .em{color:var(--signal)}
+  .lede{color:var(--muted); font-size:15px; max-width:46ch; margin:0 0 26px}
+
+  /* поле ввода кода */
+  .field{position:relative; background:var(--ink-800); border:1px solid var(--line);
+    border-radius:14px; padding:4px; transition:border-color .2s, box-shadow .2s}
+  .field:focus-within{border-color:#3a4452; box-shadow:0 0 0 4px rgba(91,200,230,.08)}
+  .field.scan::after{content:""; position:absolute; left:8px; right:8px; top:0; height:2px;
+    background:linear-gradient(90deg,transparent,var(--signal),transparent);
+    border-radius:2px; animation:sweep 1.05s ease-in-out}
+  @keyframes sweep{0%{top:6px;opacity:0}15%{opacity:1}100%{top:calc(100% - 8px);opacity:0}}
+  input.code{width:100%; border:0; outline:0; background:transparent; color:var(--txt);
+    font-family:var(--mono); font-size:clamp(15px,3.6vw,19px); letter-spacing:.06em;
+    padding:18px 16px; text-transform:uppercase}
+  input.code::placeholder{color:var(--faint); text-transform:none; letter-spacing:0}
+
+  .row{display:flex; gap:10px; margin-top:14px}
+  button.go{flex:1; border:0; border-radius:12px; cursor:pointer;
+    background:linear-gradient(180deg,#2b6f86,#1f5468); color:#eafaff;
+    font-family:var(--sans); font-size:15px; font-weight:600; padding:15px 18px;
+    transition:filter .15s, transform .05s}
+  button.go:hover{filter:brightness(1.08)} button.go:active{transform:translateY(1px)}
+  button.go:disabled{opacity:.55; cursor:default; filter:none}
+  button.ghost{border:1px solid var(--line); background:transparent; color:var(--muted);
+    border-radius:12px; padding:15px 16px; cursor:pointer; font-family:var(--sans); font-size:14px}
+  button.ghost:hover{color:var(--txt); border-color:#3a4452}
+
+  .privacy{display:flex; align-items:center; gap:8px; color:var(--faint);
+    font-size:12.5px; margin-top:14px}
+  .privacy svg{flex:none}
+
+  /* вердикт */
+  .verdict{margin-top:22px; border:1px solid var(--line); border-radius:16px;
+    background:var(--ink-850); overflow:hidden; opacity:0; transform:translateY(8px);
+    transition:opacity .35s, transform .35s, border-color .35s}
+  .verdict.show{opacity:1; transform:none}
+  .verdict[data-s="valid"]{border-color:rgba(63,185,80,.5)}
+  .verdict[data-s="warn"]{border-color:rgba(210,153,34,.5)}
+  .verdict[data-s="bad"]{border-color:rgba(248,81,73,.5)}
+  .vhead{display:flex; align-items:center; gap:14px; padding:18px 18px 14px}
+  .seal{width:46px; height:46px; flex:none}
+  .vtitle{font-size:19px; font-weight:650; letter-spacing:-.01em}
+  .vsub{color:var(--muted); font-size:13px; margin-top:2px}
+  .grant{display:flex; flex-wrap:wrap; gap:8px; padding:0 18px 16px}
+  .chip{font-family:var(--mono); font-size:13px; color:var(--txt);
+    background:#1b222c; border:1px solid var(--line); border-radius:999px; padding:6px 12px}
+  .meta{border-top:1px solid var(--line); padding:14px 18px; display:grid; gap:9px}
+  .mrow{display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--muted)}
+  .mrow .dot{width:7px; height:7px; border-radius:50%; flex:none; background:var(--faint)}
+  .mrow.ok .dot{background:var(--ok)} .mrow.ok{color:#cdeccf}
+  .mrow.pending .dot{background:var(--signal)}
+  .mrow b{color:var(--txt); font-weight:600}
+
+  /* объяснялка */
+  .how{margin-top:30px; border-top:1px solid var(--line); padding-top:20px;
+    color:var(--muted); font-size:13.5px}
+  .how h2{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
+    margin:0 0 10px; font-weight:600}
+  .how p{margin:0 0 9px; max-width:54ch}
+  .how code{font-family:var(--mono); color:var(--signal); font-size:12.5px}
+
+  @media (prefers-reduced-motion: reduce){
+    .field.scan::after{animation:none; display:none}
+    .verdict{transition:opacity .2s}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <svg class="glyph" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 2l8.66 5v10L12 22 3.34 17V7L12 2z" stroke="#5BC8E6" stroke-width="1.5"
+            stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3" fill="#5BC8E6"/>
+    </svg>
+    <b>SYMBIONT</b><span>проверка ключа</span>
+  </div>
+
+  <h1>Подлинность ключа проверяется <span class="em">прямо в браузере</span></h1>
+  <p class="lede">Вставьте код активации. Подпись сверяется на вашем устройстве —
+     сам код никуда не уходит, пока вы не решите его активировать.</p>
+
+  <div class="field" id="field">
+    <input class="code" id="code" autocomplete="off" autocapitalize="characters"
+           spellcheck="false" placeholder="SYMB-XXXX-XXXX.XXXX-XXXX">
+  </div>
+
+  <div class="row">
+    <button class="go" id="go">Проверить ключ</button>
+    <button class="ghost" id="paste" title="Вставить из буфера">Вставить</button>
+  </div>
+
+  <div class="privacy">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+      <rect x="4" y="10" width="16" height="11" rx="2" stroke="#5A6472" stroke-width="1.6"/>
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#5A6472" stroke-width="1.6"/></svg>
+    Проверка подписи идёт офлайн. Статус активации запрашивается у сервера только по кнопке.
+  </div>
+
+  <div class="verdict" id="verdict" aria-live="polite">
+    <div class="vhead">
+      <svg class="seal" id="seal" viewBox="0 0 48 48" aria-hidden="true"></svg>
+      <div>
+        <div class="vtitle" id="vtitle">—</div>
+        <div class="vsub" id="vsub"></div>
+      </div>
+    </div>
+    <div class="grant" id="grant"></div>
+    <div class="meta" id="meta"></div>
+  </div>
+
+  <div class="how">
+    <h2>Как это работает</h2>
+    <p>Каждый ключ — это полезная нагрузка (срок, тариф, число активаций) и подпись
+       <code>Ed25519</code> поверх неё. Подделать или угадать ключ нельзя: страница
+       проверяет подпись открытым ключом сервиса <i>у вас в браузере</i>.</p>
+    <p>Что ключ <b>даёт</b> и его <b>срок годности</b> видно офлайн — из самой подписи.
+       <b>Использован</b> он или нет — это состояние на сервере, поэтому запрашивается по сети.</p>
+  </div>
+
+</div>
+
+<script>
+/* ── НАСТРОЙКА (заполнить при деплое) ──────────────────────────────────────── */
+// Открытый ключ подписи сервиса (raw Ed25519, base64) — отдаёт бэкенд: GET /v1/pubkey.
+// Можно оставить как есть: если не задан, а API_BASE доступен — ключ подтянется
+// автоматически (GET /v1/pubkey) при загрузке страницы.
+let PUBKEY_B64 = "REPLACE_WITH_ED25519_PUBKEY_BASE64";
+// База бэкенда для живого статуса активации и авто-загрузки ключа. Пусто → тот же
+// origin (когда страница отдаётся рядом с API). Переопределяется ?api=… в URL.
+let API_BASE   = "";   // напр. "https://api.example.com"
+try{ const q=new URLSearchParams(location.search).get("api"); if(q) API_BASE=q.replace(/\/+$/,""); }catch(e){}
+
+// Подтянуть открытый ключ подписи с бэкенда, если он не вшит вручную.
+async function ensurePubkey(){
+  if(PUBKEY_B64 && PUBKEY_B64!=="REPLACE_WITH_ED25519_PUBKEY_BASE64") return;
+  try{
+    const r=await fetch(`${API_BASE}/v1/pubkey`);
+    if(r.ok){ const j=await r.json(); if(j.ed25519) PUBKEY_B64=j.ed25519; }
+  }catch(e){ /* останется офлайн-режим без проверки подписи */ }
+}
+
+/* ── утилиты кодирования ──────────────────────────────────────────────────── */
+const B32="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function b32decode(s){
+  let bits=0,val=0,out=[];
+  for(const ch of s){const idx=B32.indexOf(ch); if(idx<0) continue;
+    val=(val<<5)|idx; bits+=5; if(bits>=8){out.push((val>>>(bits-8))&0xff); bits-=8;}}
+  return new Uint8Array(out);
+}
+function b64ToBytes(b64){const bin=atob(b64.replace(/-/g,"+").replace(/_/g,"/"));
+  const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i); return u;}
+function parseCode(code){
+  let s=code.trim().toUpperCase().replace(/\s+/g,"");
+  if(s.startsWith("SYMB-")) s=s.slice(5); else if(s.startsWith("SYMB")) s=s.slice(4);
+  if(!s.includes(".")) throw new Error("bad_format");
+  const [bodyPart,sigPart]=s.split(".");
+  return {payload:b32decode(bodyPart.replace(/-/g,"")), sig:b32decode(sigPart.replace(/-/g,""))};
+}
+
+/* ── проверка подписи Ed25519 в браузере ──────────────────────────────────── */
+async function verifySig(payload,sig){
+  if(PUBKEY_B64==="REPLACE_WITH_ED25519_PUBKEY_BASE64") return null; // не настроено
+  try{
+    const key=await crypto.subtle.importKey("raw",b64ToBytes(PUBKEY_B64),
+      {name:"Ed25519"},false,["verify"]);
+    return await crypto.subtle.verify({name:"Ed25519"},key,sig,payload);
+  }catch(e){ return null; } // браузер без Ed25519 → доверим серверу
+}
+
+/* ── печати/иконки ────────────────────────────────────────────────────────── */
+function seal(status){
+  const c={valid:"#3FB950",warn:"#D29922",bad:"#F85149"}[status]||"#8A93A2";
+  const hex=`<path d="M24 3l18.2 10.5v21L24 45 5.8 34.5v-21L24 3z" fill="none"
+    stroke="${c}" stroke-width="2" stroke-linejoin="round" opacity=".55"/>`;
+  const mark = status==="valid"
+    ? `<path d="M16 24.5l5.5 5.5L33 18.5" fill="none" stroke="${c}" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>`
+    : status==="bad"
+    ? `<path d="M18 18l12 12M30 18L18 30" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`
+    : `<path d="M24 15v11" stroke="${c}" stroke-width="3" stroke-linecap="round"/>
+       <circle cx="24" cy="32" r="1.9" fill="${c}"/>`;
+  document.getElementById("seal").innerHTML=hex+mark;
+}
+
+/* ── человеческие заголовки по статусу ────────────────────────────────────── */
+const TITLES={
+  valid:["Ключ действителен","valid"],
+  already_redeemed:["Ключ уже использован","warn"],
+  expired:["Срок действия истёк","warn"],
+  revoked:["Ключ отозван","bad"],
+  invalid:["Подделка или опечатка","bad"],
+  not_found:["Код подлинный, но не из этой системы","warn"],
+  offline_ok:["Подпись подлинная","valid"],
+};
+const TIER={premium:"Premium",ultimate:"Ultimate"};
+
+function fmtDate(ts){ if(!ts) return null;
+  try{return new Date(ts*1000).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"});}
+  catch(e){return null;}}
+
+/* ── рендер вердикта ──────────────────────────────────────────────────────── */
+function render(status, info){
+  const v=document.getElementById("verdict");
+  const [title,sev]=TITLES[status]||["—","warn"];
+  v.dataset.s=sev; seal(sev);
+  document.getElementById("vtitle").textContent=title;
+
+  // что даёт код (из офлайн-нагрузки)
+  const chips=[];
+  if(info.days)    chips.push(`${info.days} дней`);
+  if(info.minutes) chips.push(`${Math.round(info.minutes/60)} ч активного времени`);
+  if(info.tier && TIER[info.tier]) chips.push(TIER[info.tier]);
+  if(info.uses_total && info.uses_total>1) chips.push(`активаций: ${info.uses_total}`);
+  document.getElementById("grant").innerHTML =
+    chips.map(c=>`<span class="chip">${c}</span>`).join("");
+
+  document.getElementById("vsub").textContent =
+    status==="invalid" ? "Подпись не сходится — код повреждён или поддельный."
+    : (info.expires_b ? `Код активен до ${info.expires_b}` : "");
+
+  // строки состояния
+  const meta=document.getElementById("meta"); meta.innerHTML="";
+  const add=(cls,html)=>{const d=document.createElement("div");d.className="mrow "+cls;
+    d.innerHTML=`<span class="dot"></span><span>${html}</span>`;meta.appendChild(d);};
+  if(status!=="invalid")
+    add(info.sigVerified?"ok":"pending",
+       info.sigVerified ? "Подпись подтверждена в вашем браузере (Ed25519)"
+                        : "Подпись проверит сервер (браузер без Ed25519 или ключ не задан)");
+  if(info.server){
+    const s=info.server;
+    if(s.status==="valid")            add("ok", s.uses_total>1
+        ? `В системе: <b>осталось ${s.uses_left} из ${s.uses_total}</b>` : "В системе: <b>не использован</b>");
+    else if(s.status==="already_redeemed") add("", "В системе: <b>уже использован</b>");
+    else if(s.status==="revoked")     add("", "В системе: <b>отозван</b>");
+    else if(s.status==="not_found")   add("", "В системе: <b>не найден</b>");
+  }else if(API_BASE && status!=="invalid"){
+    add("pending","Статус активации в системе получить не удалось");
+  }else if(status!=="invalid"){
+    add("","Статус активации — после подключения к серверу");
+  }
+
+  v.classList.add("show");
+}
+
+/* ── основной поток ───────────────────────────────────────────────────────── */
+async function run(){
+  const code=document.getElementById("code").value.trim();
+  if(!code) return;
+  const field=document.getElementById("field");
+  field.classList.add("scan"); setTimeout(()=>field.classList.remove("scan"),1100);
+
+  let parsed;
+  try{ parsed=parseCode(code); }
+  catch(e){ render("invalid",{}); return; }
+
+  // 1) офлайн: подпись + нагрузка
+  const sigOk=await verifySig(parsed.payload,parsed.sig);
+  if(sigOk===false){ render("invalid",{}); return; }
+
+  let p={};
+  try{ p=JSON.parse(new TextDecoder().decode(parsed.payload)); }
+  catch(e){ render("invalid",{}); return; }
+
+  const now=Math.floor(Date.now()/1000);
+  const info={days:p.grant_days,minutes:p.grant_minutes,tier:p.tier,
+    uses_total:p.uses,sigVerified:sigOk===true,
+    expires_b:fmtDate(p.expires_at)};
+
+  let status = (p.expires_at && p.expires_at<now) ? "expired"
+             : (sigOk===true ? "valid" : "offline_ok");
+
+  // 2) живой статус с сервера (публичный чекер: POST /v1/key/check, без авторизации)
+  try{
+    const r=await fetch(`${API_BASE}/v1/key/check`,{
+      method:"POST", headers:{"content-type":"application/json"},
+      body:JSON.stringify({code})});
+    if(r.ok){ const s=await r.json(); info.server=s;
+      if(["already_redeemed","revoked","expired","not_found","invalid"].includes(s.status))
+        status=s.status;
+      // сервер видит грант/срок даже если браузер без Ed25519 — дополним карточку
+      if(s.grants){ if(!info.days) info.days=s.grants.days; if(!info.tier) info.tier=s.grants.tier; }
+      if(s.uses_total && !info.uses_total) info.uses_total=s.uses_total;
+      if(s.expires_at && !info.expires_b) info.expires_b=fmtDate(s.expires_at);
+    }
+  }catch(e){ /* офлайн-результат остаётся */ }
+  render(status,info);
+}
+
+ensurePubkey();
+document.getElementById("go").addEventListener("click",run);
+document.getElementById("code").addEventListener("keydown",e=>{if(e.key==="Enter")run();});
+document.getElementById("paste").addEventListener("click",async()=>{
+  try{ document.getElementById("code").value=(await navigator.clipboard.readText()).trim();
+    document.getElementById("code").focus(); }catch(e){}
+});
+</script>
+</body>
+</html>

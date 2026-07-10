@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#070A0F; --s1:#0A1013; --s2:rgba(255,255,255,0.04); --bd:rgba(255,255,255,0.08);
+    --mint:#34E5B0; --mintText:#06231A; --text:#EAF1EF; --muted:#7C8A99; --warn:#F4B740; --danger:#FF6B7A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{width:340px;background:
+      radial-gradient(80% 40% at 50% -8%, rgba(52,229,176,0.10), transparent 60%),
+      linear-gradient(180deg,#0E1C18 0%,#0A1013 44%,#070B0C 100%);
+    color:var(--text);font-family:'Golos Text','Segoe UI',system-ui,sans-serif;padding:14px;}
+  .row{display:flex;align-items:center;gap:10px;}
+  .brand{font-weight:800;font-size:16px;letter-spacing:.2px;}
+  .mark{width:26px;height:26px;border-radius:8px;background:var(--mint);color:var(--mintText);
+    display:grid;place-items:center;font-weight:900;}
+  .pill{margin-top:14px;border:1px solid var(--bd);background:var(--s2);border-radius:16px;padding:14px;}
+  .status{font-size:18px;font-weight:800;}
+  .sub{color:var(--muted);font-size:12px;margin-top:2px;font-family:'JetBrains Mono',ui-monospace,monospace;}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:0 0 auto;}
+  .on .dot{background:var(--mint);box-shadow:0 0 10px var(--mint);}
+  .btn{margin-top:12px;width:100%;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:14px;
+    cursor:pointer;background:var(--mint);color:var(--mintText);}
+  .btn.off{background:var(--s2);color:var(--text);border:1px solid var(--bd);}
+  .nodes{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+  .node{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid transparent;cursor:pointer;}
+  .node:hover{background:var(--s2);border-color:var(--bd);}
+  .node.sel{background:rgba(52,229,176,0.10);border-color:rgba(52,229,176,0.26);}
+  .flag{width:22px;height:15px;border-radius:3px;background:rgba(255,255,255,0.07);background-size:cover;background-position:center;flex:0 0 auto;}
+  .nm{font-size:13px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .png{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--mint);}
+  .foot{margin-top:14px;display:flex;gap:8px;}
+  .link{flex:1;text-align:center;font-size:12px;color:var(--muted);border:1px solid var(--bd);border-radius:10px;padding:8px;cursor:pointer;background:transparent;}
+  .link:hover{color:var(--text);}
+  .muted{color:var(--muted);}
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="mark">∞</div>
+    <div class="brand">Симбионт</div>
+    <div style="flex:1"></div>
+    <div id="plan" class="sub">…</div>
+  </div>
+
+  <div id="pill" class="pill off">
+    <div class="row">
+      <div class="dot"></div>
+      <div>
+        <div id="status" class="status">Отключено</div>
+        <div id="statusSub" class="sub">движок в приложении</div>
+      </div>
+    </div>
+    <button id="toggle" class="btn off">Подключиться</button>
+  </div>
+
+  <div id="nodes" class="nodes"><div class="muted" style="font-size:12px;padding:6px">Загрузка узлов…</div></div>
+
+  <div class="foot">
+    <button id="portal" class="link">Открыть портал</button>
+    <button id="rules" class="link">Правила</button>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="vendor/symbiont-bridge.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

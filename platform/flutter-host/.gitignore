@@ -1,0 +1,2 @@
+# Вшивается из webapp/ скриптом sync_webapp.sh (не коммитим копию оболочки).
+assets/webapp/
