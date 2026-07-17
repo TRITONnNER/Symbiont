@@ -567,6 +567,24 @@ def flags():
     return DEFAULT_FLAGS
 
 
+class BridgeReq(BaseModel):
+    uri: str
+
+@app.post("/v1/config/parse-bridge")
+def parse_bridge_endpoint(req: BridgeReq):
+    """Разбор пользовательской ссылки «свой мост» → нормализованный узел каскада.
+    Публичный и STATELESS: сервер ничего не сохраняет (секрет моста хранит клиент
+    локально). Allow-list протоколов (vless/ss/hysteria2); приватные адреса и
+    insecure-TLS возвращаются как warnings, а не молча."""
+    import bridge_import
+    try:
+        node = bridge_import.parse_bridge(req.uri)
+    except bridge_import.BridgeError as e:
+        code = str(e)
+        return {"ok": False, "error": code, "message": bridge_import.reason_text(code)}
+    return {"ok": True, "node": node}
+
+
 # ── Оплата, подписка, баланс активного времени, гранты (Этап 3) ────────────────
 # Каталог продуктов. period — дни; balance — активные минуты (списываются узлом
 # ТОЛЬКО под подключением). Цены — для справки/sandbox; правда живёт в economy.
@@ -581,6 +599,28 @@ PRODUCTS = {
 # МИР, Visa, Mastercard, СБП, ЮMoney, крипта.
 ALLOWED_METHODS = {"sbp", "mir", "visa", "mastercard", "yoomoney", "crypto"}
 SANDBOX_PAY = os.environ.get("SYMBIONT_SANDBOX_PAY", "1") == "1"
+# Платёжный «провайдер»: 'sandbox' — мгновенное подтверждение (кнопка «Купить» сразу
+# оплачивает); 'mock' — ЗАГЛУШКА ПО РЕАЛЬНОМУ ПРИНЦИПУ: возвращает ссылку/QR и pending,
+# оплата подтверждается «колбэком» провайдера (/v1/billing/mock/confirm). Боевой провайдер
+# ставится сюда позже: purchase вернёт его checkoutUrl, а его вебхук — в /v1/billing/webhook.
+PAY_PROVIDER = os.environ.get("SYMBIONT_PAY_PROVIDER", "sandbox")
+
+def _price_of(product: str, region: str = "ru", method: str = "sbp") -> dict:
+    """Сумма к оплате из экономики. region: 'ru'→₽, иначе 'intl'→$. Крипта даёт
+    −crypto_discount. Возвращает {amount, currency}. Правда о цене — здесь (и её же
+    отдаём боевому провайдеру при интеграции)."""
+    pr = DEFAULT_ECONOMY["prices"]
+    reg = "ru" if region == "ru" else "intl"
+    cur = "RUB" if reg == "ru" else "USD"
+    if product.startswith("balance_"):
+        amount = pr["balance"][reg].get(product.split("_", 1)[1])   # '100h' / '300h'
+    else:
+        tier = "ultimate" if product.startswith("ultimate") else "premium"
+        period = "year" if product.endswith("year") else "month"
+        amount = pr[reg][tier][period]
+    if amount is not None and method == "crypto":
+        amount = round(amount * (1 - pr.get("crypto_discount", 0)), 2)
+    return {"amount": amount, "currency": cur}
 
 # Платежи: payment_id → {account_id, product, method, status, created_at, …}.
 # status ∈ pending | completed | failed. Персистентно (переживает рестарт).
@@ -600,6 +640,28 @@ def _sub(aid: str) -> dict:
         acc["sub"] = {"tier": "free", "mode": "period", "days_left": 0,
                       "active_minutes_left": 0, "auto_renew": False, "source": None}
     return acc["sub"]
+
+def _coverage(aid: str) -> str:
+    """Чем сейчас покрыт доступ аккаунта, в порядке приоритета:
+       lifetime  — пожизненный грант владельца (часы НЕ тратятся);
+       period    — активная подписка (дни > 0) — часы НЕ тратятся, это резерв;
+       balance   — только баланс активного времени (минуты > 0) — вот его и списываем;
+       none      — нечем покрыть (доступ закрыт)."""
+    sub = _sub(aid)
+    g = idaccounts.get(aid, {}).get("granted_tier")
+    if sub.get("lifetime") or (g and g.get("expires") is None):
+        return "lifetime"
+    if sub.get("days_left", 0) > 0:
+        return "period"
+    if sub.get("active_minutes_left", 0) > 0:
+        return "balance"
+    return "none"
+
+# Активные сессии узлов для баланса времени: session_token → {node_id, account_id,
+# charged (накопленно списанные минуты), created_at}. Идемпотентно-кумулятивное
+# списание: узел шлёт ИТОГО минут сессии, сервер вычитает только прирост. Эфемерно
+# (в память): падение процесса просто закрывает сессии — узел переавторизуется.
+node_sessions: dict[str, dict] = {}
 
 # ── Репутация и реферальные выплаты ────────────────────────────────────────────
 def _reputation(aid: str):
@@ -699,11 +761,15 @@ def _apply_purchase(aid: str, product: str, method: str) -> dict:
 class PurchaseReq(BaseModel):
     product: str
     method: str
+    region: str = "ru"          # 'ru' → ₽, иначе → $ (определяет клиент по языку)
 
 @app.post("/v1/billing/purchase")
 def purchase(req: PurchaseReq, token: str = Depends(auth)):
-    """PaymentProvider-абстракция. В dev (sandbox) платёж авто-подтверждается;
-    в проде возвращаем pending — подтверждение придёт вебхуком (/v1/billing/webhook)."""
+    """PaymentProvider-абстракция. Режимы:
+      • sandbox — платёж авто-подтверждается (кнопка «Купить» оплачивает сразу);
+      • mock    — заглушка ПО РЕАЛЬНОМУ ПРИНЦИПУ: pending + checkout_url + qr,
+                  подтверждение колбэком /v1/billing/mock/confirm;
+      • прод    — боевой провайдер вернёт checkoutUrl, вебхук → /v1/billing/webhook."""
     aid = _account_of(token)
     if not aid:
         raise HTTPException(400, "no_account")
@@ -713,18 +779,72 @@ def purchase(req: PurchaseReq, token: str = Depends(auth)):
         raise HTTPException(422, "unknown_method")
     pay_id = b32(secrets.token_bytes(8))
     now = int(time.time())
+    price = _price_of(req.product, req.region, req.method)
     rec = {"payment_id": pay_id, "account_id": aid, "product": req.product,
-           "method": req.method, "created_at": now}
+           "method": req.method, "created_at": now,
+           "amount": price["amount"], "currency": price["currency"]}
+
+    if PAY_PROVIDER == "mock":
+        rec["status"] = "pending"; rec["provider"] = "mock"
+        payments[pay_id] = rec; _save_payments()
+        return {"payment_id": pay_id, "status": "pending", "provider": "mock",
+                "method": req.method, "amount": price["amount"], "currency": price["currency"],
+                "checkout_url": f"/v1/billing/mock/checkout/{pay_id}",
+                "qr": f"SYMB-PAY:{pay_id}"}
+
     if not SANDBOX_PAY:
         # боевой провайдер вернул бы ссылку/QR; статус придёт вебхуком.
         rec["status"] = "pending"
         payments[pay_id] = rec; _save_payments()
-        return {"payment_id": pay_id, "status": "pending", "method": req.method}
+        return {"payment_id": pay_id, "status": "pending", "method": req.method,
+                "amount": price["amount"], "currency": price["currency"]}
+
     sub = _apply_purchase(aid, req.product, req.method)
     rec.update(status="completed", completed_at=now, sandbox=True)
     payments[pay_id] = rec; _save_payments()
     return {"payment_id": pay_id, "status": "completed", "sandbox": True,
-            "method": req.method, "subscription": sub}
+            "method": req.method, "amount": price["amount"], "currency": price["currency"],
+            "subscription": sub}
+
+@app.get("/v1/billing/mock/checkout/{payment_id}")
+def mock_checkout(payment_id: str):
+    """Мок «страницы провайдера»: сумма + кнопка «Оплатить (тест)». Кнопка шлёт confirm,
+    как будто пользователь оплатил у провайдера. Только для dev-режима PAY_PROVIDER=mock."""
+    pay = payments.get(payment_id)
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay.get("status") == "completed":
+        html = f"<!doctype html><meta charset=utf-8><h2>Оплачено ✓</h2><p>Платёж {payment_id} подтверждён.</p>"
+        return Response(content=html, media_type="text/html")
+    amt, cur = pay.get("amount"), pay.get("currency", "")
+    html = (f"<!doctype html><meta charset=utf-8>"
+            f"<title>Оплата · Симбионт (тест)</title>"
+            f"<div style='font-family:system-ui;max-width:420px;margin:60px auto;text-align:center'>"
+            f"<h2>Оплата (тестовый провайдер)</h2>"
+            f"<p style='font-size:28px;font-weight:700'>{amt} {cur}</p>"
+            f"<p style='color:#888'>{pay.get('product')} · {pay.get('method')}</p>"
+            f"<button id=pay style='padding:14px 28px;font-size:16px;border:0;border-radius:12px;"
+            f"background:#34E5B0;font-weight:700;cursor:pointer'>Оплатить</button>"
+            f"<p id=st style='color:#34E5B0'></p></div>"
+            f"<script>document.getElementById('pay').onclick=async()=>{{"
+            f"const r=await fetch('/v1/billing/mock/confirm/{payment_id}',{{method:'POST'}});"
+            f"document.getElementById('st').textContent=r.ok?'Оплачено ✓ — можно вернуться в приложение':'Ошибка';"
+            f"}};</script>")
+    return Response(content=html, media_type="text/html")
+
+@app.post("/v1/billing/mock/confirm/{payment_id}")
+def mock_confirm(payment_id: str):
+    """Эмуляция успешного колбэка провайдера: подтверждает pending-платёж и начисляет
+    продукт. Идемпотентно (повторный вызов не начисляет дважды). Только dev (mock)."""
+    pay = payments.get(payment_id)
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay.get("status") in ("completed", "failed"):
+        return {"ok": True, "status": pay["status"], "idempotent": True}
+    sub = _apply_purchase(pay["account_id"], pay["product"], pay["method"])
+    pay.update(status="completed", completed_at=int(time.time()))
+    _save_payments()
+    return {"ok": True, "status": "completed", "subscription": sub}
 
 @app.get("/v1/billing/payment/{payment_id}")
 def payment_status(payment_id: str, token: str = Depends(auth)):
@@ -784,39 +904,110 @@ def billing_status(token: str = Depends(auth)):
     return {"account_id": aid, "subscription": _sub(aid),
             "granted_tier": idaccounts[aid].get("granted_tier")}
 
-class NodeSession(BaseModel):
-    account_id: str
-    minutes: int
-
-@app.post("/v1/node/session")
-async def node_session(request: Request):
-    """Узел рапортует длительность активной сессии → списываем баланс активного
-    времени. Узнаём длительность, НЕ содержимое трафика (приватность). Подпись —
-    ПЕР-УЗЛОВЫМ секретом (выдан при регистрации), узел опознаётся по node_id."""
-    raw = await request.body()
-    try:                                       # разбор ДО любых действий: битое тело → 422, не 500
-        data = json.loads(raw)
-        if not isinstance(data, dict):
-            raise ValueError("not_an_object")
-    except Exception:
-        raise HTTPException(422, "bad_json")
+def _verify_node(request: Request, raw: bytes, data: dict):
+    """Проверка подписи узла (пер-узловой HMAC). Возвращает node_id или 403."""
     node_id = data.get("node_id")
     node_secret = _node_secrets.get(node_id) if node_id else None
     if not node_secret:
         raise HTTPException(403, "unknown_node")
     expect = hmac.new(node_secret.encode(), raw, hashlib.sha256).hexdigest()
     if not hmac.compare_digest(request.headers.get("x-node-sign", ""), expect):
-        log.warning("отказ node/session: неверная подпись узла %s", node_id)
+        log.warning("отказ узла %s: неверная подпись", node_id)
         raise HTTPException(403, "bad_node_sign")
-    try:                                       # минуты СПИСАНИЯ: только неотрицательные
-        minutes = max(0, int(data.get("minutes", 0)))   # (иначе отрицательные «начисляли» баланс)
+    return node_id
+
+async def _node_body(request: Request):
+    raw = await request.body()
+    try:
+        data = json.loads(raw)
+        if not isinstance(data, dict):
+            raise ValueError("not_an_object")
+    except Exception:
+        raise HTTPException(422, "bad_json")
+    return raw, data
+
+@app.post("/v1/node/authorize")
+async def node_authorize(request: Request):
+    """Старт сессии: узел спрашивает, можно ли пускать этот аккаунт, и получает
+    session_token + «лиз» минут (сколько крутить БЕЗ связи с backend). Enforcement
+    при нуле — здесь: если покрыть нечем (coverage=none), allowed=false и узел не
+    поднимает туннель. session_token привязан к (node_id, account_id) и ТОЛЬКО он
+    даёт право списывать этот баланс (защита от чужого узла)."""
+    raw, data = await _node_body(request)
+    node_id = _verify_node(request, raw, data)
+    aid = data.get("account_id")
+    if aid not in idaccounts:
+        raise HTTPException(404, "no_account")
+    cov = _coverage(aid)
+    sub = _sub(aid)
+    if cov == "none":
+        return {"allowed": False, "coverage": "none", "reason": "no_time_or_subscription",
+                "active_minutes_left": sub.get("active_minutes_left", 0)}
+    # «лиз»: для баланса — не больше остатка (и не больше 30 мин за один лиз);
+    # для подписки/lifetime — фиксированное окно переопроса (минуты не тратятся).
+    if cov == "balance":
+        lease = min(int(sub.get("active_minutes_left", 0)), 30)
+    else:
+        lease = 30
+    stoken = b32(secrets.token_bytes(12))
+    node_sessions[stoken] = {"node_id": node_id, "account_id": aid,
+                             "charged": 0, "created_at": int(time.time())}
+    return {"allowed": True, "coverage": cov, "session_token": stoken,
+            "lease_minutes": lease, "active_minutes_left": sub.get("active_minutes_left", 0)}
+
+@app.post("/v1/node/session")
+async def node_session(request: Request):
+    """Узел рапортует активные минуты сессии → списываем баланс активного времени.
+    Узнаём ДЛИТЕЛЬНОСТЬ, не содержимое трафика (приватность).
+
+    Два режима:
+      • НОВЫЙ (идемпотентный): тело {session_token, cum_minutes} — узел шлёт ИТОГО
+        минут сессии; сервер вычитает только прирост (delta = cum − уже списано).
+        Повтор того же cum ничего не списывает дважды; падение узла наверстывается
+        следующим cum. Списываем ТОЛЬКО если coverage=balance (подписка — приоритет).
+      • ЛЕГАСИ: тело {account_id, minutes} — прямое списание дельты (обратная совместимость).
+    Оба пути подписаны пер-узловым секретом."""
+    raw, data = await _node_body(request)
+    node_id = _verify_node(request, raw, data)
+
+    stoken = data.get("session_token")
+    if stoken is not None:                          # ── новый идемпотентно-кумулятивный путь ──
+        sess = node_sessions.get(stoken)
+        if not sess or sess["node_id"] != node_id:  # чужой/просроченный токен — 403
+            raise HTTPException(403, "bad_session_token")
+        aid = sess["account_id"]
+        if aid not in idaccounts:
+            raise HTTPException(404, "no_account")
+        try:
+            cum = max(0, int(data.get("cum_minutes", 0)))
+        except (TypeError, ValueError):
+            raise HTTPException(422, "bad_minutes")
+        # sanity: накопленные минуты не больше прошедшего wall-clock (+2 мин запаса) —
+        # узел не может «открутить» больше реального времени сессии.
+        max_cum = (int(time.time()) - sess["created_at"]) // 60 + 2
+        cum = min(cum, max_cum)
+        delta = max(0, cum - sess["charged"])
+        sess["charged"] = cum
+        sub = _sub(aid)
+        cov = _coverage(aid)
+        if delta and cov == "balance":              # подписка/lifetime → минуты НЕ трогаем
+            sub["active_minutes_left"] = max(0, sub["active_minutes_left"] - delta)
+            _ledger_add(aid, "debit", minutes=delta)
+            _save_idaccounts()
+        left = sub.get("active_minutes_left", 0)
+        return {"ok": True, "active_minutes_left": left, "coverage": _coverage(aid),
+                "cutoff": _coverage(aid) == "none"}   # cutoff=true → узлу пора рвать сессию
+
+    # ── легаси-путь: {account_id, minutes} (прямая дельта) ──
+    try:
+        minutes = max(0, int(data.get("minutes", 0)))
     except (TypeError, ValueError):
         raise HTTPException(422, "bad_minutes")
     aid = data.get("account_id")
     if aid not in idaccounts:
         raise HTTPException(404, "no_account")
     sub = _sub(aid)
-    if sub["mode"] == "balance":
+    if sub["mode"] == "balance":                    # легаси: поведение как раньше (без приоритета подписки)
         sub["active_minutes_left"] = max(0, sub["active_minutes_left"] - minutes)
         if minutes:
             _ledger_add(aid, "debit", minutes=minutes)

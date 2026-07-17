@@ -204,6 +204,16 @@ class ApiClient {
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
+  /// Разбор пользовательской ссылки «свой мост» (vless/ss/hysteria2) → узел каскада.
+  /// Stateless: сервер ничего не хранит; мост клиент держит локально. Ответ:
+  /// {ok, node:{protocol,server,port,params,warnings}} либо {ok:false, error, message}.
+  Future<Map<String, dynamic>> parseBridge(String uri) async {
+    final r = await http.post(Uri.parse('$baseUrl/v1/config/parse-bridge'),
+        headers: {'Content-Type': 'application/json'}, body: jsonEncode({'uri': uri}));
+    _need(r, 200);
+    return jsonDecode(r.body) as Map<String, dynamic>;
+  }
+
   /// Покупка: product ('premium_month'…'balance_100h'), method ('mir'|'visa'|'mastercard'|'sbp'|'crypto'…).
   Future<Map<String, dynamic>> purchase(String product, String method) async {
     final r = await http.post(Uri.parse('$baseUrl/v1/billing/purchase'), headers: _auth, body: jsonEncode({'product': product, 'method': method}));
