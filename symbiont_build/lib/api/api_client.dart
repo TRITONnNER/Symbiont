@@ -196,6 +196,14 @@ class ApiClient {
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
+  /// Фиче-флаги: видимость блоков (тот же манифест, что читает сайт). Гейтим UI
+  /// из этого; неизвестный/отсутствующий флаг считаем включённым (fail-open).
+  Future<Map<String, dynamic>> flags() async {
+    final r = await http.get(Uri.parse('$baseUrl/v1/config/flags'));
+    _need(r, 200);
+    return jsonDecode(r.body) as Map<String, dynamic>;
+  }
+
   /// Покупка: product ('premium_month'…'balance_100h'), method ('mir'|'visa'|'mastercard'|'sbp'|'crypto'…).
   Future<Map<String, dynamic>> purchase(String product, String method) async {
     final r = await http.post(Uri.parse('$baseUrl/v1/billing/purchase'), headers: _auth, body: jsonEncode({'product': product, 'method': method}));

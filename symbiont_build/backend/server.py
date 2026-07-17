@@ -524,6 +524,49 @@ def economy():
     return DEFAULT_ECONOMY
 
 
+# ── Фиче-флаги: что показывать на сайте и в приложении ─────────────────────────
+# Единый источник видимости блоков для ОБОИХ поверхностей (сайт + приложение).
+# Один флаг здесь → оболочка/клиент прячет блок в обеих. Переопределяется файлом
+# flags.json (как economy.json), чтобы менять без пересборки. Гейтинг — fail-open:
+# неизвестный/отсутствующий флаг считается ВКЛючённым (лучше лишний блок, чем пустой сайт).
+DEFAULT_FLAGS = {
+    "version": 1,
+    # Платформы в разделе «Скачать» — гаси по готовности сборки (пример: macOS не готова).
+    "download": {"ios": True, "android": True, "windows": True,
+                 "macos": True, "linux": True, "extension": True},
+    # Блок «Скоро» и его пункты.
+    "coming_soon": {"enabled": True, "apple_tv": True, "android_tv": True,
+                    "openwrt": True, "cli": True},
+    # Крупные секции сайта/страницы — можно скрыть целый блок или страницу.
+    "site": {"pricing": True, "download": True, "support": True, "legal": True,
+             "hero_widget": True, "features": True, "numbers": True, "faq": True,
+             "import_bridge": True, "lang_switcher": True},
+    # Правовое — отдельные блоки, которые часто «ещё не готовы».
+    # canary по умолчанию ВЫКЛ: пока нет реального процесса подписи — не показываем фейк.
+    "legal": {"canary": False, "law_requests": True, "key_revocations": True,
+              "jurisdictions": True},
+    # Цены — какие модели показывать (баланс, годовой переключатель, крипто-скидка).
+    "pricing": {"subscriptions": True, "balance": True, "balance_300h": True,
+                "annual_toggle": True, "crypto_discount": True},
+    # Приложение — возможности (те же флаги читает Flutter-клиент).
+    "app": {"import_bridge": True, "wheel": True, "referrals": True,
+            "network_analysis": True, "traffic_map": True, "key_checker": True},
+}
+
+@app.get("/v1/config/flags")
+def flags():
+    """Фиче-флаги видимости блоков (сайт + приложение). Единый источник — здесь;
+    override — файлом flags.json (как economy.json). Клиент/оболочка читают и гейтят
+    блоки. Неизвестный флаг = включён (fail-open), чтобы опечатка не гасила витрину."""
+    if os.path.exists("flags.json"):
+        try:
+            with open("flags.json", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            log.warning("flags.json не загружен: %s", e)
+    return DEFAULT_FLAGS
+
+
 # ── Оплата, подписка, баланс активного времени, гранты (Этап 3) ────────────────
 # Каталог продуктов. period — дни; balance — активные минуты (списываются узлом
 # ТОЛЬКО под подключением). Цены — для справки/sandbox; правда живёт в economy.

@@ -36,6 +36,7 @@ threads.json
 keys_registry.json
 nodes.json
 economy.json
+flags.json
 payments.json
 node_health.json
 symbiont_state.db

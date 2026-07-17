@@ -88,6 +88,7 @@
     // публичные
     manifest: function (since) { return req('GET', '/v1/manifest' + (since ? ('?since=' + since) : '')); },
     economy: function () { return req('GET', '/v1/config/economy'); },
+    flags: function () { return req('GET', '/v1/config/flags'); },
     pubkey: function () { return req('GET', '/v1/pubkey'); },
     keyCheck: function (code) { return req('POST', '/v1/key/check', { code: code }); },
 
@@ -217,6 +218,7 @@
           return;
         }
         try { window.SYM_DATA.economy = await API.economy(); } catch (e) {}
+        try { window.SYM_DATA.flags = await API.flags(); } catch (e) {}   // видимость блоков (сайт+приложение)
         self.ready = true;
         self._wake();
       })();
@@ -226,6 +228,22 @@
 
   // Глобальный помощник для гейтинга «живых» действий в оболочке.
   window.SYM_LIVE = function () { return !!(window.SYM_API && window.SYM_API.isLive() && window.SYM_DATA && window.SYM_DATA.manifest); };
+
+  // Фиче-флаги: показывать ли блок. Путь через точку ('download.macos').
+  // FAIL-OPEN: если флаги не загружены или путь неизвестен → возвращаем dflt (по умолчанию true),
+  // чтобы отсутствие бэкенда/опечатка не гасили витрину. Явный false в манифесте прячет блок.
+  window.SYM_FLAG = function (path, dflt) {
+    var def = (dflt === undefined) ? true : dflt;
+    var f = window.SYM_DATA && window.SYM_DATA.flags;
+    if (!f || !path) return def;
+    var cur = f;
+    var parts = String(path).split('.');
+    for (var i = 0; i < parts.length; i++) {
+      if (cur == null || typeof cur !== 'object' || !(parts[i] in cur)) return def;
+      cur = cur[parts[i]];
+    }
+    return cur === undefined ? def : cur;
+  };
 
   window.SYM_API = API;
   window.SYM_BRIDGE = BRIDGE;
