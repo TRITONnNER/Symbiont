@@ -1575,6 +1575,17 @@ class Component extends DCLogic {
   finishOnboarding(){ this.setState({authed:true, obStep:'auth', conn:'idle'}); this._seq++; setTimeout(()=>this.connect(),350); }
   logout(){ this._seq++; this.setState({authed:false, conn:'idle', screen:'home', overlay:null}); }
   setOverlay(o){ this.setState({overlay:o}); }
+  // Применить правила маршрутизации к движку (если подключён). Сайт→domain_suffix,
+  // приложение→process_name. Действие маппится в путь каскада. Нет движка → no-op (демо).
+  _applyRoutes(){
+    const eng=(typeof window!=='undefined')&&window.SYM_ENGINE;
+    if(!eng||!eng.applyRules) return;
+    const act=(a)=>(a==='vpn'||a==='tunnel')?'tunnel':((a==='dpi'||a==='bypass')?'bypass':(a==='direct'?'direct':(a==='block'?'block':(a==='boost'?'boost':'auto'))));
+    try{
+      const rules=(this.state.userRules||[]).map(r=>({ kind:(r.type==='site')?'domainSuffix':'processId', match:r.name, action:act(r.act) }));
+      eng.applyRules(rules);
+    }catch(e){}
+  }
   buyPlan(plan){ clearTimeout(this._payT); const pm=this.state.payMethod||'sbp'; const api=(typeof window!=='undefined')&&window.SYM_API; const live=!!(api&&(api.base||api._ready)); if(live&&api.hasToken&&!api.hasToken()){ this.setState({authed:false, obStep:'auth', screen:'home'}); this.toast((this.state.lang==='ru')?'Войдите, чтобы оплатить':'Sign in to pay','warn'); return; } this.setState({pay:'pending'}); const period=(this.state.billing==='year')?'year':'month'; const product=(plan||'premium')+'_'+period; const currency=(pm==='visa'||pm==='mc')?'usd':'rub'; if(live){ api.purchase({product,method:pm,currency,discountCode:(this.state.payCode||null)}).then((res)=>{ if(res&&res.checkoutUrl){ try{ window.location.href=res.checkoutUrl; }catch(e){} return; } this.setState({pay:'done'}); }).catch(()=>{ this.setState({pay:'done'}); }); } else { this._payT=setTimeout(()=>this.setState({pay:'done'}),1900); } }
   setGlTab(t){ this.setState({glTab:t}); }
   toggleFaq(i){ this.setState(s=>({faqOpen:s.faqOpen===i?null:i})); }
@@ -2232,7 +2243,19 @@ class Component extends DCLogic {
       subIcon:S.addSub!==false?'check_box':'check_box_outline_blank', subColor:S.addSub!==false?'#34E5B0':'#566270',
       openAdd:()=>this.setState({addFlow:'choose', addInput:'', addSub:true}), chooseSite:()=>this.setState({addFlow:'site'}), chooseApp:()=>{ this.setState({addFlow:null}); this.startScan(); }, closeAdd:()=>this.setState({addFlow:null}),
       onAddDomain:(e)=>this.setField('addInput',e.target.value), toggleSub:()=>this.setState(s=>({addSub:!s.addSub})),
-      addSiteConfirm:()=>{ const d=(this.state.addInput||'').trim().replace(/^https?:\/\//,'').replace(/\/.*$/,''); if(!d){ this.toast(this._T().ruleNeed,'warn'); return; } this.setState(s=>({ userRules:[...s.userRules.filter(r=>!(r.type==='site'&&r.name===d)), {type:'site',name:d,act:s.addAction||'tunnel'}], addFlow:null })); this.toast(this._T().ruleAdded,'ok'); },
+      addSiteConfirm:()=>{
+        // ВСТАВКА НЕСКОЛЬКИХ доменов сразу: через запятую/пробел/перенос строки.
+        const domains=[...new Set((this.state.addInput||'').split(/[\s,;]+/)
+          .map(x=>x.trim().replace(/^https?:\/\//,'').replace(/\/.*$/,'').toLowerCase())
+          .filter(Boolean)
+          .filter(d=>/^(\*\.)?[a-z0-9.-]+\.[a-z]{2,}$/i.test(d)))];   // базовая валидация + дедуп
+        if(!domains.length){ this.toast(this._T().ruleNeed,'warn'); return; }
+        this.setState(s=>{ const act=s.addAction||'tunnel';
+          const keep=s.userRules.filter(r=>!(r.type==='site'&&domains.indexOf(r.name)>=0));
+          return { userRules:[...keep, ...domains.map(name=>({type:'site',name,act}))], addFlow:null, addInput:'' };
+        }, ()=>this._applyRoutes());
+        this.toast(domains.length>1?(((this.state.lang==='ru')?'Добавлено правил: ':'Rules added: ')+domains.length):this._T().ruleAdded,'ok');
+      },
       addSuggest: SERVICES.filter(s=>{const q=(S.addInput||'').toLowerCase().trim(); return !q||(s.name+' '+s.domain).toLowerCase().includes(q);}).slice(0,5).map(s=>({name:s.name,domain:s.domain,logoStyle:{width:'22px',height:'22px',backgroundImage:'url('+s.logo+')',backgroundSize:'contain',backgroundRepeat:'no-repeat',backgroundPosition:'center'},onClick:()=>this.setField('addInput',s.domain)})),
       onPickAppRoute:(id)=>{ const st=this.state; if(st.svcTarget){ const d=st.svcTarget.domain, lg=st.svcTarget.logo; this.setState(s=>{ const ex=s.userRules.findIndex(r=>r.type==='site'&&r.name===d); const ur = ex>=0 ? s.userRules.map((r,j)=>j===ex?{...r,act:id}:r) : [...s.userRules,{type:'site',name:d,act:id,logo:lg}]; return { userRules:ur, svcTarget:null }; }); } else if(st.routeDefOpen){ this.setState({routeMode:id, routeDefOpen:false}); } else if(st.routeRuleIdx!=null){ if(id==='__remove'){ this.setState(s=>({userRules:s.userRules.filter((_,j)=>j!==s.routeRuleIdx), routeRuleIdx:null})); } else { this.setState(s=>({userRules:s.userRules.map((r,j)=>j===s.routeRuleIdx?{...r,act:id}:r), routeRuleIdx:null})); } } else { this.setState(s=>({appActions:{...(s.appActions||{}),[s.routeAppIdx]:id}, routeAppIdx:null})); } }, closeAppRoute:()=>this.setState({routeAppIdx:null, routeRuleIdx:null, routeDefOpen:false, svcTarget:null}), defPill, openRouteDef:()=>this.setState({routeDefOpen:true}), appRouteOptsView,
       nodeSelOpen:S.overlay==='nodeSel', protoSelOpen:S.overlay==='protoSel', openNodeSel:()=>this.setOverlay('nodeSel'), openProtoSel:()=>this.setOverlay('protoSel'),
