@@ -30,7 +30,13 @@ def _read():
     if len(raw_len) < 4:
         return None
     (length,) = struct.unpack("=I", raw_len)
+    # Спецификация native messaging: сообщение ≤1 МБ. Больший/нулевой префикс —
+    # рассинхрон кадров или мусор: рвём цикл чисто, а не блокируемся на чтении гиганта.
+    if length <= 0 or length > 1024 * 1024:
+        return None
     data = sys.stdin.buffer.read(length)
+    if len(data) < length:            # пайп закрылся раньше — не парсим огрызок
+        return None
     try:
         return json.loads(data.decode("utf-8"))
     except Exception:
@@ -65,10 +71,16 @@ def main():
         if msg is None:
             break
         cmd = msg.get("cmd")
+        # Эхо-им _id запроса в ответ, чтобы попап сопоставил ответ со своей командой
+        # (на одном порту живут и ответы, и незапрошенные engine-события).
+        rid = msg.get("_id")
         if cmd not in ("connect", "disconnect", "status"):
-            _write({"ok": False, "error": "unknown_cmd"})
-            continue
-        _write(_forward(msg))
+            resp = {"ok": False, "error": "unknown_cmd"}
+        else:
+            resp = _forward(msg)
+        if rid is not None and isinstance(resp, dict):
+            resp["_id"] = rid
+        _write(resp)
 
 
 if __name__ == "__main__":

@@ -53,12 +53,12 @@ if ! command -v sing-box >/dev/null 2>&1; then
   say "ставлю sing-box ($SB_ARCH)…"
   apt-get update -qq && apt-get install -y -qq curl tar openssl jq >/dev/null
   # узнаём последнюю версию
-  SB_VER="$(curl -fsSL https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/^v//')"
+  SB_VER="$(curl -fsSL --max-time 15 --retry 3 https://api.github.com/repos/SagerNet/sing-box/releases/latest | jq -r .tag_name | sed 's/^v//')"
   [ -n "$SB_VER" ] && [ "$SB_VER" != "null" ] || die "не удалось узнать версию sing-box (нет сети/лимит GitHub)"
   TMP="$(mktemp -d)"
   URL="https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/sing-box-${SB_VER}-linux-${SB_ARCH}.tar.gz"
   say "скачиваю $URL"
-  curl -fsSL "$URL" -o "$TMP/sb.tar.gz" || die "не удалось скачать sing-box"
+  curl -fsSL --max-time 180 --retry 3 "$URL" -o "$TMP/sb.tar.gz" || die "не удалось скачать sing-box"
   tar -xzf "$TMP/sb.tar.gz" -C "$TMP"
   install -m 0755 "$TMP/sing-box-${SB_VER}-linux-${SB_ARCH}/sing-box" /usr/local/bin/sing-box
   rm -rf "$TMP"

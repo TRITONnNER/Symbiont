@@ -21,7 +21,12 @@
      GET  /v1/account/pow · POST /v1/account/register|login|recover
    Аутентификация — Bearer-токен (не куки) → credentials:'omit'. */
 (function () {
+  var REQ_TIMEOUT_MS = 15000;   // без таймаута зависший бэкенд подвешивал fetch навсегда → bootstrap/Promise.all не завершались
   function request(url, opts) {
+    opts = opts || {};
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var tid = ctl ? setTimeout(function () { ctl.abort(); }, REQ_TIMEOUT_MS) : null;
+    if (ctl) opts = Object.assign({}, opts, { signal: ctl.signal });
     return fetch(url, opts).then(function (r) {
       return r.text().then(function (t) {
         var data = null;
@@ -29,7 +34,10 @@
         if (!r.ok) { var err = new Error('HTTP ' + r.status + ' ' + url); err.status = r.status; err.data = data; throw err; }
         return data;
       });
-    });
+    }).catch(function (e) {
+      if (e && e.name === 'AbortError') { var te = new Error('timeout ' + url); te.status = 0; throw te; }
+      throw e;
+    }).finally(function () { if (tid) clearTimeout(tid); });
   }
 
   // ── Адаптеры: форма бэкенда → форма приложения (app-config.js) ───────────────

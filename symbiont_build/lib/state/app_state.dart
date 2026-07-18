@@ -475,7 +475,13 @@ class AppState extends ChangeNotifier {
     } catch (_) {/* проба не критична — молча */}
   }
 
-  Future<void> refreshFromBackend() async {
+  Future<void>? _refreshInFlight;
+  /// Single-flight: параллельные вызовы (из _boot / register / login...) делят один
+  /// выполняющийся Future и не гоняют общую мутабельную стейт-карту (nodes, manifest,
+  /// pingHistory) наперегонки.
+  Future<void> refreshFromBackend() =>
+      _refreshInFlight ??= _refreshImpl().whenComplete(() { _refreshInFlight = null; });
+  Future<void> _refreshImpl() async {
     backendOnline = await api.ping();
     // 1) узлы и правила — ТОЛЬКО из подписанного манифеста. Нет бэкенда/узлов →
     // список пуст: UI покажет прямое подключение пользователя (без выдуманных узлов).
@@ -884,12 +890,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _trafTicking = false;
   Future<void> _trafficTick() async {
+    if (_trafTicking) return;          // тик каждые 2с; без гварда медленный опрос наслаивался бы
+    _trafTicking = true;
     try {
       traffic = await engine.trafficConnections();
     } catch (e) {
       traffic = const [];
       Log.w('traffic', 'опрос не удался (изолировано): $e');
+    } finally {
+      _trafTicking = false;
     }
     notifyListeners();
   }
@@ -919,7 +930,10 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _monTicking = false;
   Future<void> _monitorTick() async {
+    if (_monTicking) return;           // тик каждые 5с, а замер до ~14с — без гварда тики наслаивались бы и гоняли pingHistory
+    _monTicking = true;
     // изоляция падений: любая ошибка замера НЕ роняет приложение и не трогает ядро
     try {
       final p = await Probe.directPing().timeout(const Duration(seconds: 6), onTimeout: () => null);
@@ -941,6 +955,8 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       monHealth = 'unknown';
       Log.w('monitor', 'замер не удался (изолировано): $e');
+    } finally {
+      _monTicking = false;
     }
     notifyListeners();
   }

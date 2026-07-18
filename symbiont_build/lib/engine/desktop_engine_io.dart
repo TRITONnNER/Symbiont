@@ -249,7 +249,9 @@ class DesktopEngine implements SymbiontEngine {
       final req = await c.getUrl(Uri.parse('http://127.0.0.1:9090/connections'));
       final resp = await req.close().timeout(const Duration(seconds: 3));
       if (resp.statusCode != 200) return const [];
-      final body = await resp.transform(utf8.decoder).join();
+      // таймаут и на ЧТЕНИЕ ТЕЛА: заголовки могли прийти, а тело — зависнуть
+      // (иначе join() висел бы, и каждые 2с копился новый висящий запрос).
+      final body = await resp.transform(utf8.decoder).join().timeout(const Duration(seconds: 3));
       final data = jsonDecode(body) as Map<String, dynamic>;
       final conns = (data['connections'] as List?) ?? const [];
       final out = <TrafficConn>[];
@@ -572,7 +574,9 @@ class DesktopEngine implements SymbiontEngine {
     // если пользователь сам не отключился за это время — пробуем поднять заново
     if (_cur.phase == ConnPhase.error) {
       if (proto == 'vpn' && activeNode != null) {
-        await _connectFromNode(activeNode!);
+        if (_connecting) return;          // не пересекаемся с идущим connect()/applyRules
+        _connecting = true;
+        try { await _connectFromNode(activeNode!); } finally { _connecting = false; }
       } else if (proto == 'bypass' && zapret != null) {
         await _runZapret();
       } else {
@@ -775,8 +779,16 @@ class DesktopEngine implements SymbiontEngine {
     Log.w('rules', 'правила обновлены: ${_rules.length} шт.');
     // если туннель активен — пересобрать конфиг и переподнять, чтобы правила вступили в силу
     if (_cur.phase == ConnPhase.on && activeNode != null) {
-      Log.w('rules', 'туннель активен — применяю правила (переподключение)');
-      await _connectFromNode(activeNode!);
+      // Через тот же _connecting-гвард, что и connect(): иначе правило/вотчдог во время
+      // пользовательского connect() запускали второй kill/переподъём и гонку конфигов.
+      if (_connecting) { Log.w('rules', 'подключение уже идёт — правила применю следующим переподключением'); return; }
+      _connecting = true;
+      try {
+        Log.w('rules', 'туннель активен — применяю правила (переподключение)');
+        await _connectFromNode(activeNode!);
+      } finally {
+        _connecting = false;
+      }
     }
   }
   @override

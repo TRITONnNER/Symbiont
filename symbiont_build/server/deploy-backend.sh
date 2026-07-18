@@ -132,7 +132,7 @@ ln -sfn /etc/nginx/sites-available/symbiont /etc/nginx/sites-enabled/symbiont
 rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
 nginx -t >/dev/null 2>&1 && systemctl reload nginx || warn "nginx -t не прошёл — проверь конфиг"
 
-BASE="http://${DOMAIN:-$(curl -fsS ifconfig.me 2>/dev/null || echo SERVER_IP)}"
+BASE="http://${DOMAIN:-$(curl -fsS --max-time 8 ifconfig.me 2>/dev/null || echo SERVER_IP)}"
 if [ "$TLS" = "1" ] && command -v certbot >/dev/null 2>&1; then
   say "TLS через certbot для $DOMAIN…"
   certbot --nginx -n --agree-tos ${EMAIL:+-m "$EMAIL"} ${EMAIL:+} -d "$DOMAIN" >/dev/null 2>&1 \

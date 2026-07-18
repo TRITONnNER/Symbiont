@@ -52,7 +52,7 @@ command -v python3 >/dev/null 2>&1 || die "нет python3"
 
 say "скачиваю набор узла из $SRC …"
 mkdir -p "$DEST/server" "$DEST/backend"
-fetch() { curl -fsSL "$SRC/$1" -o "$DEST/$1" || die "не скачался $1 (проверь SYMBIONT_SRC/ветку)"; }
+fetch() { curl -fsSL --max-time 30 --retry 3 "$SRC/$1" -o "$DEST/$1" || die "не скачался $1 (проверь SYMBIONT_SRC/ветку)"; }
 for f in server/bootstrap_vps.sh server/install.sh server/gen_server.py \
          server/register_node.py server/heartbeat_node.py server/symbiont-node \
          backend/node_autotune.py; do

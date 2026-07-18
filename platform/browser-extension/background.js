@@ -20,22 +20,32 @@ function connectHost() {
   return port;
 }
 
+var _askSeq = 0;
 function ask(payload) {
   return new Promise(function (resolve) {
     var p = connectHost();
     if (!p) { resolve({ ok: false, error: 'no_native_host', conn: 'error' }); return; }
+    // Корреляция запрос↔ответ по _id: на одном порту живут и незапрошенные
+    // engine-события, и ответы параллельных ask(); без id ask резолвился первым
+    // попавшимся сообщением и перекрёстно мешал ответы разных команд.
+    var id = 'r' + (++_askSeq);
+    payload = Object.assign({ _id: id }, payload || {});
     var done = false;
-    function onMsg(msg) {
+    function finish(res) {
       if (done) return; done = true;
       try { p.onMessage.removeListener(onMsg); } catch (e) {}
-      resolve(msg || { ok: true });
+      resolve(res);
+    }
+    function onMsg(msg) {
+      if (!msg || msg._id !== id) return;   // не наш ответ (чужая команда/событие) — игнор
+      finish(msg);
     }
     try {
       p.onMessage.addListener(onMsg);
       p.postMessage(payload);
-      // Таймаут — не подвешиваем попап, если хост молчит.
-      setTimeout(function () { if (!done) { done = true; resolve({ ok: false, error: 'timeout', conn: lastConn }); } }, 4000);
-    } catch (e) { resolve({ ok: false, error: String(e), conn: 'error' }); }
+      // Таймаут — не подвешиваем попап, если хост молчит (снимаем слушатель).
+      setTimeout(function () { finish({ ok: false, error: 'timeout', conn: lastConn }); }, 4000);
+    } catch (e) { finish({ ok: false, error: String(e), conn: 'error' }); }
   });
 }
 

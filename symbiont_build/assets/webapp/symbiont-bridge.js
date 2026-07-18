@@ -40,15 +40,21 @@
     return h;
   }
 
+  var REQ_TIMEOUT_MS = 15000;   // без таймаута зависший бэкенд подвешивал fetch/req навсегда
   async function req(method, path, body, opt) {
     opt = opt || {};
     var init = { method: method, headers: authHeaders(opt.headers) };
     if (body !== undefined) init.body = JSON.stringify(body);
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var tid = ctl ? setTimeout(function () { ctl.abort(); }, REQ_TIMEOUT_MS) : null;
+    if (ctl) init.signal = ctl.signal;
     var r;
     try {
       r = await fetch(u(path), init);
     } catch (netErr) {
-      var e0 = new Error('network'); e0.status = 0; e0.cause = netErr; throw e0;
+      var e0 = new Error(netErr && netErr.name === 'AbortError' ? 'timeout' : 'network'); e0.status = 0; e0.cause = netErr; throw e0;
+    } finally {
+      if (tid) clearTimeout(tid);
     }
     var data = null;
     try { data = await r.json(); } catch (e) { /* пустой/не-JSON ответ */ }

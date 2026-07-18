@@ -112,18 +112,34 @@ class Probe {
       final req = await c.getUrl(Uri.parse(url));
       final resp = await req.close().timeout(const Duration(seconds: 8));
       var bytes = 0;
-      final deadline = DateTime.now().add(const Duration(seconds: 12));
-      await for (final chunk in resp) {
-        bytes += chunk.length;
-        if (DateTime.now().isAfter(deadline)) break; // не виснем, если поток застрял
+      // Сторож ТИШИНЫ + общий дедлайн (как в probeCurtain). `await for` виснул, если
+      // тело замирало между чанками: проверка дедлайна срабатывала только с приходом
+      // чанка, а внешний .timeout лишь бросал future, оставляя HttpClient/сокет
+      // открытыми (утечка на каждом флаки-замере).
+      final done = Completer<void>();
+      Timer? watchdog;
+      void arm() {
+        watchdog?.cancel();
+        watchdog = Timer(const Duration(seconds: 4), () {
+          if (!done.isCompleted) done.complete();
+        });
       }
+      arm();
+      final sub = resp.listen((chunk) {
+        bytes += chunk.length;
+        arm();                       // данные пришли — перевзводим сторож тишины
+      }, onDone: () { if (!done.isCompleted) done.complete(); },
+         onError: (_) { if (!done.isCompleted) done.complete(); });
+      await done.future.timeout(const Duration(seconds: 12), onTimeout: () {});
+      watchdog?.cancel();
+      await sub.cancel();
       sw.stop();
       if (sw.elapsedMilliseconds <= 0 || bytes <= 0) return null;
       return (bytes * 8) / (sw.elapsedMilliseconds * 1000); // Мбит/с
     } catch (_) {
       return null;
     } finally {
-      try { c?.close(); } catch (_) {}
+      try { c?.close(force: true); } catch (_) {}
     }
   }
 
