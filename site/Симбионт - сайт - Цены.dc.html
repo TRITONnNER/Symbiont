@@ -363,14 +363,20 @@ class Component extends DCLogic {
   openPay(kind,plan,sku){ const isR=this._cur()==='rub'; this.setState({ payOpen:true, payKind:kind, payPlan:plan, paySku: sku||(this.state.billing==='yearly'?'y':'m'), payMethod: isR?'sbp':'visa', payPhase:'form' }); }
   closePay(){ this.setState({payOpen:false}); }
   submitPay(){
-    this.setState({payPhase:'pending'});
     const S=this.state;
+    const api = (typeof window!=='undefined') && window.SYM_API;
+    const live = !!(api && (api.base || api._ready));
+    // login-gate: покупка только после входа в аккаунт
+    if(live && api.hasToken && !api.hasToken()){
+      try{ window.location.href='Симбионт - сайт - Аккаунт.dc.html'; }catch(e){}
+      return;
+    }
+    this.setState({payPhase:'pending'});
     const product = S.payKind==='sub'
       ? (S.payPlan + '_' + (S.billing==='yearly'?'year':'month'))
       : ('balance_' + (S.paySku==='h100'?'100h':'300h'));
-    const payload = { product, method:S.payMethod, currency:this._cur() };
-    const api = (typeof window!=='undefined') && window.SYM_API;
-    if(api && api.base){
+    const payload = { product, method:S.payMethod, currency:this._cur(), discountCode:(S.payCode||null) };
+    if(live){
       api.purchase(payload).then((res)=>{
         if(res && res.checkoutUrl){ try{ window.location.href=res.checkoutUrl; }catch(e){} return; }
         this.setState({payPhase:'done'});

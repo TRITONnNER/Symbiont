@@ -37,6 +37,7 @@ global.fetch = function (url) {
   if (url.includes('/config/economy')) body = JSON.stringify(BE.economy);
   else if (url.includes('/config/flags')) body = JSON.stringify(BE.flags);
   else if (url.includes('/config/discounts')) body = JSON.stringify(BE.discounts);
+  else if (url.includes('/account/login')) body = JSON.stringify({ token: 'TESTTOKEN', account_id: 'a1' });
   return Promise.resolve({ ok: true, status: 200, text: () => Promise.resolve(body) });
 };
 
@@ -61,6 +62,12 @@ A.bootstrap().then(() => {
   chk(Array.isArray(d.campaigns) && d.campaigns.length >= 1 && d.campaigns[0].percent === 20, 'discounts: кампания −20% пришла');
   chk(d.combo && d.combo.length === 3, 'discounts: combo (site-config) сохранён');
   chk(d.referral.premium_month.inviter === 30, 'discounts: referral (site-config) сохранён');
-  console.log(`\n[site-connector] ${ok}/${ok + fail} зелёные`);
-  process.exit(fail ? 1 : 0);
+  chk(A._ready === true, 'bootstrap: SYM_API._ready выставлен (сайт подключён)');
+  // login-gate: после входа выставляется Bearer-токен
+  return A.login({ token: 'x' }).then(function (res) {
+    chk(res.token === 'TESTTOKEN', 'login: токен получен');
+    chk(A.hasToken() && A.headers.Authorization === 'Bearer TESTTOKEN', 'login: Bearer-заголовок выставлен');
+    console.log(`\n[site-connector] ${ok}/${ok + fail} зелёные`);
+    process.exit(fail ? 1 : 0);
+  });
 }).catch(err => { console.error(err); process.exit(2); });

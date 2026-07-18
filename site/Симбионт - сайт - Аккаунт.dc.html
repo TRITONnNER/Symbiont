@@ -227,11 +227,13 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { loggedIn:false, authTab:'login', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru' };
+  state = { loggedIn:false, authTab:'login', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru', token:null, recovery:null };
   showToast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),1800); }
   componentDidMount(){
     try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
     try{ const a=localStorage.getItem('sym-auth'); if(a==='1') this.setState({loggedIn:true}); }catch(e){}
+    // если бэкенд подключён и токен уже в localStorage — считаем вошедшим
+    try{ const api=window.SYM_API; if(api&&api.loadToken){ api.loadToken(); if(api.hasToken&&api.hasToken()) this.setState({loggedIn:true}); } }catch(e){}
     this._onLang=(e)=>{ let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({lang:l}); };
     this._onStore=(e)=>{ if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({lang:e.newValue}); };
     this._onI18n=()=>this.forceUpdate();
@@ -271,7 +273,11 @@ class Component extends DCLogic {
     const qk=T('a_quick')||[];
     const quick=qkMeta.map((m,i)=>({icon:m.icon,t:qk[i],href:m.href}));
 
-    const recWords = ['orbit','cedar','flux','delta','north','ember','quartz','maple'].map((w,i)=>({ n:String(i+1).padStart(2,'0'), w }));
+    // реальный код восстановления (base32 группами по 4) при живом входе, иначе демо
+    const recWords = (this.state.recovery
+      ? this.state.recovery.split('-')
+      : ['orbit','cedar','flux','delta','north','ember','quartz','maple']
+      ).map((w,i)=>({ n:String(i+1).padStart(2,'0'), w }));
 
     return {
       dir: rtl?'rtl':'ltr', brand,
@@ -283,11 +289,17 @@ class Component extends DCLogic {
       authFieldPh: isLogin?'sb_live_…  или  СИМБ-XXXX-XXXX':T('a_phDevice'),
       authCta: isLogin?T('a_login'):T('a_createAcc'), orLabel:T('a_or'), recoverBtn:T('a_recoverBtn'), loginNote:T('a_loginNote'),
       rightTitleA:T('a_rightTitleA'), rightTitleB:T('a_rightTitleB'), noKey:T('a_noKey'), loginPoints,
-      signIn:()=>{ this.setState({loggedIn:true}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} },
-      signOut:()=>{ this.setState({loggedIn:false, recShown:false}); try{ localStorage.setItem('sym-auth','0'); }catch(e){} },
+      signIn:()=>{
+        const api=(typeof window!=='undefined') && window.SYM_API;
+        const live=!!(api && (api.base || api._ready) && api.register);
+        const enter=(res)=>{ this.setState({loggedIn:true, token:(res&&res.token)||null, recovery:(res&&res.recovery_code)||null}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} };
+        if(live){ api.register({}).then(enter).catch(()=>enter(null)); }   // анонимный аккаунт за 30 сек → токен+recovery
+        else { enter(null); }                                             // демо (без бэкенда)
+      },
+      signOut:()=>{ const api=window.SYM_API; if(api&&api.logout) api.logout(); this.setState({loggedIn:false, recShown:false, token:null, recovery:null}); try{ localStorage.setItem('sym-auth','0'); }catch(e){} },
       headerName:(dv[0]||{}).name||'', ownerLabel:T('a_owner'), headerSub:brand+' '+T('a_premium')+' · '+T('a_activeUntil'), logoutLabel:T('a_logout'),
       statTiles, subscriptionLabel:T('a_subscription'), activeLabel:T('a_active'), planName:brand+' '+T('a_premium'), planFeats:T('a_planFeats'), manageLabel:T('a_manage'), daysLeft:T('a_daysLeft'),
-      tokenLabel:T('a_tokenLabel'), token:'sb_live_9c2f·7K2Q9XR4·MT8V·a91f', tokenNote:T('a_tokenNote'),
+      tokenLabel:T('a_tokenLabel'), token:(this.state.token || 'sb_live_9c2f·7K2Q9XR4·MT8V·a91f'), tokenNote:T('a_tokenNote'),
       copyIcon:this.state.copied?'check':'content_copy', copyLabel:this.state.copied?T('a_copied'):T('a_copy'),
       copyToken:()=>{ this.setState({copied:true}); this.showToast(T('a_toastToken')); clearTimeout(this._ct); this._ct=setTimeout(()=>this.setState({copied:false}),1600); },
       activeTimeLabel:T('a_activeTime'), dU:T('a_dU'), hU:T('a_hU'), spentConnected:T('a_spentConnected'), ledger,

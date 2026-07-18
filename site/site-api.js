@@ -100,7 +100,10 @@
       var h = Object.assign({}, this.headers);
       if (t) h.Authorization = 'Bearer ' + t; else delete h.Authorization;
       this.headers = h;
+      try { if (t) localStorage.setItem('sym-token', t); else localStorage.removeItem('sym-token'); } catch (e) {}
     },
+    loadToken: function () { try { var t = localStorage.getItem('sym-token'); if (t) this.setToken(t); return t || null; } catch (e) { return null; } },
+    hasToken: function () { return !!(this.headers && this.headers.Authorization); },
 
     _get: function (path) {
       return request((this.base || '') + path, {
@@ -146,9 +149,62 @@
       });
     },
 
+    // ── Аккаунт (login-gate: покупки требуют токен) ─────────────────────────────
+    _sha256hex: function (str) {
+      var buf = new TextEncoder().encode(str);
+      return crypto.subtle.digest('SHA-256', buf).then(function (d) {
+        return Array.from(new Uint8Array(d)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+      });
+    },
+    _solvePow: function (challenge, bits) {
+      var self = this; bits = bits | 0;
+      if (!challenge || bits <= 0) return Promise.resolve('0');   // bits=0 → любой nonce
+      var prefix = new Array(bits + 1).join('0'), n = 0;
+      function step() {
+        return self._sha256hex(String(challenge) + n).then(function (h) {
+          if (h.slice(0, bits) === prefix) return String(n);
+          n++; return (n > 5000000) ? '0' : step();
+        });
+      }
+      return step();
+    },
+    register: function (opts) {
+      opts = opts || {}; var self = this;
+      return this._get('/v1/account/pow').then(function (p) {
+        return self._solvePow(p.challenge, p.bits || p.difficulty || 0).then(function (nonce) {
+          return self._post('/v1/account/register', {
+            aliases: opts.aliases || [{ value: opts.nick || 'guest', kind: 'nick' }],
+            password: opts.password || null,
+            device: opts.device || { name: 'web', platform: 'web' },
+            invite: opts.invite || null,
+            pow_challenge: p.challenge, pow_nonce: nonce
+          });
+        });
+      }).then(function (res) { if (res && res.token) self.setToken(res.token); return res; });
+    },
+    login: function (opts) {
+      var self = this;
+      return this._post('/v1/account/login', opts || {}).then(function (res) {
+        if (res && res.token) self.setToken(res.token); return res;
+      });
+    },
+    recover: function (opts) {
+      var self = this;
+      return this._post('/v1/account/recover', opts || {}).then(function (res) {
+        if (res && res.token) self.setToken(res.token); return res;
+      });
+    },
+    logout: function () { this.setToken(null); },
+    billingStatus: function () { return this._get('/v1/billing/status'); },
+    keyCheck: function (code) { return this._post('/v1/key/check', { code: code }); },
+
+    /* Удобный старт: задать origin, поднять токен из localStorage, подтянуть конфиги. */
+    connect: function (base) { if (base != null) this.base = base; this.loadToken(); return this.bootstrap(); },
+
     /* Тянет конфиги параллельно, вливает в SYM_CONFIG, рассылает 'sym-config'.
        Ошибки отдельных запросов проглатываются — остаются значения по умолчанию. */
     bootstrap: function () {
+      this._ready = true;   // сайт «подключён» — страницы могут ходить в API
       function into(section) {
         return function (d) {
           if (d && window.SYM_CONFIG && window.SYM_CONFIG.merge) {

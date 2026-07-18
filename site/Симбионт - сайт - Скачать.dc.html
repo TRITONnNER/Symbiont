@@ -197,9 +197,10 @@
         <div style="display:flex; flex-direction:column; gap:11px; max-width:460px; margin-top:4px;">
           <div style="display:flex; align-items:center; gap:11px; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.09);">
             <span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#566270;">link</span>
-            <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:13px; color:#566270;">vless://…@bridge:443?type=reality</span>
+            <input value="{{ importInput }}" onInput="{{ onImportInput }}" placeholder="vless://…@bridge:443?type=reality" style="flex:1; background:transparent; border:none; outline:none; font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">
           </div>
-          <div style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:12px; background:rgba(91,155,255,0.14); border:1px solid rgba(91,155,255,0.3); color:#5B9BFF; font-weight:700; font-size:14px; cursor:pointer;" style-hover="background:rgba(91,155,255,0.2);"><span style="font-family:'Material Symbols Rounded'; font-size:19px;">download_for_offline</span>{{ importBtn }}</div>
+          <div onClick="{{ doImport }}" style="display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:12px; background:rgba(91,155,255,0.14); border:1px solid rgba(91,155,255,0.3); color:#5B9BFF; font-weight:700; font-size:14px; cursor:pointer;" style-hover="background:rgba(91,155,255,0.2);"><span style="font-family:'Material Symbols Rounded'; font-size:19px;">download_for_offline</span>{{ importBtn }}</div>
+          <div style="min-height:16px; font-size:12.5px; color:#9DABA8;">{{ importStatusText }}</div>
         </div>
       </div>
       <div style="padding:24px; border-radius:20px; background:rgba(255,255,255,0.022); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px;">
@@ -223,7 +224,20 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { platform:'windows', lang:'ru' };
+  state = { platform:'windows', lang:'ru', importInput:'', importStatus:'' };
+  onImportInput(e){ this.setState({ importInput:(e&&e.target&&e.target.value)||'', importStatus:'' }); }
+  doImport(){
+    const uri=(this.state.importInput||'').trim();
+    if(!uri){ this.setState({importStatus:'empty'}); return; }
+    const api=(typeof window!=='undefined') && window.SYM_API;
+    const live=!!(api && (api.base || api._ready) && api.parseBridge);
+    if(!live){ this.setState({importStatus:'need_backend'}); return; }
+    this.setState({importStatus:'checking'});
+    api.parseBridge(uri).then((r)=>{
+      if(r && r.ok){ const w=(r.node&&r.node.warnings)||[]; this.setState({importStatus: w.length?('ok_warn:'+w.join(',')):'ok'}); }
+      else { this.setState({importStatus:'err:'+((r&&r.error)||'invalid')}); }
+    }).catch(()=>this.setState({importStatus:'err:network'}));
+  }
   componentDidMount(){
     try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
     try {
@@ -265,8 +279,13 @@ class Component extends DCLogic {
     const DP=T('d_P')||{};
     const PLAT=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.platforms) || null;
     if(PLAT && PLAT.items){ Object.keys(SPECS).forEach(function(k){ var it=PLAT.items[k]; if(!it) return; if(it.version!=null)SPECS[k].v=it.version; if(it.size_mb!=null)SPECS[k].size=String(it.size_mb); if(it.requirements!=null)SPECS[k].req=it.requirements; SPECS[k].url=it.url||''; }); }
-    const order=(PLAT && PLAT.order) || ['ios','android','windows','macos','linux','ext'];
-    const cur=this.state.platform; const sp=SPECS[cur]||SPECS.windows; const dp=DP[cur]||{feats:[]};
+    let order=(PLAT && PLAT.order) || ['ios','android','windows','macos','linux','ext'];
+    // гейтинг платформ фиче-флагами: flags.download.{ios,android,windows,macos,linux,extension}
+    const FL=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.flags && SYM_CONFIG.flags.download) || null;
+    if(FL){ const fk={ios:'ios',android:'android',windows:'windows',macos:'macos',linux:'linux',ext:'extension'}; order=order.filter(k=> FL[fk[k]]!==false); }
+    if(!order.length) order=['windows'];
+    const cur=(order.indexOf(this.state.platform)>=0?this.state.platform:order[0]); const sp=SPECS[cur]||SPECS.windows; const dp=DP[cur]||{feats:[]};
+    const importStatusText=(function(s){ if(!s) return ''; if(s==='empty') return 'Вставьте ссылку vless:// / ss:// / hysteria2://'; if(s==='checking') return 'Проверяем…'; if(s==='need_backend') return 'Импорт доступен при подключённом бэкенде'; if(s==='ok') return '✓ Мост распознан — добавим резервным узлом каскада'; if(s.indexOf('ok_warn:')===0) return '⚠ Распознан, но: '+s.slice(8); if(s.indexOf('err:')===0) return '✗ Не подошло: '+s.slice(4); return s; })(this.state.importStatus);
     const mb=T('d_mb');
     const specsOf=(k)=>{ const S=SPECS[k]; return [[T('d_specVersion'),S.v],[T('d_specSize'),S.size+' '+mb],[T('d_specReq'),S.req]]; };
     const tabs=order.map(k=>{ const on=k===cur; const nm=(((DP[k]||{}).name)||'').split(' · ')[0];
@@ -288,6 +307,7 @@ class Component extends DCLogic {
       previewNote:T('d_previewNote'), installLabel:T('d_installLabel'), installTitle:T('d_installTitle'),
       createAcc:T('d_createAcc'), haveKey:T('d_haveKey'),
       bridgeLabel:T('d_bridgeLabel'), importTitle:T('d_importTitle'), importDescA:T('d_importDescA'), importDescB:T('d_importDescB'), importBtn:T('d_importBtn'),
+      importInput:this.state.importInput, onImportInput:(e)=>this.onImportInput(e), doImport:()=>this.doImport(), importStatusText,
       extrasLabel:T('d_extrasLabelPre')+(brand||'').toUpperCase(), soon:T('d_soon'), soonList:T('d_soonList'),
       tabs, detIcon:sp.icon, detBadge, heroBtn, heroMeta, pickDetected:()=>{},
       d_name:dp.name, d_note:dp.note, d_iconName:sp.icon,
