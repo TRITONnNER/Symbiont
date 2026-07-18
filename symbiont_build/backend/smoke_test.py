@@ -72,12 +72,13 @@ pk = Ed25519PublicKey.from_public_bytes(base64.b64decode(c.get("/v1/pubkey").jso
 check("подпись манифеста валидна", verify_manifest(man, pk))
 check("304 при актуальной версии", c.get(f"/v1/manifest?since={man['version']}").status_code == 304)
 
-# 10) поддержка: диалог по токену
-c.post("/v1/support/message",
-       json={"text": "YouTube не открывается", "diag": {"consent": True, "report": "reachable_but_tls_reset"}},
-       headers=H)
+# 10) поддержка: обращение уходит оператору (без авто-ответа — отвечает панель Server-in-a-Box)
+r = c.post("/v1/support/message",
+           json={"text": "YouTube не открывается", "diag": {"consent": True, "report": "reachable_but_tls_reset"}},
+           headers=H)
+check("обращение принято и ждёт оператора", r.status_code == 200 and r.json().get("awaiting_operator") is True)
 msgs = c.get("/v1/support/thread", headers=H).json()["messages"]
-check("диалог поддержки ведётся (>=3 сообщений)", len(msgs) >= 3)
+check("диалог поддержки: приветствие + обращение пользователя", len(msgs) >= 2 and msgs[-1]["from"] == "user")
 
 print()
 if errors:
