@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+</helmet>
+<div onClick="{{ onRowClick }}" onMouseEnter="{{ onEnter }}" onMouseLeave="{{ onLeave }}" role="{{ role }}" tabIndex="{{ tabIndex }}" dir="{{ dir }}" style="{{ rootStyle }}">
+
+  <sc-if value="{{ leadGlyph }}" hint-placeholder-val="{{ false }}"><span style="{{ leadGlyphStyle }}">{{ leadIcon }}</span></sc-if>
+  <sc-if value="{{ leadTile }}" hint-placeholder-val="{{ false }}">
+    <div style="{{ leadTileStyle }}">
+      <sc-if value="{{ leadTileIcon }}" hint-placeholder-val="{{ false }}"><span style="{{ leadTileIconStyle }}">{{ leadIcon }}</span></sc-if>
+      <sc-if value="{{ leadTileImg }}" hint-placeholder-val="{{ false }}"><div style="{{ leadImgStyle }}"></div></sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{ leadFlag }}" hint-placeholder-val="{{ false }}"><div style="{{ leadFlagStyle }}"></div></sc-if>
+  <sc-if value="{{ leadDot }}" hint-placeholder-val="{{ false }}"><span style="{{ leadDotStyle }}"></span></sc-if>
+
+  <div style="{{ bodyStyle }}">
+    <span style="{{ titleStyle }}">{{ title }}</span>
+    <sc-if value="{{ hasSub }}" hint-placeholder-val="{{ false }}"><span style="{{ subStyle }}">{{ sub }}</span></sc-if>
+  </div>
+
+  <sc-if value="{{ aToggle }}" hint-placeholder-val="{{ false }}">
+    <div role="switch" aria-checked="{{ toggleOn }}" style="{{ trackStyle }}"><div style="{{ knobStyle }}"></div></div>
+  </sc-if>
+
+  <sc-if value="{{ aPill }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onPill }}" role="{{ pillRole }}" style="{{ pillStyle }}">
+      <sc-if value="{{ pillStar }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:14px; color:#34E5B0; flex:0 0 auto;">auto_awesome</span></sc-if>
+      <sc-if value="{{ pillDot }}" hint-placeholder-val="{{ false }}"><span style="{{ pillDotStyle }}"></span></sc-if>
+      <span style="{{ pillLabelStyle }}">{{ pillLabel }}</span>
+      <sc-if value="{{ pillChev }}" hint-placeholder-val="{{ false }}"><span style="{{ pillChevStyle }}">{{ pillChevIcon }}</span></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ aMeter }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex; align-items:center; gap:12px; flex:0 0 auto;">
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:7px; direction:ltr;">
+        <span style="{{ meterPingStyle }}">{{ meterPing }}</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:50px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="{{ meterBarStyle }}"></div></div>
+          <span style="{{ meterLoadStyle }}">{{ meterLoad }}</span>
+        </div>
+      </div>
+      <sc-if value="{{ meterChev }}" hint-placeholder-val="{{ false }}"><span style="{{ meterChevStyle }}">chevron_right</span></sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ aText }}" hint-placeholder-val="{{ false }}"><span style="{{ actionTextStyle }}">{{ actionText }}</span></sc-if>
+  <sc-if value="{{ aChev }}" hint-placeholder-val="{{ false }}"><span style="{{ chevStyle }}">{{ chevIcon }}</span></sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:68},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;card&quot;,&quot;options&quot;:[&quot;card&quot;,&quot;plain&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Row&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;default&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;active&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Row&quot;},&quot;dir&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;ltr&quot;,&quot;options&quot;:[&quot;ltr&quot;,&quot;rtl&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Row&quot;},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Telegram&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Body&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Telegram.exe&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Body&quot;},&quot;titleMono&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Body&quot;},&quot;subMono&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Body&quot;},&quot;titleColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:null,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Body&quot;},&quot;lead&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{kind:'glyph'|'tile'|'flag'|'dot'|'none',icon?:string,color?:string,fill?:boolean,img?:string,code?:string}&quot;},&quot;action&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{kind:'toggle'|'pill'|'meter'|'chevron'|'text'|'none',on?:boolean,label?:string,color?:string,dot?:string,tone?:'solid'|'ghost',star?:boolean,chevron?:boolean|string,ping?:number,load?:number,onClick?:Function}&quot;},&quot;onClick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;Function&quot;},&quot;interactive&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { hover:false };
+  renderVals(){
+    const p = this.props || {};
+    const dir = p.dir || 'ltr';
+    const rtl = dir === 'rtl';
+    const variant = p.variant || 'card';
+    const tone = p.tone || 'default';
+    const interactive = !!(p.onClick || p.interactive);
+    const hover = interactive && this.state.hover;
+
+    // ---- semantic tokens (P0 layer; literals live here, not in markup) ----
+    const C = {
+      txt:'#EAF1EF', sub:'#7C8A99', muted:'#566270', accent:'#34E5B0',
+      surf:'rgba(255,255,255,0.025)', bd:'rgba(255,255,255,0.06)',
+      activeBg:'rgba(52,229,176,0.05)', activeBd:'rgba(52,229,176,0.18)',
+      hairline:'rgba(255,255,255,0.05)',
+      ghostBg:'rgba(255,255,255,0.04)', ghostBd:'rgba(255,255,255,0.10)'
+    };
+
+    // ---- ROOT (logical box properties → free RTL mirroring) ----
+    let rootStyle;
+    if (variant === 'plain'){
+      rootStyle = {
+        display:'flex', alignItems:'center', gap:'16px', minWidth:0,
+        paddingBlock:'16px', paddingInline:'0',
+        borderBlockStart:(p.divider===false?'none':'1px solid '+C.hairline),
+        cursor: interactive?'pointer':'default',
+        background: hover?'rgba(255,255,255,0.02)':'transparent',
+        transition:'background .15s ease'
+      };
+    } else {
+      const active = tone==='active';
+      rootStyle = {
+        display:'flex', alignItems:'center', gap:'16px', minWidth:0,
+        paddingBlock:'12px', paddingInline:'16px', borderRadius:'14px',
+        background: active?C.activeBg:C.surf,
+        border:'1px solid '+(hover?'rgba(52,229,176,0.28)':(active?C.activeBd:C.bd)),
+        cursor: interactive?'pointer':'default',
+        transform: hover?'translateY(-1px)':'none',
+        transition:'border-color .16s ease, transform .16s ease'
+      };
+    }
+
+    // ---- LEAD: glyph | tile(icon|img) | flag | dot | none ----
+    const lead = p.lead || { kind:'none' };
+    const lk = lead.kind || 'none';
+    const leadIcon = lead.icon || '';
+    const leadGlyph = lk==='glyph';
+    const leadTile  = lk==='tile';
+    const leadFlag  = lk==='flag';
+    const leadDot   = lk==='dot';
+    const leadGlyphStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:(lead.size||20)+'px',
+      color: lead.color||C.sub, fontVariationSettings: lead.fill?"'FILL' 1":"'FILL' 0", flex:'0 0 auto', lineHeight:1 };
+    const tileBg = lead.tint || (lead.color ? (lead.color.length===7 ? lead.color+'24' : lead.color) : 'rgba(255,255,255,0.04)');
+    const leadTileStyle = { width:'36px', height:'36px', borderRadius:'10px', background:tileBg,
+      display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' };
+    const leadTileIcon = leadTile && !!lead.icon;
+    const leadTileImg  = leadTile && !!lead.img;
+    const leadTileIconStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:(lead.iconSize||20)+'px', color: lead.color||C.accent, lineHeight:1 };
+    const leadImgStyle = { width:(lead.imgSize||22)+'px', height:(lead.imgSize||22)+'px',
+      backgroundImage:'url('+(lead.img||'')+')', backgroundSize:'contain', backgroundRepeat:'no-repeat',
+      backgroundPosition:'center', borderRadius:(lead.imgRadius!=null?lead.imgRadius:'4px') };
+    const leadFlagStyle = { width:(lead.w||34)+'px', height:(lead.h||24)+'px', borderRadius:'5px',
+      backgroundImage:'url(https://flagcdn.com/w40/'+(lead.code||'').toLowerCase()+'.png)',
+      backgroundSize:'cover', backgroundPosition:'center', flex:'0 0 auto' };
+    const leadDotStyle = { width:(lead.size||8)+'px', height:(lead.size||8)+'px', borderRadius:'50%',
+      background: lead.color||C.sub, flex:'0 0 auto' };
+
+    // ---- BODY: title (+ optional sub). Mono title = data (e.g. domain/host). ----
+    const title = p.title!=null ? String(p.title) : '';
+    const sub   = p.sub!=null ? String(p.sub) : '';
+    const hasSub = sub.length > 0;
+    const titleMono = !!p.titleMono;
+    const bodyStyle = { flex:'1 1 auto', minWidth:0, display:'flex', flexDirection:'column', gap:'2px' };
+    const titleStyle = titleMono
+      ? { fontFamily:"'JetBrains Mono',monospace", fontSize:'13px', fontWeight:500, color:p.titleColor||C.txt,
+          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', minWidth:0, unicodeBidi:'plaintext' }
+      : { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontWeight:600, fontSize:'15px',
+          color:p.titleColor||C.txt, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', letterSpacing:'-0.005em' };
+    const subStyle = p.subMono
+      ? { fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:C.sub, whiteSpace:'nowrap',
+          overflow:'hidden', textOverflow:'ellipsis', unicodeBidi:'plaintext' }
+      : { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'11px', color:C.sub,
+          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' };
+
+    // ---- ACTION: toggle | pill | meter | text | chevron | none ----
+    const action = p.action || { kind:'none' };
+    const ak = action.kind || 'none';
+    const aToggle = ak==='toggle', aPill = ak==='pill', aMeter = ak==='meter', aChev = ak==='chevron', aText = ak==='text';
+
+    // toggle
+    const toggleOn = !!action.on;
+    const trackStyle = { width:'42px', height:'24px', borderRadius:'999px',
+      background: toggleOn?C.accent:'rgba(255,255,255,0.12)', position:'relative', flex:'0 0 auto', cursor:'pointer' };
+    const knobStyle = { position:'absolute', insetBlockStart:'3px', insetInlineStart: toggleOn?'21px':'3px',
+      width:'18px', height:'18px', borderRadius:'50%', background: toggleOn?'#06231A':'#EAF1EF', transition:'inset-inline-start 160ms ease' };
+
+    // pill (solid = colored action; ghost = neutral with own chevron/dot)
+    const pillSolid = (action.tone||'solid')==='solid';
+    const pillStyle = { display:'flex', alignItems:'center', gap:'8px', paddingBlock:'8px', paddingInline:'12px',
+      borderRadius: pillSolid?'8px':'10px',
+      background: pillSolid ? (action.bg||C.ghostBg) : C.ghostBg,
+      border:(pillSolid?'2px':'1px')+' solid '+(pillSolid?(action.border||C.ghostBd):C.ghostBd),
+      cursor: action.onClick?'pointer':'default', flex:'0 0 auto' };
+    const pillDot = action.dot!=null && action.dot!==false;
+    const pillDotStyle = { width:'8px', height:'8px', borderRadius:'50%', background: action.dot||'transparent', flex:'0 0 auto' };
+    const pillStar = !!action.star;
+    const pillLabel = action.label||'';
+    const pillLabelStyle = { fontSize:'12.5px', fontWeight:600, color: action.color||C.sub, whiteSpace:'nowrap' };
+    const pillChev = action.chevron!=null && action.chevron!==false;
+    const pillChevIcon = (typeof action.chevron==='string') ? action.chevron : 'expand_more';
+    const _dirIcon = (pillChevIcon==='chevron_right'||pillChevIcon==='chevron_left'||pillChevIcon==='arrow_forward');
+    const pillChevStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'16px', color:C.muted, flex:'0 0 auto',
+      transform:(rtl&&_dirIcon)?'scaleX(-1)':'none' };
+
+    // meter (node ping + load)
+    const meterPing = action.ping!=null ? (String(action.ping)+(action.unit?(' '+action.unit):'')) : '';
+    const meterPingStyle = { fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'15px', color: action.pingColor||C.txt };
+    const meterBarStyle = { width:Math.max(0,Math.min(100,(action.load||0)))+'%', height:'100%', background: action.loadColor||C.accent, borderRadius:'2px' };
+    const meterLoad = (action.load!=null) ? (action.load+'%') : '';
+    const meterLoadStyle = { fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'12px', color: action.loadColor||C.sub, flex:'0 0 auto' };
+    const meterChev = action.chevron!==false;
+    const meterChevStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'20px', color:C.muted, flex:'0 0 auto', transform: rtl?'scaleX(-1)':'none' };
+
+    // chevron-only / text
+    const chevIcon = (typeof action.icon==='string') ? action.icon : 'chevron_right';
+    const chevStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'18px', color: action.color||C.muted, flex:'0 0 auto', transform: rtl?'scaleX(-1)':'none' };
+    const actionText = action.text||'';
+    const actionTextStyle = { fontSize:'13px', fontWeight:600, color: action.color||C.accent, flex:'0 0 auto', whiteSpace:'nowrap' };
+
+    return {
+      dir, rootStyle, onRowClick: p.onClick, role: interactive?'button':null, tabIndex: interactive?0:null,
+      onEnter: interactive?()=>this.setState({hover:true}):null,
+      onLeave: interactive?()=>this.setState({hover:false}):null,
+      leadGlyph, leadTile, leadFlag, leadDot, leadIcon, leadGlyphStyle, leadTileStyle, leadTileIcon, leadTileImg,
+      leadTileIconStyle, leadImgStyle, leadFlagStyle, leadDotStyle,
+      title, hasSub, sub, bodyStyle, titleStyle, subStyle,
+      aToggle, aPill, aMeter, aChev, aText, toggleOn,
+      trackStyle, knobStyle,
+      pillStyle, pillDot, pillDotStyle, pillStar, pillLabel, pillLabelStyle, pillChev, pillChevIcon, pillChevStyle,
+      onPill: action.onClick, pillRole: action.onClick?'button':null,
+      meterPing, meterPingStyle, meterBarStyle, meterLoad, meterLoadStyle, meterChev, meterChevStyle,
+      chevIcon, chevStyle, actionText, actionTextStyle
+    };
+  }
+}
+</script>
+</body>
+</html>
