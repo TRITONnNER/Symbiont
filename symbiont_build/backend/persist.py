@@ -94,3 +94,39 @@ def exists(path: str) -> bool:
     if row:
         return True
     return _legacy_import(c, path)
+
+
+def db_path() -> str:
+    """Абсолютный путь к файлу БД (для бэкапа/переноса/SQL-инструментов)."""
+    return os.path.join(os.getcwd(), _DB_NAME)
+
+
+def stats() -> dict:
+    """Снимок состояния БД для панели оператора: путь, размер, режим журнала,
+    число ключей и размер каждого ключа в байтах. Доказывает, что это РЕАЛЬНАЯ
+    база (WAL), а не набор json-файлов."""
+    c = _conn()
+    with _lock:
+        rows = c.execute("SELECT k, length(v) FROM kv ORDER BY k").fetchall()
+        jm = c.execute("PRAGMA journal_mode").fetchone()[0]
+    p = db_path()
+    size = os.path.getsize(p) if os.path.exists(p) else 0
+    wal = p + "-wal"
+    return {"path": p, "size_bytes": size,
+            "wal_bytes": os.path.getsize(wal) if os.path.exists(wal) else 0,
+            "journal_mode": jm, "keys": len(rows),
+            "bytes_by_key": {k: n for k, n in rows}}
+
+
+def backup(dest_path: str) -> str:
+    """Консистентный ОНЛАЙН-бэкап БД в dest_path (sqlite3 backup API). Безопасно на
+    живой WAL-базе: не блокирует запись и не даёт полу-записанного файла — снимок
+    транзакционно целостный. Возвращает путь готового файла."""
+    src = _conn()
+    dst = sqlite3.connect(dest_path)
+    try:
+        with _lock:
+            src.backup(dst)
+    finally:
+        dst.close()
+    return dest_path

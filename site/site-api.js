@@ -140,10 +140,15 @@
                    method: (payload.method === 'mc' ? 'mastercard' : payload.method) };
       var code = payload.discountCode || payload.discount_code;
       if (code) body.discount_code = code;
+      var apiBase = this.base || '';
       return this._post(this.endpoints.purchase, body).then(function (r) {
         if (!r) return r;
+        // checkout_url бэкенда — относительный (/v1/billing/...). Если API на другом
+        // origin, редиректить нужно на origin БЭКЕНДА, иначе попадём на сайт (404).
+        var co = r.checkout_url;
+        if (co && co.charAt(0) === '/' && apiBase) co = apiBase.replace(/\/+$/, '') + co;
         return { status: (r.status === 'completed' ? 'ok' : r.status),
-                 paymentId: r.payment_id, checkoutUrl: r.checkout_url, qr: r.qr,
+                 paymentId: r.payment_id, checkoutUrl: co, qr: r.qr,
                  amount: r.amount, currency: r.currency, discount: r.discount,
                  subscription: r.subscription, raw: r };
       });

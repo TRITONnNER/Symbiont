@@ -135,9 +135,13 @@
       var region = (payload.currency === 'usd' || payload.region === 'intl') ? 'intl' : 'ru';
       var body = { product: payload.product, region: region, method: (payload.method === 'mc' ? 'mastercard' : payload.method) };
       var code = payload.discountCode || payload.discount_code; if (code) body.discount_code = code;
+      var apiBase = this.base || '';
       return this._post(this.endpoints.purchase, body).then(function (r) {
         if (!r) return r;
-        return { status: (r.status === 'completed' ? 'ok' : r.status), paymentId: r.payment_id, checkoutUrl: r.checkout_url, qr: r.qr, amount: r.amount, currency: r.currency, discount: r.discount, subscription: r.subscription, raw: r };
+        // относительный checkout_url бэкенда → абсолютный (origin бэкенда), если API на другом хосте
+        var co = r.checkout_url;
+        if (co && co.charAt(0) === '/' && apiBase) co = apiBase.replace(/\/+$/, '') + co;
+        return { status: (r.status === 'completed' ? 'ok' : r.status), paymentId: r.payment_id, checkoutUrl: co, qr: r.qr, amount: r.amount, currency: r.currency, discount: r.discount, subscription: r.subscription, raw: r };
       });
     },
 

@@ -282,6 +282,43 @@ def admin(x_admin_token: str = Header(default="")) -> None:
         raise HTTPException(403, "forbidden")
 
 
+# ── RBAC для панели (Server-in-a-Box console): владелец + работники ────────────
+# Владелец = держатель ADMIN_TOKEN (все права). Работник = именной токен с НАБОРОМ
+# прав (scopes), который создаёт владелец — как выпуск ключа. Работник видит и может
+# только выданные разделы (напр. только «Поддержка»). Токены работников персистентны.
+ALL_SCOPES = ["nodes", "support", "discounts", "flags", "keys", "billing"]
+STAFF_FILE = "staff.json"
+staff_tokens: dict[str, dict] = persist.jload(STAFF_FILE, {})  # token -> {id,name,scopes,revoked,created_at}
+def _save_staff(): persist.jsave(STAFF_FILE, staff_tokens)
+
+class Principal:
+    """Кто выполняет операцию в панели: владелец (все права) или работник (scopes)."""
+    def __init__(self, role: str, scopes, name: str = None):
+        self.role, self.scopes, self.name = role, list(scopes), name
+    def can(self, scope: str) -> bool:
+        return self.role == "owner" or scope in self.scopes
+
+def staff(x_admin_token: str = Header(default=""),
+          x_staff_token: str = Header(default="")) -> Principal:
+    """Аутентификация панели: владелец по ADMIN_TOKEN, работник по staff-токену."""
+    if x_admin_token and hmac.compare_digest(x_admin_token, ADMIN_TOKEN):
+        return Principal("owner", ALL_SCOPES, "Владелец")
+    if x_staff_token:
+        rec = staff_tokens.get(x_staff_token)
+        if rec and not rec.get("revoked"):
+            return Principal("worker", rec.get("scopes", []), rec.get("name"))
+    log.warning("отказ панели: нет валидного admin/staff-токена")
+    raise HTTPException(403, "forbidden")
+
+def require(scope: str):
+    """Зависимость: пропустить владельца ИЛИ работника с нужным правом (scope)."""
+    def _dep(p: Principal = Depends(staff)) -> Principal:
+        if not p.can(scope):
+            raise HTTPException(403, "scope_required")
+        return p
+    return _dep
+
+
 # ── модели запросов ───────────────────────────────────────────────────────────
 class AnonReq(BaseModel):
     label: Optional[str] = None
@@ -565,6 +602,31 @@ def flags():
         except Exception as e:
             log.warning("flags.json не загружен: %s", e)
     return DEFAULT_FLAGS
+
+def _deep_merge(base: dict, over: dict) -> dict:
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = _deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+class FlagsReq(BaseModel):
+    flags: dict                      # частичное или полное поддерево флагов
+
+@app.post("/v1/admin/flags")
+def admin_set_flags(req: FlagsReq, _: Principal = Depends(require("flags"))):
+    """Включить/выключить блоки сайта и приложения из панели. Пишет flags.json
+    (override поверх DEFAULT_FLAGS), версия +1 — клиент/сайт подхватят при опросе.
+    Частичный апдейт: `{"flags":{"download":{"macos":false}}}` гасит только macOS."""
+    cur = flags()
+    merged = _deep_merge(cur, req.flags or {})
+    merged["version"] = (cur.get("version", 1) or 1) + 1
+    try:
+        with open("flags.json", "w", encoding="utf-8") as f:
+            json.dump(merged, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        raise HTTPException(500, f"flags_write_failed:{e}")
+    log.info("флаги обновлены из панели → v%s", merged["version"])
+    return {"ok": True, "flags": merged}
 
 
 class BridgeReq(BaseModel):
@@ -963,7 +1025,7 @@ class DiscountReq(BaseModel):
     label: Optional[str] = None
 
 @app.post("/v1/admin/discount")
-def admin_create_discount(req: DiscountReq, _: None = Depends(admin)):
+def admin_create_discount(req: DiscountReq, _: Principal = Depends(require("discounts"))):
     """Создать скидку — владелец ИЛИ Server-in-a-Box (админ-токен), как выпуск ключа.
     Кампания (без code — применяется автоматически) или код-купон (с code).
     scope: 'all' или {tiers/products}. Окно времени starts_at…expires_at. Лимиты
@@ -984,7 +1046,7 @@ def admin_create_discount(req: DiscountReq, _: None = Depends(admin)):
     return {"ok": True, "discount": d}
 
 @app.post("/v1/admin/discount/{discount_id}/revoke")
-def admin_revoke_discount(discount_id: str, _: None = Depends(admin)):
+def admin_revoke_discount(discount_id: str, _: Principal = Depends(require("discounts"))):
     """Отозвать скидку (деактивировать)."""
     d = discounts.get(discount_id)
     if not d:
@@ -992,6 +1054,20 @@ def admin_revoke_discount(discount_id: str, _: None = Depends(admin)):
     d["active"] = False
     _save_discounts()
     return {"ok": True, "id": discount_id, "active": False}
+
+@app.get("/v1/admin/discounts")
+def admin_list_discounts(_: Principal = Depends(require("discounts"))):
+    """Все скидки (кампании и коды) с состоянием и использованием — для панели."""
+    now = int(time.time())
+    out = []
+    for d in discounts.values():
+        out.append({**{k: d.get(k) for k in
+                       ("id", "code", "percent", "amount_off", "scope",
+                        "starts_at", "expires_at", "max_uses", "used",
+                        "max_per_account", "active", "source", "label")},
+                    "live": disc_rules.is_active(d, now)})
+    out.sort(key=lambda x: (not x["active"], x["id"]))
+    return {"discounts": out, "total": len(out)}
 
 @app.get("/v1/billing/payment/{payment_id}")
 def payment_status(payment_id: str, token: str = Depends(auth)):
@@ -1399,7 +1475,7 @@ async def node_register(request: Request):
 
 # ── 3b. Управление узлами для оператора (Server-in-a-Box) ──────────────────────
 @app.get("/v1/admin/nodes")
-def admin_list_nodes(_: None = Depends(admin)):
+def admin_list_nodes(_: Principal = Depends(require("nodes"))):
     """Список зарегистрированных узлов + живость/загрузка — для управления флотом."""
     data = persist.jload("nodes.json", {"nodes": []})
     cur = data.get("nodes") if isinstance(data, dict) else (data or [])
@@ -1418,7 +1494,7 @@ def admin_list_nodes(_: None = Depends(admin)):
             "stale_after_sec": NODE_STALE_SEC}
 
 @app.post("/v1/admin/node/{node_id}/remove")
-def admin_remove_node(node_id: str, _: None = Depends(admin)):
+def admin_remove_node(node_id: str, _: Principal = Depends(require("nodes"))):
     """Снять узел из манифеста (оператор). Секрет узла отзывается, манифест пересобирается."""
     data = persist.jload("nodes.json", {"nodes": []})
     cur = data.get("nodes") if isinstance(data, dict) else (data or [])
@@ -1461,18 +1537,61 @@ async def node_heartbeat(request: Request):
             "version": MANIFEST_VERSION}
 
 
-# ── 4. Поддержка (диалог по токену) ──────────────────────────────────────────
+# ── 4. Поддержка: реальный диалог оператор ↔ пользователь ─────────────────────
+# Тред привязан к АККАУНТУ (у зарегистрированных — по account_id: переписка видна с
+# любого устройства; у гостя — по токену сессии). Пользователь пишет — сообщение
+# кладётся в тред и ждёт ОПЕРАТОРА (никаких фейковых авто-ответов). Оператор
+# (владелец/работник со scope «support») отвечает из панели Server-in-a-Box.
+def _thread_key(token: str) -> str:
+    return accounts.get(token, {}).get("account_id") or token
+
 @app.get("/v1/support/thread")
 def get_thread(token: str = Depends(auth)):
-    return {"messages": threads.get(token, [])}
+    return {"messages": threads.get(_thread_key(token), [])}
 
 @app.post("/v1/support/message")
 def post_message(req: MsgReq, token: str = Depends(auth)):
-    threads.setdefault(token, []).append({"from": "user", "text": req.text, "at": _now()})
-    # авто-ответ-заглушка (в бою — очередь для роли «Поддержка»)
-    threads[token].append({"from": "support",
-        "text": "Спасибо, видим обращение. Попробуйте «Починить интернет» — это часто решает за 15 секунд.",
-        "at": _now()})
+    key = _thread_key(token)
+    msg = {"from": "user", "text": req.text, "at": _now()}
+    if req.diag:
+        msg["diag"] = req.diag
+    threads.setdefault(key, []).append(msg)
+    _save_threads()
+    log.info("support: новое обращение в треде %s (ждёт оператора)", key[:8])
+    return {"ok": True, "awaiting_operator": True}
+
+# ── 4b. Поддержка со стороны оператора (панель Server-in-a-Box) ────────────────
+@app.get("/v1/admin/support/threads")
+def admin_support_threads(_: Principal = Depends(require("support"))):
+    """Список всех обращений: id треда, число сообщений, последнее сообщение,
+    ждёт ли ответа оператора (последнее — от пользователя). Ждущие — сверху."""
+    out = []
+    for key, msgs in threads.items():
+        if not msgs:
+            continue
+        last = msgs[-1]
+        out.append({"id": key, "count": len(msgs),
+                    "last_from": last.get("from"), "last_text": last.get("text", ""),
+                    "last_at": last.get("at"),
+                    "awaiting": last.get("from") == "user"})
+    out.sort(key=lambda t: (t["awaiting"], t["last_at"] or ""), reverse=True)
+    return {"threads": out, "total": len(out),
+            "awaiting": sum(1 for t in out if t["awaiting"])}
+
+@app.get("/v1/admin/support/thread/{key}")
+def admin_support_thread(key: str, _: Principal = Depends(require("support"))):
+    """Полная переписка одного треда (для окна диалога в панели)."""
+    if key not in threads:
+        raise HTTPException(404, "no_thread")
+    return {"id": key, "messages": threads[key]}
+
+@app.post("/v1/admin/support/{key}/reply")
+def admin_support_reply(key: str, req: MsgReq, p: Principal = Depends(require("support"))):
+    """Ответ оператора в тред (виден пользователю в приложении/на сайте)."""
+    if key not in threads:
+        raise HTTPException(404, "no_thread")
+    threads[key].append({"from": "support", "text": req.text,
+                         "at": _now(), "by": p.name or "Оператор"})
     _save_threads()
     return {"ok": True}
 
@@ -1507,6 +1626,73 @@ def admin_rollout(req: RolloutReq, _: None = Depends(admin)):
     ROLLOUT = max(0, min(100, int(req.percent)))
     _manifest_signed = _build_manifest()
     return {"rollout": ROLLOUT, "version": MANIFEST_VERSION}
+
+
+# ── Панель Server-in-a-Box: кто я, работники, состояние БД ─────────────────────
+@app.get("/v1/admin/whoami")
+def admin_whoami(p: Principal = Depends(staff)):
+    """Роль и права текущего токена панели — панель по этому рисует доступные вкладки."""
+    return {"role": p.role, "name": p.name, "scopes": p.scopes, "all_scopes": ALL_SCOPES}
+
+class StaffReq(BaseModel):
+    name: str
+    scopes: list[str] = []           # подмножество ALL_SCOPES
+
+@app.post("/v1/admin/staff")
+def admin_create_staff(req: StaffReq, _: None = Depends(admin)):
+    """Владелец создаёт токен РАБОТНИКА с набором прав (scopes). Работник входит в
+    панель этим токеном и видит только выданные разделы (напр. только «Поддержка»)."""
+    scopes = [s for s in req.scopes if s in ALL_SCOPES]
+    if not scopes:
+        raise HTTPException(422, "no_valid_scopes")
+    tok = "wrk_" + b32(secrets.token_bytes(18))
+    sid = b32(secrets.token_bytes(5))
+    staff_tokens[tok] = {"id": sid, "name": req.name or "Работник",
+                         "scopes": scopes, "revoked": False, "created_at": int(time.time())}
+    _save_staff()
+    log.info("создан работник %s (%s) scopes=%s", sid, req.name, scopes)
+    return {"ok": True, "id": sid, "name": req.name, "scopes": scopes, "token": tok}
+
+@app.get("/v1/admin/staff")
+def admin_list_staff(_: None = Depends(admin)):
+    """Список работников (без самих токенов — токен показывается только при создании)."""
+    out = [{"id": r["id"], "name": r["name"], "scopes": r["scopes"],
+            "revoked": r.get("revoked", False), "created_at": r.get("created_at")}
+           for r in staff_tokens.values()]
+    out.sort(key=lambda x: (x["revoked"], x["created_at"] or 0))
+    return {"staff": out, "total": len(out)}
+
+@app.post("/v1/admin/staff/{staff_id}/revoke")
+def admin_revoke_staff(staff_id: str, _: None = Depends(admin)):
+    """Отозвать доступ работника (по id). Токен сразу перестаёт действовать."""
+    for r in staff_tokens.values():
+        if r["id"] == staff_id:
+            r["revoked"] = True; _save_staff()
+            return {"ok": True, "id": staff_id, "revoked": True}
+    raise HTTPException(404, "no_staff")
+
+@app.get("/v1/admin/db/stats")
+def admin_db_stats(_: None = Depends(admin)):
+    """Состояние РЕАЛЬНОЙ базы (SQLite/WAL): путь, размер, режим журнала, ключи.
+    Панель показывает это, чтобы владелец видел живую БД, а не набор файлов."""
+    return persist.stats()
+
+@app.post("/v1/admin/db/backup")
+def admin_db_backup(_: None = Depends(admin)):
+    """Сделать консистентный онлайн-бэкап БД в ./backups (безопасно на живой WAL-базе).
+    Возвращает путь и размер снимка. Файл забирает оператор (rsync/scp) или таймер."""
+    import glob
+    os.makedirs("backups", exist_ok=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
+    dest = os.path.join("backups", f"symbiont-{stamp}.db")
+    persist.backup(dest)
+    # ротация: держим 14 последних
+    snaps = sorted(glob.glob(os.path.join("backups", "symbiont-*.db")))
+    for old in snaps[:-14]:
+        try: os.remove(old)
+        except OSError: pass
+    return {"ok": True, "path": os.path.abspath(dest),
+            "size_bytes": os.path.getsize(dest), "kept": min(len(snaps), 14)}
 
 
 def _now() -> str:

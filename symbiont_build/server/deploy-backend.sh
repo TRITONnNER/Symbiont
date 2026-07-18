@@ -73,9 +73,12 @@ After=network.target
 WorkingDirectory=$DATA
 Environment=PYTHONPATH=$BACKEND
 Environment=SYMBIONT_CORS_ORIGINS=*
-Environment=SYMBIONT_SANDBOX_PAY=1
-# ВНИМАНИЕ: один воркер — состояние в памяти + json. Не масштабировать воркерами
-# без durable-БД (см. роадмап). Для продакшена подключите реальный платёжный провайдер.
+# ТЕСТОВЫЙ платёжный режим «формальная покупка»: работает КАК реальная (страница
+# оплаты + подтверждение колбэком), но деньги НЕ списываются. Перед приёмом реальных
+# денег: SYMBIONT_PAY_PROVIDER=sandbox снять, подключить боевой провайдер + вебхук.
+Environment=SYMBIONT_PAY_PROVIDER=mock
+# ВНИМАНИЕ: один воркер — состояние в SQLite (symbiont_state.db, WAL) в $DATA.
+# Не масштабировать воркерами без вынесения in-memory-структур (см. роадмап).
 ExecStart=$VENV/bin/uvicorn server:app --host 127.0.0.1 --port $PORT --workers 1
 Restart=always
 RestartSec=3
@@ -86,6 +89,29 @@ systemctl daemon-reload
 systemctl enable --now symbiont-backend >/dev/null 2>&1 || true
 sleep 2
 systemctl is-active --quiet symbiont-backend || { journalctl -u symbiont-backend -n 20 --no-pager; die "бэкенд не запустился"; }
+
+say "ежедневный бэкап БД (systemd-таймер, онлайн-снимок SQLite)…"
+cat > /etc/systemd/system/symbiont-backup.service <<EOF
+[Unit]
+Description=Symbiont DB backup (consistent SQLite snapshot)
+[Service]
+Type=oneshot
+WorkingDirectory=$DATA
+Environment=PYTHONPATH=$BACKEND
+ExecStart=$VENV/bin/python $BACKEND/db_backup.py $DATA/backups
+EOF
+cat > /etc/systemd/system/symbiont-backup.timer <<EOF
+[Unit]
+Description=Daily Symbiont DB backup
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+systemctl daemon-reload
+systemctl enable --now symbiont-backup.timer >/dev/null 2>&1 || true
+$VENV/bin/python "$BACKEND/db_backup.py" "$DATA/backups" >/dev/null 2>&1 || warn "первый бэкап не сделан (сделается по таймеру)"
 
 say "nginx…"
 SERVER_NAME="${DOMAIN:-_}"
@@ -116,12 +142,20 @@ fi
 echo ""
 say "ГОТОВО. Бэкенд Симбионта развёрнут."
 echo "  Base URL:     $BASE"
-echo "  ADMIN_TOKEN:  ${ADMIN_TOKEN:-<см. $DATA/secrets.json>}"
-echo "  NODE_SECRET:  ${NODE_SECRET:-<см. $DATA/secrets.json>}"
+echo "  ADMIN_TOKEN:  ${ADMIN_TOKEN:-<initialize error>}   (он же вход ВЛАДЕЛЬЦА в панель)"
+echo "  NODE_SECRET:  ${NODE_SECRET:-<initialize error>}"
+echo ""
+echo "  База данных:  РЕАЛЬНАЯ SQLite/WAL → $DATA/symbiont_state.db"
+echo "                ежедневный бэкап (03:30) → $DATA/backups/ (symbiont-backup.timer)"
+echo "  Платежи:      ТЕСТОВЫЙ режим (mock): покупка проходит как реальная, деньги НЕ списываются."
+echo ""
+echo "  Панель управления (Server-in-a-Box console) — открыть на любом устройстве:"
+echo "    файл symbiont_build/server/sib-console.html → Base URL: $BASE, токен: ADMIN_TOKEN (владелец)"
+echo "    работникам выдать ограниченный доступ:  POST $BASE/v1/admin/staff  (name, scopes)"
 echo ""
 echo "  Поднять узел (на ДРУГОМ VPS):"
-echo "    curl -fsSL $BASE/... | sudo bash -s -- --register-to $BASE --node-secret ${NODE_SECRET:-<SECRET>}"
+echo "    curl -fsSL $BASE/../get.sh | sudo bash -s -- --register-to $BASE --node-secret ${NODE_SECRET:-<SECRET>}"
 echo "    (get.sh: см. docs/СИМБИОНТ_server_in_a_box.md)"
 echo "  Управление флотом:  GET $BASE/v1/admin/nodes  (заголовок X-Admin-Token: ${ADMIN_TOKEN:-…})"
 echo "  Обновить бэкенд:    повторить эту же команду (идемпотентно)."
-warn "Перед приёмом реальных платежей: подключить боевой провайдер (SYMBIONT_SANDBOX_PAY=0 + вебхук)."
+warn "Перед приёмом РЕАЛЬНЫХ денег: снять SYMBIONT_PAY_PROVIDER=mock, подключить боевой провайдер + вебхук."

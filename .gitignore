@@ -40,9 +40,11 @@ flags.json
 payments.json
 discounts.json
 node_health.json
+staff.json
 symbiont_state.db
 symbiont_state.db-wal
 symbiont_state.db-shm
+backups/
 
 # ── Misc ──
 .DS_Store
