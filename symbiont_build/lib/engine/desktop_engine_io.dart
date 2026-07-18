@@ -195,6 +195,32 @@ class DesktopEngine implements SymbiontEngine {
       Log.w('scan', 'скан приложений не удался (изолировано): $e');
       return const [];
     }
+    // Дополняем ЗАПУЩЕННЫМИ процессами: portable-приложения и игры часто не в реестре.
+    try {
+      final r = await Process.run('tasklist', ['/fo', 'csv', '/nh'])
+          .timeout(const Duration(seconds: 10), onTimeout: () => ProcessResult(0, 1, '', ''));
+      if (r.exitCode == 0) {
+        const sys = {
+          'svchost.exe', 'runtimebroker.exe', 'dllhost.exe', 'conhost.exe', 'csrss.exe',
+          'wininit.exe', 'services.exe', 'lsass.exe', 'smss.exe', 'fontdrvhost.exe', 'dwm.exe',
+          'sihost.exe', 'taskhostw.exe', 'explorer.exe', 'searchhost.exe', 'textinputhost.exe',
+          'winlogon.exe', 'ctfmon.exe', 'spoolsv.exe', 'registry', 'system', 'memory compression',
+        };
+        for (final line in (r.stdout as String).split('\n')) {
+          final m = RegExp(r'^"([^"]+\.exe)"', caseSensitive: false).firstMatch(line.trim());
+          if (m == null) continue;
+          final exe = m.group(1)!, low = exe.toLowerCase();
+          if (sys.contains(low)) continue;
+          found.putIfAbsent(low, () {
+            final base = exe.replaceAll(RegExp(r'\.exe$', caseSensitive: false), '');
+            final name = base.isEmpty ? exe : base[0].toUpperCase() + base.substring(1);
+            return InstalledApp(name: name, exe: exe, path: null);
+          });
+        }
+      }
+    } catch (e) {
+      Log.w('scan', 'скан процессов пропущен (изолировано): $e');
+    }
     final apps = found.values.toList()..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     Log.w('scan', 'найдено приложений: ${apps.length}');
     // имена (первые 50) — чтобы видеть, что именно нашлось
