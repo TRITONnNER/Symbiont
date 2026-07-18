@@ -144,7 +144,7 @@ POST /v1/admin/db/backup               консистентный онлайн-�
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/TRITONnNER/Symbiont/main/symbiont_build/server/deploy-backend.sh \
-  | sudo bash -s -- --domain api.example.com --email you@example.com
+  | sudo bash -s -- --domain api.symbiont.net --email admin@symbiont.app
 ```
 
 Ставит зависимости, код, venv, **генерит секреты** (в `/var/lib/symbiont`), поднимает

@@ -100,13 +100,17 @@
     // (адаптер app-api.js). Пустой список = честное состояние «серверов ещё нет».
     nodes: [],
 
-    /* ── Контакты/бренд (владелец заполняет реальными) ── */
+    /* ── Контакты/бренд ── */
     contacts: {
-      email: 'support@example.com',          // TODO: реальный e-mail поддержки
-      telegram: '',                          // TODO: https://t.me/…
-      site: '',                              // TODO: домен
-      legal_entity: '',                      // TODO: юрлицо для копирайта
-      socials: []                            // TODO: ссылки
+      email: 'support@symbiont.app',
+      telegram: 'https://t.me/symbiont_support_bot',
+      site: 'https://symbiont.app',
+      legal_entity: 'Symbiont',
+      socials: [
+        { name: 'Telegram', url: 'https://t.me/symbiont_app' },
+        { name: 'X', url: 'https://x.com/symbiont_app' },
+        { name: 'GitHub', url: 'https://github.com/symbiont-app' }
+      ]
     },
 
     /* ── GET /v1/account/status → кошелёк, план, токен ────────────────── */

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://symbiont.example/schema/manifest.schema.json",
+  "$id": "https://symbiont.app/schema/manifest.schema.json",
   "title": "Symbiont signed manifest",
   "description": "Подписанная конфигурация, раздаваемая клиентам: узлы, правила маршрутизации, категории. Подпись Ed25519 над канонической формой тела (без поля sig). См. backend/API.md §3.",
   "type": "object",
