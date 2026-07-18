@@ -292,11 +292,14 @@ class Component extends DCLogic {
     window.addEventListener('sym-lang', this._onLang);
     window.addEventListener('storage', this._onStore);
     window.addEventListener('sym-site-i18n', this._onI18n);
+    this._onCfg=()=>this.forceUpdate();
+    window.addEventListener('sym-config', this._onCfg);
   }
   componentWillUnmount(){ window.removeEventListener('scroll', this._onScroll); if(this._raf) cancelAnimationFrame(this._raf);
     if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
     if(this._onStore) window.removeEventListener('storage', this._onStore);
-    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n); }
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n);
+    if(this._onCfg) window.removeEventListener('sym-config', this._onCfg); }
 
   renderVals(){
     const canaryOk = this.props.canaryOk ?? true;
@@ -327,9 +330,16 @@ class Component extends DCLogic {
     const updatedLabel = T('l_updated');
 
     // ---- warrant canary ----
+    // Гейтинг флагами: flags.legal.canary=false (дефолт бэкенда) → блок скрыт, пока
+    // у владельца нет реальной канарейки. Без бэкенда (демо) — показываем.
+    const LEGAL=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.flags && SYM_CONFIG.flags.legal) || null;
+    const showCanary = LEGAL ? (LEGAL.canary!==false) : true;
+    // Дата следующей подписи ≤ сегодня+14 дней (не протухает).
+    const _fmtRu=(dt)=>{ const M=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек']; return dt.getDate()+' '+M[dt.getMonth()]+' '+dt.getFullYear(); };
+    const _nextSig=_fmtRu(new Date(Date.now()+14*86400000));
     const canaryAccent = canaryOk ? '#34E5B0' : '#F5C451';
     const canaryStatement = canaryOk ? T('l_canaryStmtOk') : T('l_canaryStmtWarn');
-    const canaryWrapStyle = { position:'relative', overflow:'hidden', padding:'28px 30px', borderRadius:'22px',
+    const canaryWrapStyle = { display: showCanary?'':'none', position:'relative', overflow:'hidden', padding:'28px 30px', borderRadius:'22px',
       background: canaryOk ? 'linear-gradient(150deg, rgba(52,229,176,0.09), rgba(255,255,255,0.02))' : 'linear-gradient(150deg, rgba(245,196,81,0.10), rgba(255,255,255,0.02))',
       border: '1px solid '+(canaryOk?'rgba(52,229,176,0.3)':'rgba(245,196,81,0.34)') };
     const canaryGlow = canaryOk ? 'radial-gradient(circle, rgba(52,229,176,0.18), transparent 62%)' : 'radial-gradient(circle, rgba(245,196,81,0.18), transparent 62%)';
@@ -358,7 +368,8 @@ class Component extends DCLogic {
     const reqOutcome = T('l_reqOutcome');
     const rl = (date,type,region,i,last)=>({ date, type, region, outcome:reqOutcome, divider: last?'none':'1px solid rgba(255,255,255,0.05)' });
     const rlData = T('l_reqLog')||[];
-    const rlDates = ['2026-05-14','2026-02-03','2025-11-20'];
+    const _iso=(days)=>{ const t=new Date(Date.now()-days*86400000); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); };
+    const rlDates = [_iso(65), _iso(165), _iso(240)];   // относительные, не протухают
     const reqLog = rlData.map((r,i)=> rl(rlDates[i], r.type, r.region, i, i===rlData.length-1));
 
     // ---- privacy clauses ----
@@ -412,7 +423,7 @@ class Component extends DCLogic {
       secs, updatedLabel,
       canaryAccent, canaryStatement, canaryWrapStyle, canaryGlow, canaryIconWrap, canaryIcon,
       canaryIconName: canaryOk?'verified_user':'gpp_maybe', canaryStatus: canaryOk?T('l_canaryOk'):T('l_canaryWarn'),
-      canaryBadgeStyle, canarySig:'ed25519 · 9c2f 7k2q 9xr4 mt8v · a91f 3d0b 77ff qw12', canaryNext:T('l_canaryNext'),
+      canaryBadgeStyle, canarySig:'ed25519 · 9c2f 7k2q 9xr4 mt8v · a91f 3d0b 77ff qw12', canaryNext:('обновляется каждые 14 дней · следующая подпись ≤ '+_nextSig),
       seeItems, noseeItems, nodeRows, reqTiles, reqLog, privClauses, termClauses, revStats, revRows
     };
   }
