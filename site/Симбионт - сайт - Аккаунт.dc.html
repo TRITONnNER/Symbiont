@@ -49,8 +49,9 @@
             <span style="font-size:11.5px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ authFieldLabel }}</span>
             <div style="display:flex; align-items:center; gap:11px; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(52,229,176,0.28);">
               <span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#34E5B0;">{{ authFieldIcon }}</span>
-              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:#7C8A99;">{{ authFieldPh }}</span>
+              <input value="{{ authInput }}" onInput="{{ onAuthInput }}" placeholder="{{ authFieldPh }}" style="flex:1; background:transparent; border:0; outline:none; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:#EAF1EF;">
             </div>
+            <div style="min-height:15px; font-size:12px; color:#F4B740;">{{ authStatus }}</div>
           </div>
 
           <div onClick="{{ signIn }}" style="text-align:center; padding:15px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15.5px; cursor:pointer; box-shadow:0 12px 30px -12px rgba(31,166,125,0.55);" style-hover="filter:brightness(1.06);">{{ authCta }}</div>
@@ -58,7 +59,7 @@
           <div style="display:flex; align-items:center; gap:12px; margin:18px 0;">
             <span style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></span><span style="font-size:12px; color:#566270;">{{ orLabel }}</span><span style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></span>
           </div>
-          <div onClick="{{ signIn }}" style="display:flex; align-items:center; justify-content:center; gap:9px; padding:13px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14px; cursor:pointer;" style-hover="background:rgba(255,255,255,0.07); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#A78BFA;">password</span>{{ recoverBtn }}</div>
+          <div onClick="{{ recoverAccess }}" style="display:flex; align-items:center; justify-content:center; gap:9px; padding:13px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14px; cursor:pointer;" style-hover="background:rgba(255,255,255,0.07); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#A78BFA;">password</span>{{ recoverBtn }}</div>
 
           <div style="margin-top:18px; display:flex; align-items:center; gap:9px; padding:12px 14px; border-radius:11px; background:rgba(52,229,176,0.06); border:1px solid rgba(52,229,176,0.18);">
             <span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#34E5B0;">visibility_off</span>
@@ -227,8 +228,14 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { loggedIn:false, authTab:'login', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru', token:null, recovery:null, billing:null };
+  state = { loggedIn:false, authTab:'login', authInput:'', authStatus:'', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru', token:null, recovery:null, billing:null };
   showToast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),1800); }
+  onAuthInput(e){ this.setState({ authInput:(e&&e.target&&e.target.value)||'', authStatus:'' }); }
+  // Успешный вход: фиксируем сессию (токен от бэкенда или уже выставленный),
+  // подтягиваем подписку. Общий для входа/регистрации/восстановления.
+  _enter(res){ const api=(typeof window!=='undefined')&&window.SYM_API; this.setState({loggedIn:true, authInput:'', authStatus:'', token:(res&&res.token)||(api&&api.token&&api.token())||null, recovery:(res&&res.recovery_code)||null}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} if(api&&api.billingStatus) api.billingStatus().then(b=>this.setState({billing:(b&&b.subscription)||null})).catch(()=>{}); }
+  // Вход по recovery-коду (единственный ключ к беспарольному аккаунту).
+  _recover(v){ const api=(typeof window!=='undefined')&&window.SYM_API; const ru=this.state.lang==='ru'; const live=!!(api&&(api.base||api._ready)); if(!live){ this._enter(null); return; } api.recover({recovery_code:v}).then(res=>{ if(res&&res.token) this._enter(res); else this.setState({authStatus:ru?'Код не распознан':'Code not recognized'}); }).catch(()=>this.setState({authStatus:ru?'Неверный код восстановления':'Invalid recovery code'})); }
   componentDidMount(){
     try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
     try{ const a=localStorage.getItem('sym-auth'); if(a==='1') this.setState({loggedIn:true}); }catch(e){}
@@ -296,12 +303,34 @@ class Component extends DCLogic {
       authFieldPh: isLogin?'sb_live_…  или  СИМБ-XXXX-XXXX':T('a_phDevice'),
       authCta: isLogin?T('a_login'):T('a_createAcc'), orLabel:T('a_or'), recoverBtn:T('a_recoverBtn'), loginNote:T('a_loginNote'),
       rightTitleA:T('a_rightTitleA'), rightTitleB:T('a_rightTitleB'), noKey:T('a_noKey'), loginPoints,
+      authInput:this.state.authInput, authStatus:this.state.authStatus, onAuthInput:(e)=>this.onAuthInput(e),
       signIn:()=>{
         const api=(typeof window!=='undefined') && window.SYM_API;
-        const live=!!(api && (api.base || api._ready) && api.register);
-        const enter=(res)=>{ this.setState({loggedIn:true, token:(res&&res.token)||null, recovery:(res&&res.recovery_code)||null}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} const a2=window.SYM_API; if(a2&&a2.billingStatus) a2.billingStatus().then(b=>this.setState({billing:(b&&b.subscription)||null})).catch(()=>{}); };
-        if(live){ api.register({}).then(enter).catch(()=>enter(null)); }   // анонимный аккаунт за 30 сек → токен+recovery
-        else { enter(null); }                                             // демо (без бэкенда)
+        const live=!!(api && (api.base || api._ready));
+        const ru=this.state.lang==='ru';
+        if(isLogin){
+          // ВХОД: сессионный токен (sb_live_…) — ставим и проверяем; иначе recovery-код.
+          const v=(this.state.authInput||'').trim();
+          if(!v){ this.setState({authStatus:ru?'Введите ключ или код восстановления':'Enter a key or recovery code'}); return; }
+          if(!live){ this._enter(null); return; }   // демо без бэкенда
+          if(/^sb_live_/i.test(v)){
+            if(api.setToken) api.setToken(v);
+            api.billingStatus().then(()=>this._enter({})).catch(()=>{ if(api.logout) api.logout(); this.setState({authStatus:ru?'Токен недействителен':'Invalid token'}); });
+          } else {
+            this._recover(v);
+          }
+        } else {
+          // СОЗДАНИЕ нового анонимного аккаунта (ввод — необязательный ник).
+          if(!live){ this._enter(null); return; }
+          const nick=(this.state.authInput||'').trim();
+          api.register(nick?{nick:nick}:{}).then(r=>this._enter(r)).catch(()=>this.setState({authStatus:ru?'Не удалось создать аккаунт':'Could not create account'}));
+        }
+      },
+      recoverAccess:()=>{
+        // «Восстановить доступ»: ввод трактуем как recovery-код; пусто → на вкладку входа с подсказкой.
+        const v=(this.state.authInput||'').trim();
+        if(!v){ this.setState({authTab:'login', authStatus:(this.state.lang==='ru'?'Вставьте код восстановления и нажмите «Восстановить»':'Paste your recovery code and press Recover')}); return; }
+        this._recover(v);
       },
       signOut:()=>{ const api=window.SYM_API; if(api&&api.logout) api.logout(); this.setState({loggedIn:false, recShown:false, token:null, recovery:null}); try{ localStorage.setItem('sym-auth','0'); }catch(e){} },
       headerName:(dv[0]||{}).name||'', ownerLabel:T('a_owner'), headerSub:brand+' '+tierName+' · '+(activeUntilReal? ((lang==='ru'?'активна до ':'active until ')+activeUntilReal) : T('a_activeUntil')), logoutLabel:T('a_logout'),
