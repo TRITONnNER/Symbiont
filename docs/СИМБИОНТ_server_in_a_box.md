@@ -58,13 +58,23 @@ POST /v1/admin/node/{id}/remove   снять узел из манифеста (�
 
 ---
 
-## Что нужно ДО этого (разово)
+## Что нужно ДО этого (разово) — тоже одной командой
 
-1. **Задеплоить бэкенд** (хостинг + домен + TLS) и задать `SYMBIONT_NODE_SECRET`, `SYMBIONT_ADMIN_TOKEN`,
-   ключ подписи манифеста — см. роадмап.
-2. (До merge в `main`) выложить `get.sh` по доступному URL или указать `SYMBIONT_SRC`.
+**Задеплоить бэкенд** (на отдельном VPS с доменом):
 
-После этого поднятие каждого нового сервера — **одна команда**, остальное само.
+```bash
+curl -fsSL https://raw.githubusercontent.com/TRITONnNER/Symbiont/main/symbiont_build/server/deploy-backend.sh \
+  | sudo bash -s -- --domain api.example.com --email you@example.com
+```
+
+Ставит зависимости, код, venv, **генерит секреты** (в `/var/lib/symbiont`), поднимает
+systemd-сервис (uvicorn, один воркер — состояние в памяти+SQLite), **nginx + TLS (certbot)**,
+и печатает **base URL + ADMIN_TOKEN + NODE_SECRET**. Эти `NODE_SECRET`/`ADMIN_TOKEN` и подставляете
+в `get.sh` (узлы) и в управление флотом. Повтор команды = обновление (идемпотентно).
+
+> Перед приёмом реальных платежей — подключить боевой платёжный провайдер (роадмап).
+
+Полный путь: **купил VPS → `deploy-backend.sh` (один раз) → на каждый узел `get.sh` (одна команда)**.
 
 ---
 
