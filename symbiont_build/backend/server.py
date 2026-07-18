@@ -485,7 +485,7 @@ DEFAULT_ECONOMY = {
     "prices": {
         "ru": {"premium": {"month": 199, "year": 1490}, "ultimate": {"month": 349, "year": 2790}, "currency": "RUB"},
         "intl": {"premium": {"month": 2.99, "year": 24.99}, "ultimate": {"month": 4.99, "year": 39.99}, "currency": "USD"},
-        "balance": {"ru": {"100h": 149, "300h": 399}, "intl": {"100h": 1.99, "300h": 4.99}},
+        "balance": {"ru": {"20h": 39, "100h": 149, "300h": 399}, "intl": {"20h": 0.49, "100h": 1.99, "300h": 4.99}},
         "crypto_discount": 0.10,
     },
     "referral": {"register": {"inviter": 3, "invitee": 3},
@@ -585,6 +585,17 @@ def parse_bridge_endpoint(req: BridgeReq):
     return {"ok": True, "node": node}
 
 
+@app.get("/v1/config/discounts")
+def list_discounts():
+    """Активные АВТО-кампании (без кода) — для витрины, чтобы показывать «−N%».
+    Коды-купоны здесь НЕ раскрываются (их проверяют по вводу через discount/check)."""
+    now = int(time.time())
+    out = [{"percent": d.get("percent"), "amount_off": d.get("amount_off"),
+            "scope": d.get("scope"), "expires_at": d.get("expires_at"), "label": d.get("label")}
+           for d in discounts.values() if not d.get("code") and disc_rules.is_active(d, now)]
+    return {"campaigns": out}
+
+
 # ── Оплата, подписка, баланс активного времени, гранты (Этап 3) ────────────────
 # Каталог продуктов. period — дни; balance — активные минуты (списываются узлом
 # ТОЛЬКО под подключением). Цены — для справки/sandbox; правда живёт в economy.
@@ -593,6 +604,9 @@ PRODUCTS = {
     "premium_year":   {"tier": "premium",  "add_days": 365},
     "ultimate_month": {"tier": "ultimate", "add_days": 30},
     "ultimate_year":  {"tier": "ultimate", "add_days": 365},
+    # пробный пакет: 20 ч, покупается ОДИН раз на аккаунт (max_per_account=1).
+    # Чтобы сделать его постоянным (без ограничения) — убрать max_per_account.
+    "balance_20h":    {"tier": "premium",  "add_minutes": 20 * 60, "max_per_account": 1},
     "balance_100h":   {"tier": "premium",  "add_minutes": 100 * 60},
     "balance_300h":   {"tier": "premium",  "add_minutes": 300 * 60},
 }
@@ -627,6 +641,56 @@ def _price_of(product: str, region: str = "ru", method: str = "sbp") -> dict:
 PAYMENTS_FILE = "payments.json"
 payments: dict[str, dict] = persist.jload(PAYMENTS_FILE, {})
 def _save_payments(): persist.jsave(PAYMENTS_FILE, payments)
+
+# Скидки: кампании (без кода, авто) и коды (купоны). Создаёт владелец/Server-in-a-Box
+# (админ-токен) — как платные ключи. Персистентно. Логика проверок — в discounts.py.
+import discounts as disc_rules
+DISCOUNTS_FILE = "discounts.json"
+discounts: dict[str, dict] = persist.jload(DISCOUNTS_FILE, {})
+def _save_discounts(): persist.jsave(DISCOUNTS_FILE, discounts)
+
+def _purchase_count(aid: str, product: str) -> int:
+    """Сколько раз аккаунт УЖЕ успешно купил этот продукт (для одноразовых пакетов)."""
+    return sum(1 for p in payments.values()
+               if p.get("account_id") == aid and p.get("product") == product
+               and p.get("status") == "completed")
+
+def _resolve_discount(aid: str, product: str, tier: str, code):
+    """Применимая скидка: по коду (если задан) либо лучшая авто-кампания. None — нет."""
+    now = int(time.time())
+    if code:
+        for d in discounts.values():
+            if (d.get("code") or "").upper() == code.upper() and \
+               disc_rules.applicable(d, aid, product, tier, now, is_code=True):
+                return d
+        return None
+    best = None
+    for d in discounts.values():
+        if disc_rules.applicable(d, aid, product, tier, now, is_code=False):
+            if best is None or (d.get("percent", 0) or 0) > (best.get("percent", 0) or 0):
+                best = d
+    return best
+
+def _record_discount_use(disc_id: str, aid: str):
+    d = discounts.get(disc_id)
+    if not d:
+        return
+    d["used"] = d.get("used", 0) + 1
+    d.setdefault("used_by", {})
+    d["used_by"][aid] = d["used_by"].get(aid, 0) + 1
+    _save_discounts()
+
+def _finalize_payment(rec: dict):
+    """Подтвердить платёж: начислить продукт + учесть скидку. Возвращает (sub, applied).
+    applied=False, если исчерпан лимит одноразового пакета (гонка двух pending)."""
+    aid, product = rec["account_id"], rec["product"]
+    lim = PRODUCTS[product].get("max_per_account")
+    if lim and _purchase_count(aid, product) >= lim:
+        return _sub(aid), False
+    sub = _apply_purchase(aid, product, rec["method"])
+    if rec.get("discount_id"):
+        _record_discount_use(rec["discount_id"], aid)
+    return sub, True
 
 def _ledger_add(aid: str, kind: str, **fields):
     """Записать движение баланса/подписки в журнал аккаунта (История начислений).
@@ -761,15 +825,18 @@ def _apply_purchase(aid: str, product: str, method: str) -> dict:
 class PurchaseReq(BaseModel):
     product: str
     method: str
-    region: str = "ru"          # 'ru' → ₽, иначе → $ (определяет клиент по языку)
+    region: str = "ru"                  # 'ru' → ₽, иначе → $ (определяет клиент по языку)
+    discount_code: Optional[str] = None # код-купон (опционально)
 
 @app.post("/v1/billing/purchase")
 def purchase(req: PurchaseReq, token: str = Depends(auth)):
-    """PaymentProvider-абстракция. Режимы:
+    """PaymentProvider-абстракция. ТРЕБУЕТ авторизации (login-gate: без токена аккаунта
+    покупка невозможна — на сайте кнопка «Купить» ведёт в аккаунт). Режимы:
       • sandbox — платёж авто-подтверждается (кнопка «Купить» оплачивает сразу);
       • mock    — заглушка ПО РЕАЛЬНОМУ ПРИНЦИПУ: pending + checkout_url + qr,
                   подтверждение колбэком /v1/billing/mock/confirm;
-      • прод    — боевой провайдер вернёт checkoutUrl, вебхук → /v1/billing/webhook."""
+      • прод    — боевой провайдер вернёт checkoutUrl, вебхук → /v1/billing/webhook.
+    Учитывает одноразовые пакеты (max_per_account) и скидки (кампании/коды)."""
     aid = _account_of(token)
     if not aid:
         raise HTTPException(400, "no_account")
@@ -777,18 +844,32 @@ def purchase(req: PurchaseReq, token: str = Depends(auth)):
         raise HTTPException(422, "unknown_product")
     if req.method not in ALLOWED_METHODS:
         raise HTTPException(422, "unknown_method")
+    # одноразовые пакеты (напр. пробные 20 ч): исчерпан лимит на аккаунт → отказ
+    lim = PRODUCTS[req.product].get("max_per_account")
+    if lim and _purchase_count(aid, req.product) >= lim:
+        raise HTTPException(409, "purchase_limit_reached")
+    tier = PRODUCTS[req.product]["tier"]
+    base = _price_of(req.product, req.region, req.method)
+    disc = _resolve_discount(aid, req.product, tier, req.discount_code)
+    if req.discount_code and not disc:
+        raise HTTPException(422, "discount_invalid")
+    final_amount, off = disc_rules.compute(disc, base["amount"]) if disc else (base["amount"], 0)
+    resp_disc = {"percent": disc.get("percent"), "off": off, "label": disc.get("label")} if disc else None
+
     pay_id = b32(secrets.token_bytes(8))
     now = int(time.time())
-    price = _price_of(req.product, req.region, req.method)
     rec = {"payment_id": pay_id, "account_id": aid, "product": req.product,
            "method": req.method, "created_at": now,
-           "amount": price["amount"], "currency": price["currency"]}
+           "amount": final_amount, "base_amount": base["amount"], "currency": base["currency"]}
+    if disc:
+        rec["discount_id"] = disc["id"]; rec["discount_off"] = off
 
     if PAY_PROVIDER == "mock":
         rec["status"] = "pending"; rec["provider"] = "mock"
         payments[pay_id] = rec; _save_payments()
         return {"payment_id": pay_id, "status": "pending", "provider": "mock",
-                "method": req.method, "amount": price["amount"], "currency": price["currency"],
+                "method": req.method, "amount": final_amount, "currency": base["currency"],
+                "discount": resp_disc,
                 "checkout_url": f"/v1/billing/mock/checkout/{pay_id}",
                 "qr": f"SYMB-PAY:{pay_id}"}
 
@@ -797,14 +878,14 @@ def purchase(req: PurchaseReq, token: str = Depends(auth)):
         rec["status"] = "pending"
         payments[pay_id] = rec; _save_payments()
         return {"payment_id": pay_id, "status": "pending", "method": req.method,
-                "amount": price["amount"], "currency": price["currency"]}
+                "amount": final_amount, "currency": base["currency"], "discount": resp_disc}
 
-    sub = _apply_purchase(aid, req.product, req.method)
-    rec.update(status="completed", completed_at=now, sandbox=True)
+    sub, applied = _finalize_payment(rec)
+    rec.update(status="completed" if applied else "failed", completed_at=now, sandbox=True)
     payments[pay_id] = rec; _save_payments()
-    return {"payment_id": pay_id, "status": "completed", "sandbox": True,
-            "method": req.method, "amount": price["amount"], "currency": price["currency"],
-            "subscription": sub}
+    return {"payment_id": pay_id, "status": rec["status"], "sandbox": True,
+            "method": req.method, "amount": final_amount, "currency": base["currency"],
+            "discount": resp_disc, "subscription": sub}
 
 @app.get("/v1/billing/mock/checkout/{payment_id}")
 def mock_checkout(payment_id: str):
@@ -841,10 +922,76 @@ def mock_confirm(payment_id: str):
         raise HTTPException(404, "no_payment")
     if pay.get("status") in ("completed", "failed"):
         return {"ok": True, "status": pay["status"], "idempotent": True}
-    sub = _apply_purchase(pay["account_id"], pay["product"], pay["method"])
-    pay.update(status="completed", completed_at=int(time.time()))
+    sub, applied = _finalize_payment(pay)
+    pay.update(status="completed" if applied else "failed", completed_at=int(time.time()))
     _save_payments()
-    return {"ok": True, "status": "completed", "subscription": sub}
+    return {"ok": True, "status": pay["status"], "subscription": sub}
+
+class DiscountCheckReq(BaseModel):
+    code: str
+    product: str
+    region: str = "ru"
+
+@app.post("/v1/billing/discount/check")
+def discount_check(req: DiscountCheckReq, token: str = Depends(auth)):
+    """Проверить код-купон до оплаты (как проверка ключа): годен ли к этому продукту,
+    какой процент и итоговая сумма. Ничего не списывает."""
+    aid = _account_of(token)
+    if not aid:
+        raise HTTPException(400, "no_account")
+    if req.product not in PRODUCTS:
+        raise HTTPException(422, "unknown_product")
+    tier = PRODUCTS[req.product]["tier"]
+    d = _resolve_discount(aid, req.product, tier, req.code)
+    if not d:
+        return {"ok": False, "error": "invalid_or_inapplicable"}
+    base = _price_of(req.product, req.region)
+    final, off = disc_rules.compute(d, base["amount"])
+    return {"ok": True, "percent": d.get("percent"), "off": off,
+            "final_amount": final, "currency": base["currency"], "label": d.get("label")}
+
+class DiscountReq(BaseModel):
+    percent: Optional[int] = None
+    amount_off: Optional[float] = None
+    code: Optional[str] = None
+    scope: object = "all"            # 'all' | {"tiers":[...], "products":[...]}
+    starts_at: Optional[int] = None
+    expires_at: Optional[int] = None
+    max_uses: Optional[int] = None
+    max_per_account: Optional[int] = None
+    source: str = "owner"            # 'owner' | 'server_in_a_box'
+    label: Optional[str] = None
+
+@app.post("/v1/admin/discount")
+def admin_create_discount(req: DiscountReq, _: None = Depends(admin)):
+    """Создать скидку — владелец ИЛИ Server-in-a-Box (админ-токен), как выпуск ключа.
+    Кампания (без code — применяется автоматически) или код-купон (с code).
+    scope: 'all' или {tiers/products}. Окно времени starts_at…expires_at. Лимиты
+    max_uses (всего) и max_per_account."""
+    if not req.percent and not req.amount_off:
+        raise HTTPException(422, "percent_or_amount_required")
+    did = b32(secrets.token_bytes(6))
+    d = {"id": did, "code": (req.code or None), "percent": req.percent,
+         "amount_off": req.amount_off, "scope": req.scope,
+         "starts_at": req.starts_at, "expires_at": req.expires_at,
+         "max_uses": req.max_uses, "used": 0,
+         "max_per_account": req.max_per_account, "used_by": {},
+         "active": True, "source": req.source, "label": req.label}
+    discounts[did] = d
+    _save_discounts()
+    log.info("скидка создана: %s %s%% scope=%s source=%s",
+             did, req.percent, req.scope, req.source)
+    return {"ok": True, "discount": d}
+
+@app.post("/v1/admin/discount/{discount_id}/revoke")
+def admin_revoke_discount(discount_id: str, _: None = Depends(admin)):
+    """Отозвать скидку (деактивировать)."""
+    d = discounts.get(discount_id)
+    if not d:
+        raise HTTPException(404, "no_discount")
+    d["active"] = False
+    _save_discounts()
+    return {"ok": True, "id": discount_id, "active": False}
 
 @app.get("/v1/billing/payment/{payment_id}")
 def payment_status(payment_id: str, token: str = Depends(auth)):
@@ -879,12 +1026,12 @@ async def billing_webhook(request: Request):
         _save_payments()
         log.info("платёж %s помечен failed вебхуком", pay["payment_id"])
         return {"ok": True, "status": "failed"}
-    sub = _apply_purchase(pay["account_id"], pay["product"], pay["method"])
+    sub, applied = _finalize_payment(pay)
     log.info("платёж %s подтверждён вебхуком: %s/%s",
              pay["payment_id"], pay["product"], pay["method"])
-    pay.update(status="completed", completed_at=int(time.time()))
+    pay.update(status="completed" if applied else "failed", completed_at=int(time.time()))
     _save_payments()
-    return {"ok": True, "status": "completed", "subscription": sub}
+    return {"ok": True, "status": pay["status"], "subscription": sub}
 
 @app.get("/v1/billing/ledger")
 def billing_ledger(token: str = Depends(auth)):

@@ -38,6 +38,7 @@ nodes.json
 economy.json
 flags.json
 payments.json
+discounts.json
 node_health.json
 symbiont_state.db
 symbiont_state.db-wal
