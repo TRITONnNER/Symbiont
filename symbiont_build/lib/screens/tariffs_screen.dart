@@ -202,7 +202,7 @@ class _TariffsScreenState extends State<TariffsScreen> {
   }
 
   Future<void> _doBuy(String product) async {
-    final res = await app.buy(product, _method);
+    final res = await app.buy(product, _method, region: _region);
     if (!mounted) return;
     setState(() => _note = res != null && res['status'] == 'completed'
         ? '${app.tr('tariffs.buy')}: ${res['status']} (${app.tr('pay.$_method')})'

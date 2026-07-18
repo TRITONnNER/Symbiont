@@ -6,6 +6,18 @@
 
 enum Plan { free, trial, pro }
 
+/// Терпимый разбор имени плана. Бэкенд отдаёт тиры, которых нет в этом enum
+/// (`premium`, `ultimate`, `topup`) — например, при погашении премиум/ultimate-ключа.
+/// `Plan.values.byName(...)` на таком значении бросал ArgumentError, и активация
+/// падала уже ПОСЛЕ списания использования ключа. Здесь неизвестный платный тир
+/// сворачивается в Plan.pro (единый «платный» план клиента; точный тир берётся из
+/// billing/status), пустое/отсутствующее — в Plan.free.
+Plan planFromName(Object? name) {
+  final s = name?.toString() ?? '';
+  if (s.isEmpty) return Plan.free;
+  return Plan.values.asNameMap()[s] ?? Plan.pro;
+}
+
 /// Аккаунт «придумай что угодно»: label — косметический ярлык (ник/ID/что угодно),
 /// token — внутренний непрозрачный идентификатор (уникальность держит он, не label).
 class Account {
@@ -34,7 +46,7 @@ class Subscription {
       (paidUntil == null || paidUntil!.isAfter(DateTime.now()));
 
   factory Subscription.fromJson(Map<String, dynamic> j) => Subscription(
-    plan: Plan.values.byName(j['plan'] ?? 'free'),
+    plan: planFromName(j['plan']),
     paidUntil: j['paidUntil'] != null ? DateTime.tryParse(j['paidUntil']) : null,
     maxConcurrentSessions: j['maxConcurrentSessions'] ?? 5,
   );

@@ -162,10 +162,10 @@ class AppState extends ChangeNotifier {
   }
 
   /// Покупка тарифа/пакета выбранным методом, затем обновление статуса.
-  Future<Map<String, dynamic>?> buy(String product, String method) async {
+  Future<Map<String, dynamic>?> buy(String product, String method, {String region = 'ru'}) async {
     try {
-      Log.w('billing', 'покупка: $product через $method');
-      final res = await api.purchase(product, method);
+      Log.w('billing', 'покупка: $product через $method ($region)');
+      final res = await api.purchase(product, method, region: region);
       Log.w('billing', 'оплата: ${res['status']}');
       await refreshAccount();
       return res;
@@ -237,7 +237,7 @@ class AppState extends ChangeNotifier {
   Future<void> _boot() async {
     lang = Store.lang;
     label = Store.label;
-    plan = Plan.values.byName(Store.plan);
+    plan = planFromName(Store.plan);
     paidUntil = Store.paidUntil != null ? DateTime.tryParse(Store.paidUntil!) : null;
     mode = CoverageMode.values.byName(Store.mode);
     onboarded = Store.onboarded && Store.token != null;
@@ -281,9 +281,16 @@ class AppState extends ChangeNotifier {
       if (directPingMs != null) {
         pingHistory.add(directPingMs!.toDouble());
         if (pingHistory.length > 40) pingHistory.removeAt(0);
+        // Реальные потери прямого канала по стабильному якорю. Без этого поле
+        // directLossPct никогда не заполнялось и метрика «потери» на Home всегда
+        // показывала «—». (В вебе Probe.lossPct — заглушка null → так и остаётся «—».)
+        directLossPct = await Probe.lossPct('1.1.1.1', 443);
+      } else {
+        directLossPct = null;
       }
     } catch (_) {
       directPingMs = null;
+      directLossPct = null;
     } finally {
       measuringDirect = false;
       notifyListeners();
@@ -739,9 +746,15 @@ class AppState extends ChangeNotifier {
     if (idx < 0) return;
     nodeIndex = idx;
     Store.lastNodeId = gameBestNodeId!;
+    engine.setActiveNode(nodes[idx]);            // узел с секретами transport готов
     Log.w('boost', 'переключение на лучший узел: $gameBestNodeId');
     notifyListeners();
-    if (status.phase == ConnPhase.on) { await toggleConnect(); await toggleConnect(); }
+    // Переподключаемся на лучший узел напрямую (как selectNode/fastest). Двойной
+    // toggleConnect тут не работал: второй вызов попадал в throttle 1.2с, и туннель
+    // оставался выключенным.
+    if (status.phase == ConnPhase.on || status.phase == ConnPhase.connecting) {
+      await engine.connect(nodeId: gameBestNodeId!, mode: mode);
+    }
   }
 
   // ── МОДУЛЬ: пользовательские правила маршрутизации (per-site/per-app) ──
@@ -1015,7 +1028,7 @@ class AppState extends ChangeNotifier {
     _setBusy(true);
     try {
       final res = await api.redeemKey(code);
-      plan = Plan.values.byName((res['plan'] ?? 'pro').toString());
+      plan = planFromName(res['plan'] ?? 'pro');
       paidUntil = res['paidUntil'] != null ? DateTime.tryParse(res['paidUntil']) : null;
       Store.plan = plan.name;
       Store.paidUntil = paidUntil?.toIso8601String();

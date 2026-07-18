@@ -215,8 +215,10 @@ class ApiClient {
   }
 
   /// Покупка: product ('premium_month'…'balance_100h'), method ('mir'|'visa'|'mastercard'|'sbp'|'crypto'…).
-  Future<Map<String, dynamic>> purchase(String product, String method) async {
-    final r = await http.post(Uri.parse('$baseUrl/v1/billing/purchase'), headers: _auth, body: jsonEncode({'product': product, 'method': method}));
+  /// region ('ru'→₽ / 'intl'→$) — иначе бэкенд считает по умолчанию 'ru' и intl-юзер
+  /// видит цену в $, а списывают ₽.
+  Future<Map<String, dynamic>> purchase(String product, String method, {String region = 'ru'}) async {
+    final r = await http.post(Uri.parse('$baseUrl/v1/billing/purchase'), headers: _auth, body: jsonEncode({'product': product, 'method': method, 'region': region}));
     _need(r, 200);
     return jsonDecode(r.body) as Map<String, dynamic>;
   }
