@@ -99,8 +99,17 @@ class Issuer:
 
     def _parse_verify(self, code: str) -> KeyPayload:
         try:
-            body_b32, sig_b32 = code.strip().split(".")
-            body, sig = unb32(body_b32), unb32(sig_b32)
+            # Код показывается группами по 4 через дефисы и с префиксом SYMB-
+            # (см. issue()); парсинг ОБЯЗАН их игнорировать — иначе пользователь,
+            # вводящий/вставляющий код в отображаемом виде, получает «подделку»
+            # и в чекере, и при погашении.
+            s = code.strip().upper().replace(" ", "").replace("\t", "")
+            if s.startswith("SYMB-"):
+                s = s[5:]
+            elif s.startswith("SYMB"):
+                s = s[4:]
+            body_b32, sig_b32 = s.split(".")
+            body, sig = unb32(body_b32.replace("-", "")), unb32(sig_b32.replace("-", ""))
             self._pk.verify(sig, body)
         except (ValueError, InvalidSignature):
             raise KeyError_("key_invalid")

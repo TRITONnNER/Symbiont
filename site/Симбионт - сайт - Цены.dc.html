@@ -375,6 +375,9 @@ class Component extends DCLogic {
     const api=(typeof window!=='undefined') && window.SYM_API;
     const live=!!(api && (api.base || api._ready) && api.checkDiscount);
     if(!live){ this.setState({payCodeStatus:(this.state.lang==='ru'?'Промокод применится при оплате':'Code applies at checkout')}); return; }
+    // Проверка купона требует входа (эндпоинт под auth). Без токена не зовём — иначе
+    // 401 показывался пользователю как «код недействителен». Купон применится при оплате.
+    if(api.hasToken && !api.hasToken()){ this.setState({payCodeStatus:(this.state.lang==='ru'?'Промокод применится при оплате':'Code applies at checkout')}); return; }
     api.checkDiscount(code, product).then((r)=>{
       const ru=this.state.lang==='ru';
       if(r && r.ok){ this.setState({payCodeStatus:(ru?'✓ Скидка −':'✓ −')+(r.percent||'')+(ru?'% применена':'% applied')}); }

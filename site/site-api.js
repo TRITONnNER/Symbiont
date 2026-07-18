@@ -161,13 +161,17 @@
         return Array.from(new Uint8Array(d)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
       });
     },
+    // Число ведущих НУЛЕВЫХ БИТ hex-дайджеста (1:1 с backend identity.pow_ok:
+    // sha256(challenge:nonce) < 2^(256-bits)).
+    _powBits: function (h) { var c = 0; for (var i = 0; i < h.length; i++) { var v = parseInt(h[i], 16); if (v === 0) { c += 4; continue; } c += (v >= 8 ? 0 : v >= 4 ? 1 : v >= 2 ? 2 : 3); break; } return c; },
     _solvePow: function (challenge, bits) {
       var self = this; bits = bits | 0;
       if (!challenge || bits <= 0) return Promise.resolve('0');   // bits=0 → любой nonce
-      var prefix = new Array(bits + 1).join('0'), n = 0;
+      var n = 0;
       function step() {
-        return self._sha256hex(String(challenge) + n).then(function (h) {
-          if (h.slice(0, bits) === prefix) return String(n);
+        // Разделитель ':' и подсчёт битов обязаны совпадать с сервером, иначе pow_failed.
+        return self._sha256hex(String(challenge) + ':' + n).then(function (h) {
+          if (self._powBits(h) >= bits) return String(n);
           n++; return (n > 5000000) ? '0' : step();
         });
       }
@@ -175,10 +179,17 @@
     },
     register: function (opts) {
       opts = opts || {}; var self = this;
+      // Анонимная регистрация — УНИКАЛЬНЫЙ ник: константа 'guest' проходила лишь у
+      // первого посетителя, все следующие ловили 409 alias_taken (ник детерминирован).
+      // Публичный ник больше не даёт входа (backend требует пароль/recovery), риска нет.
+      var aliases = opts.aliases || [{
+        value: opts.nick || ('guest-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)),
+        kind: 'nick'
+      }];
       return this._get('/v1/account/pow').then(function (p) {
         return self._solvePow(p.challenge, p.bits || p.difficulty || 0).then(function (nonce) {
           return self._post('/v1/account/register', {
-            aliases: opts.aliases || [{ value: opts.nick || 'guest', kind: 'nick' }],
+            aliases: aliases,
             password: opts.password || null,
             device: opts.device || { name: 'web', platform: 'web' },
             invite: opts.invite || null,

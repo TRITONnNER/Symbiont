@@ -230,7 +230,7 @@ const TITLES={
   not_found:["Код подлинный, но не из этой системы","warn"],
   offline_ok:["Подпись подлинная","valid"],
 };
-const TIER={premium:"Premium",ultimate:"Ultimate"};
+const TIER={pro:"Premium",premium:"Premium",ultimate:"Ultimate"};
 
 function fmtDate(ts){ if(!ts) return null;
   try{return new Date(ts*1000).toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"});}
@@ -300,7 +300,9 @@ async function run(){
   catch(e){ render("invalid",{}); return; }
 
   const now=Math.floor(Date.now()/1000);
-  const info={days:p.grant_days,minutes:p.grant_minutes,tier:p.tier,
+  // Поля подписанной нагрузки — plan/grant_days (а не tier/grant_minutes):
+  // иначе тир-чип офлайн никогда не показывался.
+  const info={days:p.grant_days,tier:p.plan,
     uses_total:p.uses,sigVerified:sigOk===true,
     expires_b:fmtDate(p.expires_at)};
 

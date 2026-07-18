@@ -33,6 +33,12 @@ check(d["status"] == "valid" and d["ok"] is True, "свежий ключ → val
 check(d["grants"]["days"] == 30 and d["grants"]["tier"] == "pro", "чекер показывает грант (дни/тариф)")
 check(d["registered"] is True and d["uses_left"] == 1, "registered + uses_left")
 
+# 1b) тот же ключ в ОТОБРАЖАЕМОМ виде (префикс SYMB-, дефисы, нижний регистр) → valid
+body, sig = code.split(".")
+shown = "symb-" + "-".join(body[i:i + 4] for i in range(0, len(body), 4)) + "." + sig.lower()
+check(c.post("/v1/key/check", json={"code": shown}).json()["status"] == "valid",
+      "код в отображаемом виде (SYMB-/дефисы/регистр) → valid")
+
 # 2) проверка НЕ мутирует состояние
 check(c.post("/v1/key/check", json={"code": code}).json()["status"] == "valid",
       "повторная проверка не погасила ключ")
