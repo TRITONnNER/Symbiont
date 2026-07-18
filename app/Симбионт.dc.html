@@ -18,6 +18,7 @@
 <script src="./symbiont-strings.js"></script>
 <script src="./app-config.js"></script>
 <script src="./flags.js"></script>
+<script src="./icons.js"></script>
 <script src="./app-api.js"></script>
 <style>
   html,body{margin:0;padding:0;background:#0A0F11;}
@@ -1886,12 +1887,12 @@ class Component extends DCLogic {
       block:{label:rl.block,color:'#FF6B6B',bg:'rgba(255,107,107,0.10)',border:'rgba(255,107,107,0.28)',dot:'#FF6B6B'}
     };
     const appsRaw=[
-      {name:'Google Chrome',exe:'chrome.exe',c:'#6BA4FF',act:'auto',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {name:'Telegram',exe:'Telegram.exe',c:'#58B7F5',act:'bypass',logo:'https://cdn.simpleicons.org/telegram'},
-      {name:'Discord',exe:'Discord.exe',c:'#8C9EFF',act:'tunnel',logo:'https://cdn.simpleicons.org/discord'},
-      {name:'VALORANT',exe:'VALORANT.exe',tag:'game',c:'#FF6B6B',act:'boost',logo:'https://cdn.simpleicons.org/valorant'},
-      {name:'Steam',exe:'steam.exe',c:'#9FB2C4',act:'direct',logo:'https://cdn.simpleicons.org/steam'},
-      {name:'Spotify',exe:'Spotify.exe',c:'#5BE5A6',act:'direct',logo:'https://cdn.simpleicons.org/spotify'}
+      {name:'Google Chrome',exe:'chrome.exe',c:'#6BA4FF',act:'auto',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('googlechrome'):'')},
+      {name:'Telegram',exe:'Telegram.exe',c:'#58B7F5',act:'bypass',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('telegram'):'')},
+      {name:'Discord',exe:'Discord.exe',c:'#8C9EFF',act:'tunnel',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('discord'):'')},
+      {name:'VALORANT',exe:'VALORANT.exe',tag:'game',c:'#FF6B6B',act:'boost',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('valorant'):'')},
+      {name:'Steam',exe:'steam.exe',c:'#9FB2C4',act:'direct',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('steam'):'')},
+      {name:'Spotify',exe:'Spotify.exe',c:'#5BE5A6',act:'direct',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('spotify'):'')}
     ];
     const _gameWord={ru:'игра',en:'game',es:'juego',de:'Spiel'}[lng]||'игра';
     const apps=appsRaw.map((a,i)=>{ const actKey=(S.appActions&&S.appActions[i])||a.act; const ac=ACT[actKey]; return {
@@ -1901,20 +1902,20 @@ class Component extends DCLogic {
       action:{ kind:'pill', tone:'solid', label:ac.label, color:ac.color, dot:ac.dot, star:!!ac.star, bg:ac.bg, border:ac.border, chevron:'expand_more', onClick:()=>this.toggleAppPicker(i) }
     }; });
     const DEVICE_APPS=[
-      {id:'chrome',name:'Google Chrome',exe:'chrome.exe',cat:'browser',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {id:'firefox',name:'Mozilla Firefox',exe:'firefox.exe',cat:'browser',logo:'https://cdn.simpleicons.org/firefoxbrowser'},
-      {id:'edge',name:'Microsoft Edge',exe:'msedge.exe',cat:'browser',logo:'https://cdn.simpleicons.org/googlechrome'},
-      {id:'telegram',name:'Telegram',exe:'Telegram.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/telegram'},
-      {id:'discord',name:'Discord',exe:'Discord.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/discord'},
-      {id:'whatsapp',name:'WhatsApp',exe:'WhatsApp.exe',cat:'messenger',logo:'https://cdn.simpleicons.org/whatsapp'},
-      {id:'valorant',name:'VALORANT',exe:'VALORANT.exe',cat:'game',logo:'https://cdn.simpleicons.org/valorant'},
-      {id:'steam',name:'Steam',exe:'steam.exe',cat:'game',logo:'https://cdn.simpleicons.org/steam'},
-      {id:'epic',name:'Epic Games',exe:'EpicGamesLauncher.exe',cat:'game',logo:'https://cdn.simpleicons.org/epicgames'},
-      {id:'spotify',name:'Spotify',exe:'Spotify.exe',cat:'media',logo:'https://cdn.simpleicons.org/spotify'},
-      {id:'vlc',name:'VLC',exe:'vlc.exe',cat:'media',logo:'https://cdn.simpleicons.org/vlcmediaplayer'},
-      {id:'obs',name:'OBS Studio',exe:'obs64.exe',cat:'media',logo:'https://cdn.simpleicons.org/obsstudio'},
-      {id:'vscode',name:'VS Code',exe:'Code.exe',cat:'dev',logo:'https://cdn.simpleicons.org/codecrafters'},
-      {id:'docker',name:'Docker',exe:'Docker Desktop.exe',cat:'dev',logo:'https://cdn.simpleicons.org/docker'}
+      {id:'chrome',name:'Google Chrome',exe:'chrome.exe',cat:'browser',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('googlechrome'):'')},
+      {id:'firefox',name:'Mozilla Firefox',exe:'firefox.exe',cat:'browser',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('firefoxbrowser'):'')},
+      {id:'edge',name:'Microsoft Edge',exe:'msedge.exe',cat:'browser',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('googlechrome'):'')},
+      {id:'telegram',name:'Telegram',exe:'Telegram.exe',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('telegram'):'')},
+      {id:'discord',name:'Discord',exe:'Discord.exe',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('discord'):'')},
+      {id:'whatsapp',name:'WhatsApp',exe:'WhatsApp.exe',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('whatsapp'):'')},
+      {id:'valorant',name:'VALORANT',exe:'VALORANT.exe',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('valorant'):'')},
+      {id:'steam',name:'Steam',exe:'steam.exe',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('steam'):'')},
+      {id:'epic',name:'Epic Games',exe:'EpicGamesLauncher.exe',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('epicgames'):'')},
+      {id:'spotify',name:'Spotify',exe:'Spotify.exe',cat:'media',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('spotify'):'')},
+      {id:'vlc',name:'VLC',exe:'vlc.exe',cat:'media',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('vlcmediaplayer'):'')},
+      {id:'obs',name:'OBS Studio',exe:'obs64.exe',cat:'media',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('obsstudio'):'')},
+      {id:'vscode',name:'VS Code',exe:'Code.exe',cat:'dev',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('codecrafters'):'')},
+      {id:'docker',name:'Docker',exe:'Docker Desktop.exe',cat:'dev',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('docker'):'')}
     ];
     const _scn=this._scanStr();
     const _scanX=_ext.scanX||({ru:{addAll:'Добавить все',addedAll:'Все приложения добавлены'},en:{addAll:'Add all',addedAll:'All apps added'},es:{addAll:'Añadir todo',addedAll:'Todas añadidas'},de:{addAll:'Alle hinzufügen',addedAll:'Alle hinzugefügt'}})[lng]||{addAll:'Add all',addedAll:'All apps added'};
@@ -1929,24 +1930,24 @@ class Component extends DCLogic {
     const scanAddAllN=_toAddScan.length;
     const _catL=_ext.catL||({ru:{all:'Все',social:'Соцсети',video:'Видео',messenger:'Мессенджеры',game:'Игры',bank:'Банки',other:'Прочее'},en:{all:'All',social:'Social',video:'Video',messenger:'Messengers',game:'Games',bank:'Banks',other:'Other'},es:{all:'Todo',social:'Redes',video:'Vídeo',messenger:'Mensajería',game:'Juegos',bank:'Bancos',other:'Otros'},de:{all:'Alle',social:'Soziales',video:'Video',messenger:'Messenger',game:'Spiele',bank:'Banken',other:'Andere'}})[lng]||{all:'All',social:'Social',video:'Video',messenger:'Messengers',game:'Games',bank:'Banks',other:'Other'};
     const SERVICES=[
-      {name:'Instagram',domain:'instagram.com',cat:'social',logo:'https://cdn.simpleicons.org/instagram',act:'tunnel'},
-      {name:'Facebook',domain:'facebook.com',cat:'social',logo:'https://cdn.simpleicons.org/facebook',act:'tunnel'},
-      {name:'X (Twitter)',domain:'x.com',cat:'social',logo:'https://cdn.simpleicons.org/x',act:'tunnel'},
-      {name:'TikTok',domain:'tiktok.com',cat:'social',logo:'https://cdn.simpleicons.org/tiktok',act:'tunnel'},
-      {name:'Reddit',domain:'reddit.com',cat:'social',logo:'https://cdn.simpleicons.org/reddit',act:'auto'},
-      {name:'YouTube',domain:'youtube.com',cat:'video',logo:'https://cdn.simpleicons.org/youtube',act:'bypass'},
-      {name:'Twitch',domain:'twitch.tv',cat:'video',logo:'https://cdn.simpleicons.org/twitch',act:'auto'},
-      {name:'Netflix',domain:'netflix.com',cat:'video',logo:'https://cdn.simpleicons.org/netflix',act:'tunnel'},
-      {name:'Telegram',domain:'telegram.org',cat:'messenger',logo:'https://cdn.simpleicons.org/telegram',act:'bypass'},
-      {name:'Discord',domain:'discord.com',cat:'messenger',logo:'https://cdn.simpleicons.org/discord',act:'tunnel'},
-      {name:'WhatsApp',domain:'whatsapp.com',cat:'messenger',logo:'https://cdn.simpleicons.org/whatsapp',act:'auto'},
-      {name:'Steam',domain:'steampowered.com',cat:'game',logo:'https://cdn.simpleicons.org/steam',act:'direct'},
-      {name:'Epic Games',domain:'epicgames.com',cat:'game',logo:'https://cdn.simpleicons.org/epicgames',act:'boost'},
-      {name:'Riot Games',domain:'riotgames.com',cat:'game',logo:'https://cdn.simpleicons.org/riotgames',act:'boost'},
-      {name:'PayPal',domain:'paypal.com',cat:'bank',logo:'https://cdn.simpleicons.org/paypal',act:'direct'},
-      {name:'Wise',domain:'wise.com',cat:'bank',logo:'https://cdn.simpleicons.org/wise',act:'direct'},
-      {name:'GitHub',domain:'github.com',cat:'other',logo:'https://cdn.simpleicons.org/github',act:'auto'},
-      {name:'Wikipedia',domain:'wikipedia.org',cat:'other',logo:'https://cdn.simpleicons.org/wikipedia',act:'auto'}
+      {name:'Instagram',domain:'instagram.com',cat:'social',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('instagram'):''),act:'tunnel'},
+      {name:'Facebook',domain:'facebook.com',cat:'social',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('facebook'):''),act:'tunnel'},
+      {name:'X (Twitter)',domain:'x.com',cat:'social',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('x'):''),act:'tunnel'},
+      {name:'TikTok',domain:'tiktok.com',cat:'social',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('tiktok'):''),act:'tunnel'},
+      {name:'Reddit',domain:'reddit.com',cat:'social',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('reddit'):''),act:'auto'},
+      {name:'YouTube',domain:'youtube.com',cat:'video',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('youtube'):''),act:'bypass'},
+      {name:'Twitch',domain:'twitch.tv',cat:'video',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('twitch'):''),act:'auto'},
+      {name:'Netflix',domain:'netflix.com',cat:'video',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('netflix'):''),act:'tunnel'},
+      {name:'Telegram',domain:'telegram.org',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('telegram'):''),act:'bypass'},
+      {name:'Discord',domain:'discord.com',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('discord'):''),act:'tunnel'},
+      {name:'WhatsApp',domain:'whatsapp.com',cat:'messenger',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('whatsapp'):''),act:'auto'},
+      {name:'Steam',domain:'steampowered.com',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('steam'):''),act:'direct'},
+      {name:'Epic Games',domain:'epicgames.com',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('epicgames'):''),act:'boost'},
+      {name:'Riot Games',domain:'riotgames.com',cat:'game',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('riotgames'):''),act:'boost'},
+      {name:'PayPal',domain:'paypal.com',cat:'bank',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('paypal'):''),act:'direct'},
+      {name:'Wise',domain:'wise.com',cat:'bank',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('wise'):''),act:'direct'},
+      {name:'GitHub',domain:'github.com',cat:'other',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('github'):''),act:'auto'},
+      {name:'Wikipedia',domain:'wikipedia.org',cat:'other',logo:(window.SYM_ICON_SVG?SYM_ICON_SVG('wikipedia'):''),act:'auto'}
     ];
     const _scat=S.svcCat||'all'; const _sq2=(S.routingQuery||'').toLowerCase().trim();
     const _catDomains=SERVICES.map(s=>s.domain);
