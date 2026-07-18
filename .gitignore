@@ -41,6 +41,8 @@ payments.json
 discounts.json
 node_health.json
 staff.json
+audit.json
+thread_status.json
 symbiont_state.db
 symbiont_state.db-wal
 symbiont_state.db-shm

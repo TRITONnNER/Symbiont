@@ -286,10 +286,27 @@ def admin(x_admin_token: str = Header(default="")) -> None:
 # Владелец = держатель ADMIN_TOKEN (все права). Работник = именной токен с НАБОРОМ
 # прав (scopes), который создаёт владелец — как выпуск ключа. Работник видит и может
 # только выданные разделы (напр. только «Поддержка»). Токены работников персистентны.
-ALL_SCOPES = ["nodes", "support", "discounts", "flags", "keys", "billing"]
+# Разделы панели (scopes). Владелец = все; работнику владелец выдаёт нужные.
+ALL_SCOPES = ["nodes", "users", "support", "billing", "discounts", "keys", "economy", "flags"]
+SCOPE_NAMES = {"nodes": "Серверы", "users": "Пользователи", "support": "Поддержка",
+               "billing": "Платежи", "discounts": "Скидки", "keys": "Ключи",
+               "economy": "Экономика/цены", "flags": "Блоки"}
 STAFF_FILE = "staff.json"
 staff_tokens: dict[str, dict] = persist.jload(STAFF_FILE, {})  # token -> {id,name,scopes,revoked,created_at}
 def _save_staff(): persist.jsave(STAFF_FILE, staff_tokens)
+
+# ── Журнал действий панели (кто что сделал) — подотчётность работников ─────────
+AUDIT_FILE = "audit.json"
+audit_log: list = persist.jload(AUDIT_FILE, [])
+def _audit(actor, action: str, target: str = None, **extra):
+    """Записать действие оператора в журнал (последние 500). actor — Principal или имя."""
+    is_p = actor.__class__.__name__ == "Principal"
+    audit_log.append({"at": _now(), "action": action, "target": target,
+                      "by": (actor.name if is_p else (actor or "Владелец")),
+                      "role": (actor.role if is_p else "owner"), **extra})
+    if len(audit_log) > 500:
+        del audit_log[:len(audit_log) - 500]
+    persist.jsave(AUDIT_FILE, audit_log)
 
 class Principal:
     """Кто выполняет операцию в панели: владелец (все права) или работник (scopes)."""
@@ -613,7 +630,7 @@ class FlagsReq(BaseModel):
     flags: dict                      # частичное или полное поддерево флагов
 
 @app.post("/v1/admin/flags")
-def admin_set_flags(req: FlagsReq, _: Principal = Depends(require("flags"))):
+def admin_set_flags(req: FlagsReq, p: Principal = Depends(require("flags"))):
     """Включить/выключить блоки сайта и приложения из панели. Пишет flags.json
     (override поверх DEFAULT_FLAGS), версия +1 — клиент/сайт подхватят при опросе.
     Частичный апдейт: `{"flags":{"download":{"macos":false}}}` гасит только macOS."""
@@ -626,7 +643,34 @@ def admin_set_flags(req: FlagsReq, _: Principal = Depends(require("flags"))):
     except OSError as e:
         raise HTTPException(500, f"flags_write_failed:{e}")
     log.info("флаги обновлены из панели → v%s", merged["version"])
+    _audit(p, "flags_set", changed=list((req.flags or {}).keys()), version=merged["version"])
     return {"ok": True, "flags": merged}
+
+class EconomyReq(BaseModel):
+    economy: dict                    # частичное или полное поддерево экономики
+
+@app.get("/v1/admin/economy")
+def admin_get_economy(_: Principal = Depends(require("economy"))):
+    """Текущая экономика (цены/тиры/пакеты/награды) — для редактора в панели."""
+    return economy()
+
+@app.post("/v1/admin/economy")
+def admin_set_economy(req: EconomyReq, p: Principal = Depends(require("economy"))):
+    """Изменить цены/пакеты/награды из панели (пишет economy.json, override поверх
+    DEFAULT_ECONOMY, deep-merge). Клиент/сайт рендерят тарифы из /v1/config/economy —
+    смена цены здесь мгновенно меняет витрину без пересборки."""
+    if not isinstance(req.economy, dict) or not req.economy:
+        raise HTTPException(422, "economy_object_required")
+    cur = economy()
+    merged = _deep_merge(cur, req.economy)
+    try:
+        with open("economy.json", "w", encoding="utf-8") as f:
+            json.dump(merged, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        raise HTTPException(500, f"economy_write_failed:{e}")
+    log.info("экономика обновлена из панели")
+    _audit(p, "economy_set", changed=list(req.economy.keys()))
+    return {"ok": True, "economy": merged}
 
 
 class BridgeReq(BaseModel):
@@ -1025,7 +1069,7 @@ class DiscountReq(BaseModel):
     label: Optional[str] = None
 
 @app.post("/v1/admin/discount")
-def admin_create_discount(req: DiscountReq, _: Principal = Depends(require("discounts"))):
+def admin_create_discount(req: DiscountReq, p: Principal = Depends(require("discounts"))):
     """Создать скидку — владелец ИЛИ Server-in-a-Box (админ-токен), как выпуск ключа.
     Кампания (без code — применяется автоматически) или код-купон (с code).
     scope: 'all' или {tiers/products}. Окно времени starts_at…expires_at. Лимиты
@@ -1043,16 +1087,18 @@ def admin_create_discount(req: DiscountReq, _: Principal = Depends(require("disc
     _save_discounts()
     log.info("скидка создана: %s %s%% scope=%s source=%s",
              did, req.percent, req.scope, req.source)
+    _audit(p, "discount_create", did, percent=req.percent, code=req.code)
     return {"ok": True, "discount": d}
 
 @app.post("/v1/admin/discount/{discount_id}/revoke")
-def admin_revoke_discount(discount_id: str, _: Principal = Depends(require("discounts"))):
+def admin_revoke_discount(discount_id: str, p: Principal = Depends(require("discounts"))):
     """Отозвать скидку (деактивировать)."""
     d = discounts.get(discount_id)
     if not d:
         raise HTTPException(404, "no_discount")
     d["active"] = False
     _save_discounts()
+    _audit(p, "discount_revoke", discount_id)
     return {"ok": True, "id": discount_id, "active": False}
 
 @app.get("/v1/admin/discounts")
@@ -1244,12 +1290,13 @@ class GrantReq(BaseModel):
     reason: str = "owner_grant"
 
 @app.post("/v1/admin/grant")
-def admin_grant(req: GrantReq, _: None = Depends(admin)):
-    """Грант премиума по решению владельца (не покупается массово)."""
+def admin_grant(req: GrantReq, p: "Principal" = Depends(require("users"))):
+    """Грант премиума по решению оператора (комп/бонус; не покупается массово)."""
     if req.account_id not in idaccounts:
         raise HTTPException(404, "no_account")
     g = {"tier": req.tier, "expires": req.days, "source": "owner_grant", "reason": req.reason}
     idaccounts[req.account_id]["granted_tier"] = g
+    _audit(p, "grant", req.account_id, tier=req.tier, days=req.days, reason=req.reason)
     # Единая модель тира: грант отражается и в ПОДПИСКЕ, а не только в granted_tier —
     # иначе GET /v1/billing/status показывал бы free/старый тир (два источника правды).
     # По рангу: грант не понижает уже оплаченный более высокий тир.
@@ -1291,7 +1338,7 @@ class FraudReq(BaseModel):
     account_id: str
 
 @app.post("/v1/admin/fraud")
-def admin_fraud(req: FraudReq, _: None = Depends(admin)):
+def admin_fraud(req: FraudReq, p: "Principal" = Depends(require("users"))):
     """Откат по инвайт-графу: помечаем аккаунт и ВСЮ его реферальную ветку как фрод,
     обнуляем им премиум. Так ферма, размножавшая бонусы, схлопывается целиком."""
     if req.account_id not in idaccounts:
@@ -1309,7 +1356,20 @@ def admin_fraud(req: FraudReq, _: None = Depends(admin)):
             walk(r)
     walk(req.account_id)
     _save_idaccounts()
+    _audit(p, "fraud_flag", req.account_id, count=len(flagged))
     return {"ok": True, "flagged": flagged, "count": len(flagged)}
+
+@app.post("/v1/admin/unfraud")
+def admin_unfraud(req: FraudReq, p: "Principal" = Depends(require("users"))):
+    """Снять метку фрода с аккаунта (ошибочно помечен). Ветку НЕ трогаем — только сам
+    аккаунт; премиум не возвращаем автоматически (при необходимости — грантом)."""
+    acc = idaccounts.get(req.account_id)
+    if not acc:
+        raise HTTPException(404, "no_account")
+    acc["fraud"] = False
+    _save_idaccounts()
+    _audit(p, "unfraud", req.account_id)
+    return {"ok": True, "account_id": req.account_id, "fraud": False}
 
 
 # ── Колесо фортуны: бесплатный ежедневный бонус (provably fair) ────────────────
@@ -1494,7 +1554,7 @@ def admin_list_nodes(_: Principal = Depends(require("nodes"))):
             "stale_after_sec": NODE_STALE_SEC}
 
 @app.post("/v1/admin/node/{node_id}/remove")
-def admin_remove_node(node_id: str, _: Principal = Depends(require("nodes"))):
+def admin_remove_node(node_id: str, p: Principal = Depends(require("nodes"))):
     """Снять узел из манифеста (оператор). Секрет узла отзывается, манифест пересобирается."""
     data = persist.jload("nodes.json", {"nodes": []})
     cur = data.get("nodes") if isinstance(data, dict) else (data or [])
@@ -1505,6 +1565,7 @@ def admin_remove_node(node_id: str, _: Principal = Depends(require("nodes"))):
     _node_health.pop(node_id, None); _save_node_health()
     _node_secrets.pop(node_id, None); persist.jsave("node_secrets.json", _node_secrets)
     _bump_and_rebuild()
+    _audit(p, "node_remove", node_id)
     return {"ok": True, "removed": node_id, "total_nodes": len(new), "version": MANIFEST_VERSION}
 
 
@@ -1561,29 +1622,53 @@ def post_message(req: MsgReq, token: str = Depends(auth)):
     return {"ok": True, "awaiting_operator": True}
 
 # ── 4b. Поддержка со стороны оператора (панель Server-in-a-Box) ────────────────
+# Статус тредов (open/closed) — сбоку, чтобы не менять формат сообщений.
+THREAD_STATUS_FILE = "thread_status.json"
+thread_status: dict[str, str] = persist.jload(THREAD_STATUS_FILE, {})
+def _save_thread_status(): persist.jsave(THREAD_STATUS_FILE, thread_status)
+
+# Готовые ответы оператора (быстрые шаблоны) — правятся здесь, видны в панели.
+SUPPORT_TEMPLATES = [
+    {"title": "Импорт своего моста", "text": "Импортируйте свой мост: раздел «Скачать» → «Добавить свой мост», вставьте ссылку vless://…/ss://…/hysteria2://…"},
+    {"title": "Починить интернет", "text": "Откройте приложение → «Починить интернет»: пересоберёт маршрут и сменит протокол автоматически (обычно решает за 15 секунд)."},
+    {"title": "Сменить локацию", "text": "Попробуйте другую страну в списке серверов — ближайшая живая обычно быстрее. Если сервер молчит, он скоро сам уйдёт из списка."},
+    {"title": "Оплата не прошла", "text": "Проверьте статус в разделе «Аккаунт → Платежи». Если платёж завис — напишите номер платежа, проверим и при необходимости начислим вручную."},
+    {"title": "Баланс времени", "text": "Активное время тратится только когда VPN включён. Подписка/грант — приоритет, часы при них не расходуются."},
+]
+
+@app.get("/v1/admin/support/templates")
+def admin_support_templates(_: Principal = Depends(require("support"))):
+    """Быстрые ответы оператора (шаблоны)."""
+    return {"templates": SUPPORT_TEMPLATES}
+
 @app.get("/v1/admin/support/threads")
-def admin_support_threads(_: Principal = Depends(require("support"))):
-    """Список всех обращений: id треда, число сообщений, последнее сообщение,
-    ждёт ли ответа оператора (последнее — от пользователя). Ждущие — сверху."""
+def admin_support_threads(status: str = "", _: Principal = Depends(require("support"))):
+    """Список всех обращений: id треда, число сообщений, последнее сообщение, статус
+    (open/closed), ждёт ли ответа оператора. Фильтр ?status=open|closed. Ждущие — сверху."""
     out = []
     for key, msgs in threads.items():
         if not msgs:
             continue
+        st = thread_status.get(key, "open")
+        if status and st != status:
+            continue
         last = msgs[-1]
-        out.append({"id": key, "count": len(msgs),
+        out.append({"id": key, "count": len(msgs), "status": st,
                     "last_from": last.get("from"), "last_text": last.get("text", ""),
                     "last_at": last.get("at"),
-                    "awaiting": last.get("from") == "user"})
+                    "awaiting": last.get("from") == "user" and st == "open"})
     out.sort(key=lambda t: (t["awaiting"], t["last_at"] or ""), reverse=True)
     return {"threads": out, "total": len(out),
             "awaiting": sum(1 for t in out if t["awaiting"])}
 
 @app.get("/v1/admin/support/thread/{key}")
 def admin_support_thread(key: str, _: Principal = Depends(require("support"))):
-    """Полная переписка одного треда (для окна диалога в панели)."""
+    """Полная переписка одного треда + статус + привязка к аккаунту (ключ=account_id)."""
     if key not in threads:
         raise HTTPException(404, "no_thread")
-    return {"id": key, "messages": threads[key]}
+    return {"id": key, "messages": threads[key],
+            "status": thread_status.get(key, "open"),
+            "account_id": (key if key in idaccounts else None)}
 
 @app.post("/v1/admin/support/{key}/reply")
 def admin_support_reply(key: str, req: MsgReq, p: Principal = Depends(require("support"))):
@@ -1593,7 +1678,212 @@ def admin_support_reply(key: str, req: MsgReq, p: Principal = Depends(require("s
     threads[key].append({"from": "support", "text": req.text,
                          "at": _now(), "by": p.name or "Оператор"})
     _save_threads()
+    thread_status[key] = "open"; _save_thread_status()
+    _audit(p, "support_reply", key)
     return {"ok": True}
+
+class ThreadStatusReq(BaseModel):
+    status: str = "closed"           # closed | open
+
+@app.post("/v1/admin/support/{key}/status")
+def admin_support_status(key: str, req: ThreadStatusReq, p: Principal = Depends(require("support"))):
+    """Закрыть/переоткрыть обращение (решено / вернуть в работу)."""
+    if key not in threads:
+        raise HTTPException(404, "no_thread")
+    st = "closed" if req.status == "closed" else "open"
+    thread_status[key] = st; _save_thread_status()
+    _audit(p, "support_" + st, key)
+    return {"ok": True, "id": key, "status": st}
+
+
+# ── 4c. Пользователи: обзор и управление (scope users) ─────────────────────────
+# Приватность сохраняется: PII нет (алиасы хранятся как HMAC→aid и НЕ разворачиваются),
+# оператор видит только account_id, тир, подписку/баланс, устройства, рефералы, журнал.
+def _devices_of(aid: str) -> list:
+    return [{"id": k, "name": v.get("name"), "platform": v.get("platform"),
+             "role": v.get("role"), "revoked": v.get("revoked", False),
+             "last_seen": v.get("last_seen")}
+            for k, v in devices.items() if v.get("account_id") == aid]
+
+def _payments_of(aid: str) -> list:
+    out = [{"payment_id": p.get("payment_id"), "product": p.get("product"),
+            "method": p.get("method"), "amount": p.get("amount"),
+            "currency": p.get("currency"), "status": p.get("status"),
+            "created_at": p.get("created_at"), "completed_at": p.get("completed_at")}
+           for p in payments.values() if p.get("account_id") == aid]
+    out.sort(key=lambda x: x.get("created_at") or 0, reverse=True)
+    return out
+
+def _user_summary(aid: str) -> dict:
+    acc = idaccounts.get(aid, {})
+    sub = acc.get("sub", {})
+    devs = [d for d in devices.values() if d.get("account_id") == aid and not d.get("revoked")]
+    return {"account_id": aid, "created_at": acc.get("created_at"),
+            "tier": acc.get("tier", "free"), "coverage": _coverage(aid),
+            "days_left": sub.get("days_left", 0),
+            "active_minutes_left": sub.get("active_minutes_left", 0),
+            "lifetime": bool(sub.get("lifetime")) or (acc.get("granted_tier", {}) or {}).get("expires") is None and bool(acc.get("granted_tier")),
+            "devices": len(devs), "paid_months": acc.get("paid_months", 0),
+            "referrals": len(acc.get("referrals", [])), "fraud": bool(acc.get("fraud"))}
+
+@app.get("/v1/admin/users")
+def admin_list_users(query: str = "", tier: str = "", limit: int = 100,
+                     _: Principal = Depends(require("users"))):
+    """Список аккаунтов (без PII): тир, покрытие, баланс, устройства, рефералы, фрод.
+    Фильтры: ?query=<подстрока account_id>, ?tier=free|premium|ultimate. Свежие сверху."""
+    n = max(1, min(int(limit or 100), 1000))
+    rows = []
+    for aid, acc in idaccounts.items():
+        if query and query.lower() not in aid.lower():
+            continue
+        if tier and acc.get("tier", "free") != tier:
+            continue
+        rows.append(_user_summary(aid))
+    rows.sort(key=lambda r: r.get("created_at") or 0, reverse=True)
+    return {"users": rows[:n], "total": len(rows)}
+
+@app.get("/v1/admin/user/{aid}")
+def admin_user_detail(aid: str, _: Principal = Depends(require("users"))):
+    """Полная карточка аккаунта: подписка, грант, устройства, платежи, рефералы,
+    репутация, журнал (последние 50), есть ли обращение в поддержку."""
+    acc = idaccounts.get(aid)
+    if not acc:
+        raise HTTPException(404, "no_account")
+    lvl, cap, mult = _reputation(aid)
+    ledger = sorted(acc.get("ledger", []), key=lambda e: e.get("at", 0), reverse=True)[:50]
+    return {"account_id": aid, "summary": _user_summary(aid),
+            "subscription": _sub(aid), "granted_tier": acc.get("granted_tier"),
+            "invite_code": acc.get("invite_code"), "invited_by": acc.get("invited_by"),
+            "referrals": acc.get("referrals", []),
+            "reputation": {"level": lvl, "payout_cap_month": cap, "multiplier": mult},
+            "devices": _devices_of(aid), "payments": _payments_of(aid),
+            "ledger": ledger, "has_support": aid in threads}
+
+class BalanceAdjustReq(BaseModel):
+    minutes: int                     # + начислить, − списать
+    reason: str = "operator_adjust"
+
+@app.post("/v1/admin/user/{aid}/balance")
+def admin_adjust_balance(aid: str, req: BalanceAdjustReq, p: Principal = Depends(require("users"))):
+    """Начислить/списать активные минуты (комп/возврат/коррекция). Пишет в журнал."""
+    if aid not in idaccounts:
+        raise HTTPException(404, "no_account")
+    sub = _sub(aid)
+    if req.minutes >= 0:
+        sub["active_minutes_left"] = sub.get("active_minutes_left", 0) + req.minutes
+        if sub.get("tier", "free") == "free":
+            _raise_tier(sub, "premium"); idaccounts[aid]["tier"] = sub["tier"]
+        sub["mode"] = "balance" if sub.get("days_left", 0) == 0 and not sub.get("lifetime") else sub.get("mode", "balance")
+        _ledger_add(aid, "grant", minutes=req.minutes, reason=req.reason)
+    else:
+        sub["active_minutes_left"] = max(0, sub.get("active_minutes_left", 0) + req.minutes)
+        _ledger_add(aid, "debit", minutes=-req.minutes, reason=req.reason)
+    _save_idaccounts()
+    _audit(p, "balance_adjust", aid, minutes=req.minutes, reason=req.reason)
+    return {"ok": True, "account_id": aid, "active_minutes_left": sub["active_minutes_left"]}
+
+@app.post("/v1/admin/user/{aid}/device/{did}/revoke")
+def admin_revoke_user_device(aid: str, did: str, p: Principal = Depends(require("users"))):
+    """Отозвать устройство пользователя (украдено/лишнее) — сессии этого устройства станут 401."""
+    d = devices.get(did)
+    if not d or d.get("account_id") != aid:
+        raise HTTPException(404, "no_device")
+    d["revoked"] = True; _save_devices()
+    _audit(p, "device_revoke", aid, device=did)
+    return {"ok": True, "account_id": aid, "device_id": did, "revoked": True}
+
+
+# ── 4d. Платежи: обзор, сводка, ручное подтверждение/возврат (scope billing) ───
+@app.get("/v1/admin/payments")
+def admin_list_payments(status: str = "", limit: int = 100,
+                        _: Principal = Depends(require("billing"))):
+    """Все платежи (id, аккаунт, продукт, сумма, метод, статус, время). Фильтр ?status=."""
+    n = max(1, min(int(limit or 100), 1000))
+    rows = []
+    for pay in payments.values():
+        if status and pay.get("status") != status:
+            continue
+        rows.append({"payment_id": pay.get("payment_id"), "account_id": pay.get("account_id"),
+                     "product": pay.get("product"), "method": pay.get("method"),
+                     "amount": pay.get("amount"), "currency": pay.get("currency"),
+                     "status": pay.get("status"), "provider": pay.get("provider"),
+                     "created_at": pay.get("created_at"), "completed_at": pay.get("completed_at")})
+    rows.sort(key=lambda x: x.get("created_at") or 0, reverse=True)
+    return {"payments": rows[:n], "total": len(rows)}
+
+@app.get("/v1/admin/billing/summary")
+def admin_billing_summary(_: Principal = Depends(require("billing"))):
+    """Сводка: выручка (по завершённым), разбивка по продуктам и статусам, за 24ч/7д."""
+    now = int(time.time())
+    by_product, by_status, revenue = {}, {}, {}
+    rev_24h = rev_7d = 0
+    for pay in payments.values():
+        st = pay.get("status", "unknown")
+        by_status[st] = by_status.get(st, 0) + 1
+        if st == "completed":
+            cur = pay.get("currency", "RUB"); amt = pay.get("amount") or 0
+            revenue[cur] = round(revenue.get(cur, 0) + amt, 2)
+            prod = pay.get("product", "?")
+            by_product[prod] = by_product.get(prod, 0) + 1
+            ts = pay.get("completed_at") or pay.get("created_at") or 0
+            if cur == "RUB":
+                if now - ts <= 86400: rev_24h += amt
+                if now - ts <= 7 * 86400: rev_7d += amt
+    return {"revenue": revenue, "by_product": by_product, "by_status": by_status,
+            "revenue_rub_24h": round(rev_24h, 2), "revenue_rub_7d": round(rev_7d, 2),
+            "total_payments": len(payments)}
+
+@app.post("/v1/admin/payment/{pid}/confirm")
+def admin_confirm_payment(pid: str, p: Principal = Depends(require("billing"))):
+    """Вручную подтвердить pending-платёж (тест-режим / зависший колбэк). Идемпотентно."""
+    pay = payments.get(pid)
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay.get("status") in ("completed", "failed", "refunded"):
+        return {"ok": True, "status": pay["status"], "idempotent": True}
+    sub, applied = _finalize_payment(pay)
+    pay.update(status="completed" if applied else "failed", completed_at=int(time.time()))
+    _save_payments()
+    _audit(p, "payment_confirm", pid, account=pay.get("account_id"), product=pay.get("product"))
+    return {"ok": True, "status": pay["status"], "subscription": sub}
+
+@app.post("/v1/admin/payment/{pid}/fail")
+def admin_fail_payment(pid: str, p: Principal = Depends(require("billing"))):
+    """Пометить pending-платёж проваленным (отменён/не оплачен)."""
+    pay = payments.get(pid)
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay.get("status") == "completed":
+        raise HTTPException(409, "already_completed_use_refund")
+    pay.update(status="failed", completed_at=int(time.time()))
+    _save_payments()
+    _audit(p, "payment_fail", pid)
+    return {"ok": True, "status": "failed"}
+
+@app.post("/v1/admin/payment/{pid}/refund")
+def admin_refund_payment(pid: str, p: Principal = Depends(require("billing"))):
+    """Возврат завершённого платежа: помечаем refunded и снимаем начисленный эффект
+    (дни/минуты) с аккаунта, насколько возможно. Деньги в тест-режиме не двигаются."""
+    pay = payments.get(pid)
+    if not pay:
+        raise HTTPException(404, "no_payment")
+    if pay.get("status") != "completed":
+        raise HTTPException(409, "not_completed")
+    aid, product = pay.get("account_id"), pay.get("product")
+    prod = PRODUCTS.get(product, {})
+    sub = _sub(aid)
+    if "add_minutes" in prod:
+        sub["active_minutes_left"] = max(0, sub.get("active_minutes_left", 0) - prod["add_minutes"])
+        _ledger_add(aid, "debit", minutes=prod["add_minutes"], reason="refund:" + pid)
+    elif "add_days" in prod:
+        sub["days_left"] = max(0, sub.get("days_left", 0) - prod["add_days"])
+        _ledger_add(aid, "debit", days=prod["add_days"], reason="refund:" + pid)
+    idaccounts[aid]["tier"] = sub.get("tier", "free")
+    _save_idaccounts()
+    pay.update(status="refunded", refunded_at=int(time.time()))
+    _save_payments()
+    _audit(p, "payment_refund", pid, account=aid, product=product)
+    return {"ok": True, "status": "refunded", "subscription": sub}
 
 
 # ── 5. Аттестация устройства (анти-абьюз) ─────────────────────────────────────
@@ -1606,9 +1896,29 @@ def attest(req: AttestReq, token: str = Depends(auth)):
 
 # ── админ: выпуск ключей (для демо/реселлеров) ───────────────────────────────
 @app.post("/v1/admin/issue")
-def admin_issue(req: IssueReq, _: None = Depends(admin)):
+def admin_issue(req: IssueReq, p: "Principal" = Depends(require("keys"))):
     code = issuer.issue(plan=req.plan, grant_days=req.grant_days, uses=req.uses)
+    _audit(p, "key_issue", plan=req.plan, days=req.grant_days, uses=req.uses)
     return {"code": code}
+
+@app.get("/v1/admin/keys")
+def admin_list_keys(_: "Principal" = Depends(require("keys"))):
+    """Выпущенные ключи (реестр): kid, осталось активаций, отозван, к скольким аккаунтам
+    привязан. Сам код показывается ТОЛЬКО при выпуске (как пароль) — здесь его нет."""
+    out = []
+    for kid, st in issuer._registry.items():
+        out.append({"kid": kid, "uses_left": st.uses_left, "revoked": st.revoked,
+                    "bound": len(st.bound_accounts)})
+    out.sort(key=lambda k: (k["revoked"], -k["uses_left"]))
+    return {"keys": out, "total": len(out)}
+
+@app.post("/v1/admin/key/{kid}/revoke")
+def admin_revoke_key(kid: str, p: "Principal" = Depends(require("keys"))):
+    """Отозвать выпущенный ключ (перестанет активироваться)."""
+    if not issuer.revoke(kid):
+        raise HTTPException(404, "no_key_or_spent")
+    _audit(p, "key_revoke", kid)
+    return {"ok": True, "kid": kid, "revoked": True}
 
 
 # ── админ: canary-выкатка манифеста (операторский рычаг 1%→5%→25%→100%) ───────
@@ -1625,6 +1935,7 @@ def admin_rollout(req: RolloutReq, _: None = Depends(admin)):
     global ROLLOUT, _manifest_signed
     ROLLOUT = max(0, min(100, int(req.percent)))
     _manifest_signed = _build_manifest()
+    _audit("Владелец", "rollout", percent=ROLLOUT, version=MANIFEST_VERSION)
     return {"rollout": ROLLOUT, "version": MANIFEST_VERSION}
 
 
@@ -1651,7 +1962,24 @@ def admin_create_staff(req: StaffReq, _: None = Depends(admin)):
                          "scopes": scopes, "revoked": False, "created_at": int(time.time())}
     _save_staff()
     log.info("создан работник %s (%s) scopes=%s", sid, req.name, scopes)
+    _audit("Владелец", "staff_create", sid, name=req.name, scopes=scopes)
     return {"ok": True, "id": sid, "name": req.name, "scopes": scopes, "token": tok}
+
+class StaffEditReq(BaseModel):
+    scopes: list[str]
+
+@app.patch("/v1/admin/staff/{staff_id}")
+def admin_edit_staff(staff_id: str, req: StaffEditReq, _: None = Depends(admin)):
+    """Изменить набор прав работника (владелец). Токен не меняется."""
+    scopes = [s for s in req.scopes if s in ALL_SCOPES]
+    if not scopes:
+        raise HTTPException(422, "no_valid_scopes")
+    for r in staff_tokens.values():
+        if r["id"] == staff_id:
+            r["scopes"] = scopes; _save_staff()
+            _audit("Владелец", "staff_edit", staff_id, scopes=scopes)
+            return {"ok": True, "id": staff_id, "scopes": scopes}
+    raise HTTPException(404, "no_staff")
 
 @app.get("/v1/admin/staff")
 def admin_list_staff(_: None = Depends(admin)):
@@ -1668,8 +1996,15 @@ def admin_revoke_staff(staff_id: str, _: None = Depends(admin)):
     for r in staff_tokens.values():
         if r["id"] == staff_id:
             r["revoked"] = True; _save_staff()
+            _audit("Владелец", "staff_revoke", staff_id)
             return {"ok": True, "id": staff_id, "revoked": True}
     raise HTTPException(404, "no_staff")
+
+@app.get("/v1/admin/audit")
+def admin_audit(limit: int = 100, _: None = Depends(admin)):
+    """Журнал действий панели (кто что сделал) — только владелец. Свежие сверху."""
+    n = max(1, min(int(limit or 100), 500))
+    return {"entries": list(reversed(audit_log))[:n], "total": len(audit_log)}
 
 @app.get("/v1/admin/db/stats")
 def admin_db_stats(_: None = Depends(admin)):

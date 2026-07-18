@@ -6,16 +6,17 @@
 <title>Симбионт · Server-in-a-Box — панель управления</title>
 <!--
   Панель управления Server-in-a-Box. ОДИН файл, БЕЗ CDN и внешних запросов —
-  скачивается и открывается на любом устройстве (ПК/ноут/планшет). Входишь как
-  ВЛАДЕЛЕЦ (ADMIN_TOKEN) или РАБОТНИК (staff-токен с ограниченными правами) и
-  управляешь серверами, поддержкой, скидками, флагами блоков, работниками и БД.
-  Всё общение — с задеплоенным бэкендом по его /v1/admin/*.
+  скачивается и открывается на любом устройстве (ПК/ноут/планшет). Вход ВЛАДЕЛЬЦЕМ
+  (ADMIN_TOKEN, все права) или РАБОТНИКОМ (staff-токен с ограниченным набором прав).
+  Полный контроль сервиса: серверы, пользователи, поддержка, платежи, скидки, ключи,
+  цены/экономика, блоки сайта и приложения, работники, журнал действий. Всё общение —
+  с задеплоенным бэкендом по его /v1/admin/*.
 -->
 <style>
   :root{
     --bg:#0b0f14; --panel:#121821; --panel2:#0e141c; --line:#1f2a37;
     --fg:#e7eef7; --muted:#8aa0b6; --accent:#34E5B0; --accent2:#2bd0a0;
-    --warn:#ffb020; --danger:#ff5d5d; --chip:#17212e;
+    --warn:#ffb020; --danger:#ff5d5d; --chip:#17212e; --blue:#39a0ff;
   }
   @media (prefers-color-scheme: light){
     :root{ --bg:#f4f7fb; --panel:#ffffff; --panel2:#f0f4f9; --line:#dde5ee;
@@ -25,11 +26,11 @@
   body{margin:0;background:var(--bg);color:var(--fg);
        font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif}
   a{color:var(--accent)}
-  .wrap{max-width:1080px;margin:0 auto;padding:16px}
+  .wrap{max-width:1160px;margin:0 auto;padding:16px}
   header.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
              padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
   .logo{width:30px;height:30px;border-radius:8px;background:
-        conic-gradient(from 210deg,var(--accent),#39a0ff,var(--accent));flex:0 0 auto}
+        conic-gradient(from 210deg,var(--accent),var(--blue),var(--accent));flex:0 0 auto}
   .brand{font-weight:800;letter-spacing:.2px}
   .brand small{display:block;font-weight:500;color:var(--muted);letter-spacing:0}
   .spacer{flex:1}
@@ -40,6 +41,7 @@
   button.primary{background:var(--accent);color:#04231b;border-color:transparent;font-weight:700}
   button.ghost{background:transparent}
   button.danger{background:transparent;color:var(--danger);border-color:#5a2730}
+  button.sm{padding:5px 10px;font-size:13px;border-radius:8px}
   button:disabled{opacity:.5;cursor:not-allowed}
   input,select,textarea{font:inherit;background:var(--panel2);color:var(--fg);
          border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
@@ -51,25 +53,31 @@
   .tabs button{border-radius:999px}
   .tabs button.on{background:var(--accent);color:#04231b;border-color:transparent;font-weight:700}
   table{width:100%;border-collapse:collapse;font-size:14px}
-  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  .scroll{overflow-x:auto}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top;white-space:nowrap}
   th{color:var(--muted);font-weight:600}
   .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;
         background:var(--chip);border:1px solid var(--line)}
   .pill.ok{color:var(--accent);border-color:#1c4a3c}
   .pill.bad{color:var(--danger);border-color:#5a2730}
   .pill.wait{color:var(--warn);border-color:#5a4a1c}
+  .pill.blue{color:var(--blue);border-color:#1c3a5a}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
   .muted{color:var(--muted)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  @media (max-width:680px){.grid2{grid-template-columns:1fr}}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media (max-width:820px){.grid3,.grid4{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
   .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
-  .chat{max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 0}
-  .msg{max-width:80%;padding:9px 12px;border-radius:12px;background:var(--chip);white-space:pre-wrap;word-break:break-word}
+  .chat{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 0}
+  .msg{max-width:82%;padding:9px 12px;border-radius:12px;background:var(--chip);white-space:pre-wrap;word-break:break-word}
   .msg.user{align-self:flex-start}
   .msg.support{align-self:flex-end;background:var(--accent);color:#04231b}
   .msg .meta{display:block;font-size:11px;opacity:.7;margin-top:3px}
   .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
          background:var(--panel);border:1px solid var(--line);padding:12px 18px;border-radius:12px;
-         box-shadow:0 8px 30px rgba(0,0,0,.35);display:none;z-index:50}
+         box-shadow:0 8px 30px rgba(0,0,0,.35);display:none;z-index:80;max-width:90vw}
   .toast.err{border-color:#5a2730;color:var(--danger)}
   .toast.show{display:block}
   .empty{color:var(--muted);text-align:center;padding:26px}
@@ -85,15 +93,22 @@
            background:var(--muted);border-radius:50%;transition:.15s}
   .sw input:checked + span{background:var(--accent);border-color:transparent}
   .sw input:checked + span:before{transform:translateX(18px);background:#04231b}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;
+           justify-content:center;z-index:70;padding:16px}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;
+         max-width:680px;width:100%;max-height:88vh;overflow:auto}
+  .stat{font-size:22px;font-weight:800;margin:2px 0}
+  .clickrow{cursor:pointer}
+  .clickrow:hover td{background:var(--panel2)}
 </style>
 </head>
 <body>
 
 <!-- ── ЭКРАН ВХОДА ─────────────────────────────────────────────────────────── -->
-<div id="login" class="wrap" style="max-width:460px;margin-top:8vh">
+<div id="login" class="wrap" style="max-width:460px;margin-top:7vh">
   <div class="row" style="gap:10px;margin-bottom:6px">
     <div class="logo"></div>
-    <div class="brand">Симбионт · Server-in-a-Box<small>панель управления флотом</small></div>
+    <div class="brand">Симбионт · Server-in-a-Box<small>панель управления сервисом</small></div>
   </div>
   <div class="card">
     <label>Адрес бэкенда (Base URL)</label>
@@ -135,418 +150,553 @@
 
 <script>
 "use strict";
-const $ = (s,r=document)=>r.querySelector(s);
 const el = (t,a={},...kids)=>{const e=document.createElement(t);
   for(const k in a){ if(k==="class")e.className=a[k]; else if(k==="html")e.innerHTML=a[k];
-    else if(k.startsWith("on"))e.addEventListener(k.slice(2),a[k]); else e.setAttribute(k,a[k]); }
-  for(const c of kids.flat()){ if(c!=null)e.append(c.nodeType?c:document.createTextNode(c)); }
+    else if(k.startsWith("on"))e.addEventListener(k.slice(2),a[k]); else if(a[k]!=null)e.setAttribute(k,a[k]); }
+  for(const c of kids.flat()){ if(c!=null&&c!==false)e.append(c.nodeType?c:document.createTextNode(c)); }
   return e;};
-const esc = s => String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const short=s=>String(s||"").slice(0,8);
 
-const state = { base:"", role:"owner", token:"", scopes:[], name:"", tab:"" };
-function save(){ localStorage.setItem("sib-console", JSON.stringify(
-  {base:state.base, role:state.role, token:state.token})); }
+const state={ base:"", role:"owner", token:"", scopes:[], name:"", tab:"" };
+function save(){ localStorage.setItem("sib-console", JSON.stringify({base:state.base,role:state.role,token:state.token})); }
 function load(){ try{ return JSON.parse(localStorage.getItem("sib-console")||"{}"); }catch(_){ return {}; } }
-
-function toast(msg, err){ const t=$("#toast"); t.textContent=msg;
-  t.className="toast show"+(err?" err":""); clearTimeout(toast._t);
-  toast._t=setTimeout(()=>t.className="toast",2600); }
+function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.className="toast show"+(err?" err":"");
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.className="toast",2800); }
 
 async function api(path,{method="GET",body}={}){
   const h={"Content-Type":"application/json"};
   if(state.role==="owner") h["X-Admin-Token"]=state.token; else h["X-Staff-Token"]=state.token;
-  let r;
-  try{ r=await fetch(state.base.replace(/\/+$/,"")+path,
-        {method,headers:h,body:body?JSON.stringify(body):undefined}); }
+  let r; try{ r=await fetch(state.base.replace(/\/+$/,"")+path,{method,headers:h,body:body?JSON.stringify(body):undefined}); }
   catch(e){ throw new Error("сеть недоступна ("+e.message+")"); }
   let data=null; try{ data=await r.json(); }catch(_){}
-  if(!r.ok){ const d=(data&&(data.detail||data.error))||r.status;
-    throw new Error(typeof d==="string"?d:JSON.stringify(d)); }
+  if(!r.ok){ const d=(data&&(data.detail||data.error))||r.status; throw new Error(typeof d==="string"?d:JSON.stringify(d)); }
   return data;
 }
+function fmtBytes(n){ n=+n||0; if(n<1024)return n+" Б"; if(n<1048576)return (n/1024).toFixed(1)+" КБ"; return (n/1048576).toFixed(2)+" МБ"; }
+function fmtWhen(s){ if(!s)return "—"; if(typeof s==="number"){ const d=new Date(s*1000); return d.toISOString().slice(0,16).replace("T"," ")+" UTC"; }
+  return String(s).replace("T"," ").replace("Z"," UTC"); }
+function statCard(title,big,sub,onclick){ return el("div",{class:"card"+(onclick?" clickrow":""),style:"margin:0",onclick:onclick||null},
+  el("div",{class:"muted"},title), el("div",{class:"stat"},big), sub?el("div",{class:"hint"},sub):null); }
+function kvline(k,v){ return el("div",{class:"kv"}, el("span",{class:"muted"},k), el("span",{class:"mono"},v)); }
+function field(lbl,input){ const w=el("div",{}); w.append(el("label",{},lbl),input); return w; }
+function modal(node){ const ov=el("div",{class:"overlay",onclick:e=>{ if(e.target===ov)ov.remove(); }});
+  const m=el("div",{class:"modal"}); m.append(node); ov.append(m); document.body.append(ov); return ov; }
 
-// ── права → доступные вкладки ─────────────────────────────────────────────────
+// ── права → вкладки ───────────────────────────────────────────────────────────
+const SCOPE_LABELS={nodes:"Серверы",users:"Пользователи",support:"Поддержка",billing:"Платежи",
+  discounts:"Скидки",keys:"Ключи",economy:"Экономика",flags:"Блоки"};
 const TABS=[
-  {id:"overview", name:"Обзор",     scope:null},
-  {id:"servers",  name:"Серверы",   scope:"nodes"},
-  {id:"support",  name:"Поддержка", scope:"support"},
-  {id:"discounts",name:"Скидки",    scope:"discounts"},
-  {id:"flags",    name:"Блоки",     scope:"flags"},
-  {id:"staff",    name:"Работники", scope:"__owner__"},
+  {id:"overview",name:"Обзор",scope:null},
+  {id:"servers",name:"Серверы",scope:"nodes"},
+  {id:"users",name:"Пользователи",scope:"users"},
+  {id:"support",name:"Поддержка",scope:"support"},
+  {id:"payments",name:"Платежи",scope:"billing"},
+  {id:"discounts",name:"Скидки",scope:"discounts"},
+  {id:"keys",name:"Ключи",scope:"keys"},
+  {id:"economy",name:"Экономика",scope:"economy"},
+  {id:"flags",name:"Блоки",scope:"flags"},
+  {id:"staff",name:"Работники",scope:"__owner__"},
+  {id:"audit",name:"Журнал",scope:"__owner__"},
 ];
-function allowed(tab){
-  if(tab.scope===null) return true;
-  if(tab.scope==="__owner__") return state.role==="owner";
-  return state.role==="owner" || state.scopes.includes(tab.scope);
-}
-
-function renderTabs(){
-  const box=$("#tabs"); box.innerHTML="";
-  const vis=TABS.filter(allowed);
+function allowed(tab){ if(tab.scope===null)return true; if(tab.scope==="__owner__")return state.role==="owner";
+  return state.role==="owner"||state.scopes.includes(tab.scope); }
+function renderTabs(){ const box=$("#tabs"); box.innerHTML=""; const vis=TABS.filter(allowed);
   if(!vis.some(t=>t.id===state.tab)) state.tab=vis[0]?.id||"overview";
-  for(const t of vis){
-    box.append(el("button",{class:state.tab===t.id?"on":"",
-      onclick:()=>{state.tab=t.id;renderTabs();renderView();}}, t.name));
-  }
-}
+  for(const t of vis) box.append(el("button",{class:state.tab===t.id?"on":"",
+    onclick:()=>{state.tab=t.id;renderTabs();renderView();}},t.name)); }
 function loading(){ $("#view").innerHTML='<div class="card empty">Загрузка…</div>'; }
-async function renderView(){
-  loading();
-  try{
-    if(state.tab==="overview")   await viewOverview();
-    else if(state.tab==="servers")   await viewServers();
-    else if(state.tab==="support")   await viewSupport();
-    else if(state.tab==="discounts") await viewDiscounts();
-    else if(state.tab==="flags")     await viewFlags();
-    else if(state.tab==="staff")     await viewStaff();
-  }catch(e){ $("#view").innerHTML=""; $("#view").append(
-    el("div",{class:"card"}, el("div",{class:"empty",html:"Ошибка: "+esc(e.message)}))); }
-}
+const VIEWS={};
+async function renderView(){ loading();
+  try{ await (VIEWS[state.tab]||VIEWS.overview)(); }
+  catch(e){ $("#view").innerHTML=""; $("#view").append(el("div",{class:"card"},el("div",{class:"empty",html:"Ошибка: "+esc(e.message)}))); } }
 
 // ── ОБЗОР ─────────────────────────────────────────────────────────────────────
-async function viewOverview(){
+VIEWS.overview=async function(){
   const v=$("#view"); v.innerHTML="";
-  const card=el("div",{class:"card"});
-  card.append(el("h3",{},"Состояние"));
-  const g=el("div",{class:"grid2"}); card.append(g);
-
-  // серверы
-  let nodes=null; try{ nodes=await api("/v1/admin/nodes"); }catch(_){}
-  if(nodes){ const alive=nodes.nodes.filter(n=>n.alive).length;
-    g.append(kvCard("Серверы", (alive)+" онлайн / "+nodes.total+" всего",
-      "манифест v"+nodes.version)); }
-
-  // поддержка
-  let sup=null; try{ sup=await api("/v1/admin/support/threads"); }catch(_){}
-  if(sup){ g.append(kvCard("Поддержка", sup.awaiting+" ждут ответа",
-      sup.total+" обращений всего")); }
-
-  // скидки
-  let disc=null; try{ disc=await api("/v1/admin/discounts"); }catch(_){}
-  if(disc){ const live=disc.discounts.filter(d=>d.live).length;
-    g.append(kvCard("Скидки", live+" активны", disc.total+" всего")); }
-
-  // база (только владелец)
-  if(state.role==="owner"){ try{ const db=await api("/v1/admin/db/stats");
-    g.append(kvCard("База данных", (db.journal_mode||"").toUpperCase()+" · "+fmtBytes(db.size_bytes),
-      db.keys+" ключей стейта")); }catch(_){} }
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Состояние сервиса"));
+  const g=el("div",{class:"grid4"}); card.append(g);
+  const tryGet=async p=>{ try{ return await api(p); }catch(_){ return null; } };
+  const nodes=await tryGet("/v1/admin/nodes");
+  if(nodes) g.append(statCard("Серверы",nodes.nodes.filter(n=>n.alive).length+" / "+nodes.total,"онлайн / всего · v"+nodes.version,()=>{state.tab="servers";renderTabs();renderView();}));
+  const users=await tryGet("/v1/admin/users?limit=1000");
+  if(users){ const paying=users.users.filter(u=>u.tier!=="free").length;
+    g.append(statCard("Пользователи",String(users.total),paying+" на платном",()=>{state.tab="users";renderTabs();renderView();})); }
+  const sup=await tryGet("/v1/admin/support/threads");
+  if(sup) g.append(statCard("Поддержка",sup.awaiting+" ждут",sup.total+" обращений",()=>{state.tab="support";renderTabs();renderView();}));
+  const bs=await tryGet("/v1/admin/billing/summary");
+  if(bs) g.append(statCard("Выручка (24ч)",(bs.revenue_rub_24h||0)+" ₽",(bs.revenue_rub_7d||0)+" ₽ за 7 дней",()=>{state.tab="payments";renderTabs();renderView();}));
+  const disc=await tryGet("/v1/admin/discounts");
+  if(disc) g.append(statCard("Скидки",disc.discounts.filter(d=>d.live).length+" активны",disc.total+" всего",()=>{state.tab="discounts";renderTabs();renderView();}));
+  if(state.role==="owner"){ const db=await tryGet("/v1/admin/db/stats");
+    if(db) g.append(statCard("База данных",(db.journal_mode||"").toUpperCase()+" · "+fmtBytes(db.size_bytes),db.keys+" ключей стейта")); }
   v.append(card);
 
   if(state.role==="owner"){
     const dbc=el("div",{class:"card"});
-    dbc.append(el("div",{class:"row"},
-      el("h3",{style:"margin:0;flex:1"},"База данных (реальная SQLite/WAL)"),
-      el("button",{class:"primary",onclick:async(e)=>{ e.target.disabled=true;
-        try{ const r=await api("/v1/admin/db/backup",{method:"POST"});
-          toast("Бэкап создан: "+fmtBytes(r.size_bytes)); }catch(err){ toast(err.message,true); }
-        e.target.disabled=false; }},"Сделать бэкап")));
+    dbc.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"База данных (реальная SQLite/WAL)"),
+      el("button",{class:"primary",onclick:async e=>{ e.target.disabled=true;
+        try{ const r=await api("/v1/admin/db/backup",{method:"POST"}); toast("Бэкап создан: "+fmtBytes(r.size_bytes)); }
+        catch(err){ toast(err.message,true); } e.target.disabled=false; }},"Сделать бэкап")));
     try{ const db=await api("/v1/admin/db/stats"); const t=el("div",{style:"margin-top:8px"});
-      t.append(kvline("Файл", db.path));
-      t.append(kvline("Размер", fmtBytes(db.size_bytes)+(db.wal_bytes?(" (+WAL "+fmtBytes(db.wal_bytes)+")"):"")));
-      t.append(kvline("Режим журнала", (db.journal_mode||"").toUpperCase()+" — атомарные транзакции"));
-      t.append(kvline("Ключей стейта", String(db.keys)));
-      dbc.append(t);
-      dbc.append(el("p",{class:"hint"},"Ежедневный бэкап настроен таймером на сервере (03:30). Онлайн-снимок безопасен на живой базе."));
+      t.append(kvline("Файл",db.path),kvline("Размер",fmtBytes(db.size_bytes)+(db.wal_bytes?(" (+WAL "+fmtBytes(db.wal_bytes)+")"):"")),
+        kvline("Режим журнала",(db.journal_mode||"").toUpperCase()+" — атомарные транзакции"),kvline("Ключей стейта",String(db.keys)));
+      dbc.append(t); dbc.append(el("p",{class:"hint"},"Ежедневный бэкап настроен таймером на сервере (03:30). Онлайн-снимок безопасен на живой базе."));
     }catch(_){}
     v.append(dbc);
   }
-}
-function kvCard(title,big,sub){ return el("div",{class:"card",style:"margin:0"},
-  el("div",{class:"muted"},title), el("div",{style:"font-size:22px;font-weight:800;margin:2px 0"},big),
-  el("div",{class:"hint"},sub)); }
-function kvline(k,v){ return el("div",{class:"kv"}, el("span",{class:"muted"},k), el("span",{},v)); }
-function fmtBytes(n){ n=+n||0; if(n<1024)return n+" Б"; if(n<1048576)return (n/1024).toFixed(1)+" КБ";
-  return (n/1048576).toFixed(2)+" МБ"; }
-function fmtWhen(s){ if(!s)return "—"; return String(s).replace("T"," ").replace("Z"," UTC"); }
+};
 
 // ── СЕРВЕРЫ ───────────────────────────────────────────────────────────────────
-async function viewServers(){
+VIEWS.servers=async function(){
   const v=$("#view"); v.innerHTML="";
   const d=await api("/v1/admin/nodes");
   const card=el("div",{class:"card"});
-  card.append(el("div",{class:"row"}, el("h3",{style:"margin:0;flex:1"},"Серверы (узлы флота)"),
-    el("span",{class:"muted"}, d.nodes.filter(n=>n.alive).length+" онлайн / "+d.total)));
-  if(!d.total){ card.append(el("div",{class:"empty"},
-    "Пока ни одного узла. Установите узел одной командой (get.sh) — он появится здесь сам.")); }
-  else{
-    const tb=el("table"); tb.append(el("tr",{}, ...["Страна","Хост","Протоколы","Загрузка","Статус",""].map(h=>el("th",{},h))));
-    for(const n of d.nodes){
-      tb.append(el("tr",{},
-        el("td",{}, el("b",{},(n.code?flag(n.code)+" ":"")+(n.country||n.id))),
-        el("td",{class:"muted"}, n.host||"—"),
-        el("td",{}, (n.protocols||[]).map(p=>el("span",{class:"pill",style:"margin:1px"},p))),
-        el("td",{}, n.load_pct==null?"—":n.load_pct+"%"),
-        el("td",{}, n.alive?el("span",{class:"pill ok"},"онлайн")
-                           :el("span",{class:"pill bad"},"молчит")),
-        el("td",{}, el("button",{class:"danger",onclick:async()=>{
-          if(!confirm("Снять узел «"+(n.country||n.id)+"» из списка серверов?"))return;
-          try{ await api("/v1/admin/node/"+encodeURIComponent(n.id)+"/remove",{method:"POST"});
-            toast("Узел снят"); renderView(); }catch(e){ toast(e.message,true); } }},"Снять"))));
-    }
-    card.append(tb);
+  card.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"Серверы (узлы флота)"),
+    el("span",{class:"muted"},d.nodes.filter(n=>n.alive).length+" онлайн / "+d.total)));
+  if(!d.total){ card.append(el("div",{class:"empty"},"Пока ни одного узла. Установите узел одной командой (get.sh) — появится здесь сам.")); }
+  else{ const tb=el("table"); const wrap=el("div",{class:"scroll"},tb);
+    tb.append(el("tr",{},...["Страна","Хост","Протоколы","Загрузка","Статус",""].map(h=>el("th",{},h))));
+    for(const n of d.nodes){ tb.append(el("tr",{},
+      el("td",{},el("b",{},(n.code?flag(n.code)+" ":"")+(n.country||short(n.id)))),
+      el("td",{class:"muted mono"},n.host||"—"),
+      el("td",{},(n.protocols||[]).map(p=>el("span",{class:"pill",style:"margin:1px"},p))),
+      el("td",{},n.load_pct==null?"—":n.load_pct+"%"),
+      el("td",{},n.alive?el("span",{class:"pill ok"},"онлайн"):el("span",{class:"pill bad"},"молчит")),
+      el("td",{},el("button",{class:"danger sm",onclick:async()=>{ if(!confirm("Снять узел «"+(n.country||n.id)+"»?"))return;
+        try{ await api("/v1/admin/node/"+encodeURIComponent(n.id)+"/remove",{method:"POST"}); toast("Узел снят"); renderView(); }catch(e){ toast(e.message,true); } }},"Снять")))); }
+    card.append(wrap);
   }
   card.append(el("p",{class:"hint"},"Узел молчит дольше порога heartbeat — сам выпадает из списка; вернулся — появляется снова."));
   v.append(card);
+  if(state.role==="owner"){
+    const rc=el("div",{class:"card"});
+    rc.append(el("h3",{},"Выкатка манифеста (canary)"));
+    rc.append(el("p",{class:"hint"},"Доля клиентов, которым достаётся текущая версия. 1%→5%→25%→100%. Версия: "+d.version));
+    const inp=el("input",{type:"number",min:"0",max:"100",value:"100",style:"max-width:120px"});
+    rc.append(el("div",{class:"row"},field("Процент",inp),el("button",{class:"primary",style:"align-self:flex-end",onclick:async()=>{
+      try{ const r=await api("/v1/admin/rollout",{method:"POST",body:{percent:parseInt(inp.value,10)||0}});
+        toast("Выкатка "+r.rollout+"%"); }catch(e){ toast(e.message,true); } }},"Применить")));
+    v.append(rc);
+  }
+};
+function flag(code){ return (code||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,2)||"·"; }
+
+// ── ПОЛЬЗОВАТЕЛИ ──────────────────────────────────────────────────────────────
+VIEWS.users=async function(){
+  const v=$("#view"); v.innerHTML="";
+  const bar=el("div",{class:"card"});
+  const q=el("input",{placeholder:"поиск по account_id…",style:"max-width:280px"});
+  const tf=el("select",{style:"max-width:180px"},el("option",{value:""},"все тиры"),
+    el("option",{value:"free"},"free"),el("option",{value:"premium"},"premium"),el("option",{value:"ultimate"},"ultimate"));
+  const run=async()=>{ await fillUsers(list,q.value.trim(),tf.value); };
+  q.addEventListener("keydown",e=>{ if(e.key==="Enter")run(); });
+  tf.addEventListener("change",run);
+  bar.append(el("div",{class:"row"},field("Поиск",q),field("Тир",tf),
+    el("button",{class:"primary",style:"align-self:flex-end",onclick:run},"Найти")));
+  v.append(bar);
+  const list=el("div",{class:"card"}); v.append(list);
+  await fillUsers(list,"","");
+};
+async function fillUsers(list,query,tier){
+  list.innerHTML="Загрузка…";
+  const d=await api("/v1/admin/users?limit=500"+(query?"&query="+encodeURIComponent(query):"")+(tier?"&tier="+tier:""));
+  list.innerHTML="";
+  list.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"Пользователи"),el("span",{class:"muted"},d.total+" найдено")));
+  if(!d.total){ list.append(el("div",{class:"empty"},"Ничего не найдено.")); return; }
+  const tb=el("table"); const wrap=el("div",{class:"scroll"},tb);
+  tb.append(el("tr",{},...["Аккаунт","Тир","Покрытие","Часы","Дни","Устр.","Реф.","",""].map(h=>el("th",{},h))));
+  for(const u of d.users){ tb.append(el("tr",{class:"clickrow",onclick:()=>openUser(u.account_id)},
+    el("td",{},el("b",{class:"mono"},short(u.account_id)),u.fraud?el("span",{class:"pill bad",style:"margin-left:6px"},"фрод"):null),
+    el("td",{},el("span",{class:"pill"+(u.tier!=="free"?" ok":"")},u.tier)),
+    el("td",{class:"muted"},u.coverage),
+    el("td",{},Math.round((u.active_minutes_left||0)/60*10)/10+" ч"),
+    el("td",{},String(u.days_left||0)),
+    el("td",{},String(u.devices||0)),
+    el("td",{},String(u.referrals||0)),
+    el("td",{class:"muted",colspan:"2"},"открыть →"))); }
+  list.append(wrap);
 }
-function flag(code){ // локально, без CDN: буквенный флаг-чип
-  return (code||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,2)||"·"; }
+async function openUser(aid){
+  let d; try{ d=await api("/v1/admin/user/"+encodeURIComponent(aid)); }catch(e){ toast(e.message,true); return; }
+  const box=el("div",{});
+  box.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"Аккаунт "),el("span",{class:"mono muted"},short(aid))));
+  const s=d.summary;
+  const info=el("div",{style:"margin:8px 0"});
+  info.append(kvline("Тир",s.tier),kvline("Покрытие",s.coverage),
+    kvline("Активные часы",(Math.round((s.active_minutes_left||0)/60*10)/10)+" ч"),
+    kvline("Дни подписки",String(s.days_left||0)),
+    kvline("Оплачено месяцев",String(s.paid_months||0)),
+    kvline("Устройств",String(d.devices.length)),
+    kvline("Рефералов",String(d.referrals.length)+" · репутация "+(d.reputation.level||"—")),
+    kvline("Инвайт-код",d.invite_code||"—"),
+    kvline("Фрод",s.fraud?"да":"нет"));
+  box.append(info);
+
+  // действия
+  const act=el("div",{class:"card",style:"margin:10px 0"});
+  act.append(el("h4",{style:"margin:0 0 8px"},"Действия"));
+  // грант
+  const gt=el("select",{},el("option",{value:"premium"},"Premium"),el("option",{value:"ultimate"},"Ultimate"));
+  const gd=el("input",{type:"number",placeholder:"дней (пусто = навсегда)",style:"max-width:180px"});
+  act.append(el("div",{class:"row"},field("Грант тира",gt),field("Дней",gd),
+    el("button",{class:"primary sm",style:"align-self:flex-end",onclick:async()=>{
+      const body={account_id:aid,tier:gt.value}; const dv=parseInt(gd.value,10); if(dv)body.days=dv; else body.days=null;
+      try{ await api("/v1/admin/grant",{method:"POST",body}); toast("Грант выдан"); reopen(); }catch(e){ toast(e.message,true); } }},"Выдать грант")));
+  // баланс
+  const bm=el("input",{type:"number",placeholder:"минуты (+ / −)",style:"max-width:180px"});
+  act.append(el("div",{class:"row"},field("Изменить баланс (мин)",bm),
+    el("button",{class:"primary sm",style:"align-self:flex-end",onclick:async()=>{
+      const m=parseInt(bm.value,10); if(!m){ toast("Укажите минуты (+/−)",true); return; }
+      try{ await api("/v1/admin/user/"+encodeURIComponent(aid)+"/balance",{method:"POST",body:{minutes:m}}); toast("Баланс изменён"); reopen(); }catch(e){ toast(e.message,true); } }},"Применить")));
+  // фрод
+  act.append(el("div",{class:"row",style:"margin-top:8px"},
+    s.fraud
+      ? el("button",{class:"sm",onclick:async()=>{ try{ await api("/v1/admin/unfraud",{method:"POST",body:{account_id:aid}}); toast("Фрод снят"); reopen(); }catch(e){ toast(e.message,true); } }},"Снять фрод")
+      : el("button",{class:"danger sm",onclick:async()=>{ if(!confirm("Пометить фродом (и всю реферальную ветку)?"))return; try{ await api("/v1/admin/fraud",{method:"POST",body:{account_id:aid}}); toast("Помечен фродом"); reopen(); }catch(e){ toast(e.message,true); } }},"Пометить фродом")));
+  box.append(act);
+
+  // устройства
+  if(d.devices.length){ const dc=el("div",{class:"card",style:"margin:10px 0"}); dc.append(el("h4",{style:"margin:0 0 8px"},"Устройства"));
+    const tb=el("table"); dc.append(el("div",{class:"scroll"},tb));
+    for(const dev of d.devices){ tb.append(el("tr",{},
+      el("td",{},dev.name||"—"),el("td",{class:"muted"},dev.platform),el("td",{},dev.role),
+      el("td",{},dev.revoked?el("span",{class:"pill bad"},"отозв."):el("span",{class:"pill ok"},"актив.")),
+      el("td",{},dev.revoked?null:el("button",{class:"danger sm",onclick:async()=>{
+        try{ await api("/v1/admin/user/"+encodeURIComponent(aid)+"/device/"+encodeURIComponent(dev.id)+"/revoke",{method:"POST"}); toast("Устройство отозвано"); reopen(); }catch(e){ toast(e.message,true); } }},"Отозвать")))); }
+    box.append(dc); }
+
+  // платежи
+  if(d.payments.length){ const pc=el("div",{class:"card",style:"margin:10px 0"}); pc.append(el("h4",{style:"margin:0 0 8px"},"Платежи"));
+    const tb=el("table"); pc.append(el("div",{class:"scroll"},tb));
+    for(const p of d.payments){ tb.append(el("tr",{},el("td",{},p.product),el("td",{},(p.amount||0)+" "+(p.currency||"")),
+      el("td",{class:"muted"},p.method),el("td",{},payStatus(p.status)),el("td",{class:"muted"},fmtWhen(p.created_at)))); }
+    box.append(pc); }
+
+  // журнал
+  if(d.ledger.length){ const lc=el("div",{class:"card",style:"margin:10px 0"}); lc.append(el("h4",{style:"margin:0 0 8px"},"История начислений"));
+    const tb=el("table"); lc.append(el("div",{class:"scroll"},tb));
+    for(const e of d.ledger.slice(0,20)){ tb.append(el("tr",{},el("td",{},e.kind),
+      el("td",{},(e.days?("+"+e.days+" дн"):e.minutes?((e.kind==="debit"?"−":"+")+e.minutes+" мин"):"—")),
+      el("td",{class:"muted"},e.reason||e.product||""),el("td",{class:"muted"},fmtWhen(e.at)))); }
+    box.append(lc); }
+
+  box.append(el("div",{class:"row",style:"justify-content:flex-end;margin-top:10px"},el("button",{class:"primary",onclick:()=>ov.remove()},"Закрыть")));
+  const ov=modal(box);
+  function reopen(){ ov.remove(); openUser(aid); }
+}
+function payStatus(s){ return s==="completed"?el("span",{class:"pill ok"},"оплачен")
+  :s==="pending"?el("span",{class:"pill wait"},"ожидание")
+  :s==="refunded"?el("span",{class:"pill blue"},"возврат")
+  :el("span",{class:"pill bad"},s||"—"); }
 
 // ── ПОДДЕРЖКА ─────────────────────────────────────────────────────────────────
-let curThread=null;
-async function viewSupport(){
+let curThread=null, curTemplates=[];
+VIEWS.support=async function(){
   const v=$("#view"); v.innerHTML="";
+  try{ curTemplates=(await api("/v1/admin/support/templates")).templates||[]; }catch(_){ curTemplates=[]; }
   const d=await api("/v1/admin/support/threads");
   const wrap=el("div",{class:"grid2"});
   const list=el("div",{class:"card",style:"margin:0"});
-  list.append(el("div",{class:"row"}, el("h3",{style:"margin:0;flex:1"},"Обращения"),
-    el("span",{class:"pill wait"}, d.awaiting+" ждут")));
-  if(!d.total){ list.append(el("div",{class:"empty"},"Обращений пока нет.")); }
-  for(const t of d.threads){
-    list.append(el("div",{class:"kv",style:"cursor:pointer;align-items:flex-start",
-      onclick:()=>openThread(t.id)},
-      el("div",{style:"min-width:0"},
-        el("div",{}, el("b",{},"#"+String(t.id).slice(0,8)),
-          t.awaiting?el("span",{class:"pill wait",style:"margin-left:6px"},"ждёт"):null),
-        el("div",{class:"hint",style:"white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px"},
-          (t.last_from==="support"?"вы: ":"")+esc(t.last_text))),
-      el("span",{class:"muted",style:"font-size:12px"}, String(t.count)+" сбщ")));
-  }
+  list.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"Обращения"),el("span",{class:"pill wait"},d.awaiting+" ждут")));
+  if(!d.total) list.append(el("div",{class:"empty"},"Обращений пока нет."));
+  for(const t of d.threads){ list.append(el("div",{class:"kv clickrow",style:"align-items:flex-start;padding:8px 4px",onclick:()=>openThread(t.id)},
+    el("div",{style:"min-width:0"},el("div",{},el("b",{class:"mono"},"#"+short(t.id)),
+      t.awaiting?el("span",{class:"pill wait",style:"margin-left:6px"},"ждёт"):null,
+      t.status==="closed"?el("span",{class:"pill",style:"margin-left:6px"},"закрыт"):null),
+      el("div",{class:"hint",style:"white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px"},(t.last_from==="support"?"вы: ":"")+esc(t.last_text))),
+    el("span",{class:"muted",style:"font-size:12px"},String(t.count)+" сбщ"))); }
   wrap.append(list);
-
-  const chat=el("div",{class:"card",style:"margin:0"},
-    el("div",{id:"thread-box",class:"empty"},"Выберите обращение слева."));
-  wrap.append(chat);
+  wrap.append(el("div",{class:"card",style:"margin:0"},el("div",{id:"thread-box",class:"empty"},"Выберите обращение слева.")));
   v.append(wrap);
   if(curThread) openThread(curThread);
-}
+};
 async function openThread(key){
-  curThread=key;
-  const box=$("#thread-box"); if(!box)return;
-  box.className=""; box.innerHTML="Загрузка…";
-  let d; try{ d=await api("/v1/admin/support/thread/"+encodeURIComponent(key)); }
-  catch(e){ box.textContent="Ошибка: "+e.message; return; }
+  curThread=key; const box=$("#thread-box"); if(!box)return; box.className=""; box.innerHTML="Загрузка…";
+  let d; try{ d=await api("/v1/admin/support/thread/"+encodeURIComponent(key)); }catch(e){ box.textContent="Ошибка: "+e.message; return; }
   box.innerHTML="";
-  box.append(el("div",{class:"row",style:"margin-bottom:6px"},
-    el("h3",{style:"margin:0;flex:1"},"Диалог #"+String(key).slice(0,8))));
+  box.append(el("div",{class:"row",style:"margin-bottom:6px"},el("h3",{style:"margin:0;flex:1"},"Диалог #"+short(key)),
+    el("span",{class:"pill"+(d.status==="closed"?"":" ok")},d.status==="closed"?"закрыт":"открыт")));
+  if(d.account_id&&(state.role==="owner"||state.scopes.includes("users")))
+    box.append(el("div",{style:"margin-bottom:6px"},el("button",{class:"sm",onclick:()=>openUser(d.account_id)},"Открыть аккаунт →")));
   const chat=el("div",{class:"chat"});
-  for(const m of d.messages){
-    chat.append(el("div",{class:"msg "+(m.from==="support"?"support":"user")},
-      esc(m.text), el("span",{class:"meta"},
-        (m.from==="support"?("оператор"+(m.by?(" · "+m.by):"")):"пользователь")+" · "+fmtWhen(m.at))));
-  }
+  for(const m of d.messages) chat.append(el("div",{class:"msg "+(m.from==="support"?"support":"user")},esc(m.text),
+    el("span",{class:"meta"},(m.from==="support"?("оператор"+(m.by?(" · "+m.by):"")):"пользователь")+" · "+fmtWhen(m.at))));
   box.append(chat);
   const ta=el("textarea",{rows:"2",placeholder:"Ответ оператора…"});
-  const send=el("button",{class:"primary",onclick:async()=>{
-    const text=ta.value.trim(); if(!text)return; send.disabled=true;
-    try{ await api("/v1/admin/support/"+encodeURIComponent(key)+"/reply",{method:"POST",body:{text}});
-      ta.value=""; await openThread(key); toast("Отправлено"); }
+  if(curTemplates.length){ const tr=el("div",{class:"row",style:"margin-top:6px"});
+    for(const tpl of curTemplates) tr.append(el("button",{class:"sm",onclick:()=>{ ta.value=tpl.text; ta.focus(); }},tpl.title));
+    box.append(el("div",{style:"margin-top:8px"},el("div",{class:"hint"},"Быстрые ответы:"),tr)); }
+  box.append(el("div",{style:"margin-top:8px"},ta));
+  const send=el("button",{class:"primary",onclick:async()=>{ const text=ta.value.trim(); if(!text)return; send.disabled=true;
+    try{ await api("/v1/admin/support/"+encodeURIComponent(key)+"/reply",{method:"POST",body:{text}}); ta.value=""; await openThread(key); toast("Отправлено"); }
     catch(e){ toast(e.message,true); } send.disabled=false; }},"Ответить");
-  box.append(el("div",{style:"margin-top:8px"},ta),
-    el("div",{class:"row",style:"margin-top:6px;justify-content:flex-end"},send));
+  const toggle=el("button",{class:"sm",onclick:async()=>{ const ns=d.status==="closed"?"open":"closed";
+    try{ await api("/v1/admin/support/"+encodeURIComponent(key)+"/status",{method:"POST",body:{status:ns}}); toast(ns==="closed"?"Закрыто":"Переоткрыто"); await openThread(key); renderView(); }catch(e){ toast(e.message,true); } }},d.status==="closed"?"Переоткрыть":"Закрыть обращение");
+  box.append(el("div",{class:"row",style:"margin-top:6px;justify-content:space-between"},toggle,send));
+}
+
+// ── ПЛАТЕЖИ ───────────────────────────────────────────────────────────────────
+VIEWS.payments=async function(){
+  const v=$("#view"); v.innerHTML="";
+  const sm=await api("/v1/admin/billing/summary");
+  const g=el("div",{class:"grid4"});
+  const rev=Object.entries(sm.revenue||{}).map(([c,a])=>a+" "+c).join(" · ")||"0";
+  g.append(statCard("Выручка всего",rev,(sm.by_status.completed||0)+" оплат"),
+    statCard("За 24 часа",(sm.revenue_rub_24h||0)+" ₽",null),
+    statCard("За 7 дней",(sm.revenue_rub_7d||0)+" ₽",null),
+    statCard("Платежей",String(sm.total_payments||0),(sm.by_status.pending||0)+" в ожидании"));
+  v.append(el("div",{class:"card"},el("h3",{},"Сводка по платежам"),g));
+
+  const d=await api("/v1/admin/payments?limit=300");
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Платежи ("+d.total+")"));
+  if(!d.total){ card.append(el("div",{class:"empty"},"Платежей пока нет.")); v.append(card); return; }
+  const tb=el("table"); card.append(el("div",{class:"scroll"},tb));
+  tb.append(el("tr",{},...["Аккаунт","Продукт","Сумма","Метод","Статус","Когда",""].map(h=>el("th",{},h))));
+  for(const p of d.payments){ const actions=el("td",{});
+    if(p.status==="pending"){ actions.append(
+      el("button",{class:"primary sm",onclick:()=>payAct(p.payment_id,"confirm")},"Подтвердить"),
+      el("button",{class:"danger sm",style:"margin-left:4px",onclick:()=>payAct(p.payment_id,"fail")},"Отклонить")); }
+    else if(p.status==="completed"){ actions.append(el("button",{class:"danger sm",onclick:()=>payAct(p.payment_id,"refund")},"Возврат")); }
+    tb.append(el("tr",{},el("td",{class:"mono"},short(p.account_id)),el("td",{},p.product),
+      el("td",{},(p.amount||0)+" "+(p.currency||"")),el("td",{class:"muted"},p.method),
+      el("td",{},payStatus(p.status)),el("td",{class:"muted"},fmtWhen(p.created_at)),actions)); }
+  v.append(card);
+};
+async function payAct(pid,act){
+  const names={confirm:"Подтвердить платёж?",fail:"Отклонить платёж?",refund:"Сделать возврат (снять начисленное)?"};
+  if(!confirm(names[act]))return;
+  try{ await api("/v1/admin/payment/"+encodeURIComponent(pid)+"/"+act,{method:"POST"});
+    toast(act==="confirm"?"Подтверждён":act==="fail"?"Отклонён":"Возврат сделан"); renderView(); }catch(e){ toast(e.message,true); }
 }
 
 // ── СКИДКИ ────────────────────────────────────────────────────────────────────
-async function viewDiscounts(){
+VIEWS.discounts=async function(){
   const v=$("#view"); v.innerHTML="";
-  // форма создания
-  const f=el("div",{class:"card"});
-  f.append(el("h3",{},"Создать скидку"));
+  const f=el("div",{class:"card"}); f.append(el("h3",{},"Создать скидку"));
   const g=el("div",{class:"grid2"});
-  const iPercent=el("input",{type:"number",min:"1",max:"100",placeholder:"%, напр. 20"});
-  const iCode=el("input",{placeholder:"код-купон (пусто = авто-кампания)"});
-  const iScope=el("select",{}, el("option",{value:"all"},"на всё"),
-    el("option",{value:"premium"},"только Premium"), el("option",{value:"ultimate"},"только Ultimate"),
-    el("option",{value:"balance"},"только пакеты часов"));
-  const iLabel=el("input",{placeholder:"подпись (видит клиент)"});
-  const iMaxUses=el("input",{type:"number",min:"1",placeholder:"лимит использований (пусто = без)"});
-  const iPerAcc=el("input",{type:"number",min:"1",placeholder:"на аккаунт (пусто = без)"});
-  g.append(field("Процент скидки",iPercent), field("Код",iCode),
-    field("Область",iScope), field("Подпись",iLabel),
-    field("Всего использований",iMaxUses), field("На аккаунт",iPerAcc));
+  const iP=el("input",{type:"number",min:"1",max:"100",placeholder:"%, напр. 20"});
+  const iC=el("input",{placeholder:"код-купон (пусто = авто-кампания)"});
+  const iS=el("select",{},el("option",{value:"all"},"на всё"),el("option",{value:"premium"},"только Premium"),
+    el("option",{value:"ultimate"},"только Ultimate"),el("option",{value:"balance"},"только пакеты часов"));
+  const iL=el("input",{placeholder:"подпись (видит клиент)"});
+  const iU=el("input",{type:"number",min:"1",placeholder:"лимит использований"});
+  const iA=el("input",{type:"number",min:"1",placeholder:"на аккаунт"});
+  g.append(field("Процент",iP),field("Код",iC),field("Область",iS),field("Подпись",iL),field("Всего использований",iU),field("На аккаунт",iA));
   f.append(g);
-  f.append(el("div",{class:"row",style:"margin-top:12px"},
-    el("button",{class:"primary",onclick:async()=>{
-      const percent=parseInt(iPercent.value,10);
-      if(!percent){ toast("Укажите процент",true); return; }
-      const scope = iScope.value==="all" ? "all"
-        : (iScope.value==="balance" ? {products:["balance_20h","balance_100h","balance_300h"]}
-                                     : {tiers:[iScope.value]});
-      const body={percent, scope, source:"server_in_a_box",
-        code:iCode.value.trim()||null, label:iLabel.value.trim()||null,
-        max_uses:parseInt(iMaxUses.value,10)||null, max_per_account:parseInt(iPerAcc.value,10)||null};
-      try{ await api("/v1/admin/discount",{method:"POST",body});
-        toast("Скидка создана"); iPercent.value=iCode.value=iLabel.value=iMaxUses.value=iPerAcc.value="";
-        renderView(); }catch(e){ toast(e.message,true); } }},"Создать")));
+  f.append(el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"primary",onclick:async()=>{
+    const percent=parseInt(iP.value,10); if(!percent){ toast("Укажите процент",true); return; }
+    const scope=iS.value==="all"?"all":(iS.value==="balance"?{products:["balance_20h","balance_100h","balance_300h"]}:{tiers:[iS.value]});
+    const body={percent,scope,source:"server_in_a_box",code:iC.value.trim()||null,label:iL.value.trim()||null,
+      max_uses:parseInt(iU.value,10)||null,max_per_account:parseInt(iA.value,10)||null};
+    try{ await api("/v1/admin/discount",{method:"POST",body}); toast("Скидка создана"); iP.value=iC.value=iL.value=iU.value=iA.value=""; renderView(); }catch(e){ toast(e.message,true); } }},"Создать")));
   v.append(f);
-
   const d=await api("/v1/admin/discounts");
-  const card=el("div",{class:"card"});
-  card.append(el("h3",{},"Скидки ("+d.total+")"));
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Скидки ("+d.total+")"));
   if(!d.total){ card.append(el("div",{class:"empty"},"Скидок пока нет.")); }
-  else{
-    const tb=el("table"); tb.append(el("tr",{}, ...["Скидка","Код","Область","Исп.","Статус",""].map(h=>el("th",{},h))));
-    for(const x of d.discounts){
-      tb.append(el("tr",{},
-        el("td",{}, el("b",{}, (x.percent?x.percent+"%":(x.amount_off+"₽"))), x.label?el("div",{class:"hint"},esc(x.label)):null),
-        el("td",{}, x.code?el("span",{class:"pill"},esc(x.code)):el("span",{class:"muted"},"авто")),
-        el("td",{class:"muted"}, scopeText(x.scope)),
-        el("td",{class:"muted"}, String(x.used||0)+(x.max_uses?("/"+x.max_uses):"")),
-        el("td",{}, x.live?el("span",{class:"pill ok"},"активна")
-                          :el("span",{class:"pill bad"}, x.active?"вне окна":"отозвана")),
-        el("td",{}, x.active?el("button",{class:"danger",onclick:async()=>{
-          if(!confirm("Отозвать скидку?"))return;
-          try{ await api("/v1/admin/discount/"+encodeURIComponent(x.id)+"/revoke",{method:"POST"});
-            toast("Отозвана"); renderView(); }catch(e){ toast(e.message,true); }}},"Отозвать"):null)));
-    }
-    card.append(tb);
+  else{ const tb=el("table"); card.append(el("div",{class:"scroll"},tb));
+    tb.append(el("tr",{},...["Скидка","Код","Область","Исп.","Статус",""].map(h=>el("th",{},h))));
+    for(const x of d.discounts){ tb.append(el("tr",{},
+      el("td",{},el("b",{},x.percent?x.percent+"%":(x.amount_off+"₽")),x.label?el("div",{class:"hint"},esc(x.label)):null),
+      el("td",{},x.code?el("span",{class:"pill mono"},esc(x.code)):el("span",{class:"muted"},"авто")),
+      el("td",{class:"muted"},scopeText(x.scope)),el("td",{class:"muted"},String(x.used||0)+(x.max_uses?("/"+x.max_uses):"")),
+      el("td",{},x.live?el("span",{class:"pill ok"},"активна"):el("span",{class:"pill bad"},x.active?"вне окна":"отозвана")),
+      el("td",{},x.active?el("button",{class:"danger sm",onclick:async()=>{ if(!confirm("Отозвать скидку?"))return;
+        try{ await api("/v1/admin/discount/"+encodeURIComponent(x.id)+"/revoke",{method:"POST"}); toast("Отозвана"); renderView(); }catch(e){ toast(e.message,true); }}},"Отозвать"):null))); }
   }
   v.append(card);
-}
-function scopeText(s){ if(!s||s==="all")return "на всё";
-  if(s.tiers)return "тиры: "+s.tiers.join(", ");
-  if(s.products)return "пакеты часов"; return JSON.stringify(s); }
-function field(lbl,input){ const w=el("div",{}); w.append(el("label",{},lbl),input); return w; }
+};
+function scopeText(s){ if(!s||s==="all")return "на всё"; if(s.tiers)return "тиры: "+s.tiers.join(", "); if(s.products)return "пакеты часов"; return JSON.stringify(s); }
+
+// ── КЛЮЧИ ─────────────────────────────────────────────────────────────────────
+VIEWS.keys=async function(){
+  const v=$("#view"); v.innerHTML="";
+  const f=el("div",{class:"card"}); f.append(el("h3",{},"Выпустить ключ"));
+  const pl=el("select",{},el("option",{value:"premium"},"Premium"),el("option",{value:"ultimate"},"Ultimate"));
+  const dd=el("input",{type:"number",value:"30",style:"max-width:140px"});
+  const uu=el("input",{type:"number",value:"1",style:"max-width:120px"});
+  f.append(el("div",{class:"row"},field("Тир",pl),field("Дней грант",dd),field("Активаций",uu),
+    el("button",{class:"primary",style:"align-self:flex-end",onclick:async()=>{
+      try{ const r=await api("/v1/admin/issue",{method:"POST",body:{plan:pl.value,grant_days:parseInt(dd.value,10)||30,uses:parseInt(uu.value,10)||1}});
+        showKey(r.code); renderView(); }catch(e){ toast(e.message,true); } }},"Выпустить")));
+  f.append(el("p",{class:"hint"},"Код показывается один раз при выпуске (как пароль). Реселлеру/пользователю — активировать в приложении."));
+  v.append(f);
+  const d=await api("/v1/admin/keys");
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Выпущенные ключи ("+d.total+")"));
+  if(!d.total){ card.append(el("div",{class:"empty"},"Ключей пока нет.")); }
+  else{ const tb=el("table"); card.append(el("div",{class:"scroll"},tb));
+    tb.append(el("tr",{},...["Ключ (kid)","Активаций","Привязок","Статус",""].map(h=>el("th",{},h))));
+    for(const k of d.keys){ tb.append(el("tr",{},el("td",{class:"mono"},k.kid),el("td",{},String(k.uses_left)),
+      el("td",{},String(k.bound)),el("td",{},k.revoked?el("span",{class:"pill bad"},"отозван"):el("span",{class:"pill ok"},"активен")),
+      el("td",{},k.revoked?null:el("button",{class:"danger sm",onclick:async()=>{ if(!confirm("Отозвать ключ?"))return;
+        try{ await api("/v1/admin/key/"+encodeURIComponent(k.kid)+"/revoke",{method:"POST"}); toast("Отозван"); renderView(); }catch(e){ toast(e.message,true); }}},"Отозвать")))); }
+  }
+  v.append(card);
+};
+function showKey(code){ const b=el("div",{}); b.append(el("h3",{},"Ключ выпущен"),
+  el("p",{class:"hint"},"Покажется ОДИН раз. Передайте пользователю — активировать в приложении «Ввести ключ»."),
+  el("input",{value:code,readonly:"",onclick:e=>e.target.select(),class:"mono"}),
+  el("div",{class:"row",style:"margin-top:12px;justify-content:flex-end"},
+    el("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(code); toast("Скопировано"); }catch(_){}}},"Скопировать"),
+    el("button",{class:"primary",onclick:()=>ov.remove()},"Готово"))); const ov=modal(b); }
+
+// ── ЭКОНОМИКА / ЦЕНЫ ──────────────────────────────────────────────────────────
+VIEWS.economy=async function(){
+  const v=$("#view"); v.innerHTML="";
+  const eco=await api("/v1/admin/economy");
+  const P=JSON.parse(JSON.stringify(eco.prices||{}));
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Цены и пакеты"),
+    el("p",{class:"hint"},"Меняются мгновенно на витрине (сайт/приложение читают /v1/config/economy). Валюта RU = ₽, INTL = $."));
+  const inputs={};
+  function num(path,val){ const i=el("input",{type:"number",step:"0.01",value:(val==null?"":val),style:"max-width:150px"}); inputs[path]=i; return i; }
+  const mk=(title,rows)=>{ const sec=el("div",{class:"flagsec"}); sec.append(el("h4",{},title));
+    const g=el("div",{class:"grid3"}); for(const r of rows) g.append(field(r[0],r[1])); sec.append(g); return sec; };
+  card.append(mk("Подписки · Россия (₽)",[
+    ["Premium / мес",num("ru.premium.month",P.ru?.premium?.month)],["Premium / год",num("ru.premium.year",P.ru?.premium?.year)],
+    ["Ultimate / мес",num("ru.ultimate.month",P.ru?.ultimate?.month)],["Ultimate / год",num("ru.ultimate.year",P.ru?.ultimate?.year)]]));
+  card.append(mk("Подписки · Мир ($)",[
+    ["Premium / мес",num("intl.premium.month",P.intl?.premium?.month)],["Premium / год",num("intl.premium.year",P.intl?.premium?.year)],
+    ["Ultimate / мес",num("intl.ultimate.month",P.intl?.ultimate?.month)],["Ultimate / год",num("intl.ultimate.year",P.intl?.ultimate?.year)]]));
+  card.append(mk("Пакеты часов · Россия (₽)",[
+    ["20 ч",num("balance.ru.20h",P.balance?.ru?.["20h"])],["100 ч",num("balance.ru.100h",P.balance?.ru?.["100h"])],["300 ч",num("balance.ru.300h",P.balance?.ru?.["300h"])]]));
+  card.append(mk("Пакеты часов · Мир ($)",[
+    ["20 ч",num("balance.intl.20h",P.balance?.intl?.["20h"])],["100 ч",num("balance.intl.100h",P.balance?.intl?.["100h"])],["300 ч",num("balance.intl.300h",P.balance?.intl?.["300h"])]]));
+  const crypto=el("input",{type:"number",step:"0.01",min:"0",max:"1",value:(P.crypto_discount!=null?P.crypto_discount:0.1),style:"max-width:150px"});
+  const freeDev=el("input",{type:"number",min:"0",value:((eco.tiers?.[0]?.devices)??2),style:"max-width:150px"});
+  card.append(mk("Прочее",[["Крипто-скидка (0–1)",crypto],["Устройств на Free",freeDev]]));
+  card.append(el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"primary",onclick:async e=>{
+    e.target.disabled=true;
+    const prices={ru:{premium:{},ultimate:{}},intl:{premium:{},ultimate:{}},balance:{ru:{},intl:{}}};
+    const setp=(path)=>{ const val=parseFloat(inputs[path].value); if(isNaN(val))return; const seg=path.split(".");
+      if(seg[0]==="balance"){ prices.balance[seg[1]][seg[2]]=val; } else { prices[seg[0]][seg[1]][seg[2]]=val; } };
+    Object.keys(inputs).forEach(setp);
+    prices.crypto_discount=parseFloat(crypto.value)||0;
+    const tiers=JSON.parse(JSON.stringify(eco.tiers||[])); if(tiers[0]) tiers[0].devices=parseInt(freeDev.value,10)||0;
+    try{ await api("/v1/admin/economy",{method:"POST",body:{economy:{prices,tiers}}}); toast("Цены сохранены — витрина обновлена"); }
+    catch(err){ toast(err.message,true); } e.target.disabled=false; }},"Сохранить цены")));
+  v.append(card);
+};
 
 // ── БЛОКИ (флаги) ─────────────────────────────────────────────────────────────
 const FLAG_SECTIONS=[
-  {key:"download", title:"Платформы в разделе «Скачать»",
-   items:{ios:"iOS",android:"Android",windows:"Windows",macos:"macOS",linux:"Linux",extension:"Расширение"}},
-  {key:"site", title:"Секции сайта",
-   items:{pricing:"Цены",download:"Скачать",support:"Поддержка",legal:"Правовое",
-          hero_widget:"Виджет на главной",features:"Возможности",numbers:"Цифры",faq:"FAQ",
-          import_bridge:"Импорт своего моста",lang_switcher:"Переключатель языка"}},
-  {key:"pricing", title:"Модели оплаты",
-   items:{subscriptions:"Подписки",balance:"Пакеты часов",balance_300h:"Пакет 300 ч",
-          annual_toggle:"Годовой переключатель",crypto_discount:"Крипто-скидка"}},
-  {key:"app", title:"Возможности приложения",
-   items:{import_bridge:"Импорт моста",wheel:"Колесо",referrals:"Рефералы",
-          network_analysis:"Анализ сети",traffic_map:"Карта трафика",key_checker:"Проверка ключа"}},
-  {key:"coming_soon", title:"Блок «Скоро»",
-   items:{enabled:"Показывать блок",apple_tv:"Apple TV",android_tv:"Android TV",openwrt:"OpenWRT",cli:"CLI"}},
-  {key:"legal", title:"Правовые блоки",
-   items:{canary:"Warrant canary",law_requests:"Запросы органов",key_revocations:"Отзывы ключей",jurisdictions:"Юрисдикции"}},
+  {key:"download",title:"Платформы в разделе «Скачать»",items:{ios:"iOS",android:"Android",windows:"Windows",macos:"macOS",linux:"Linux",extension:"Расширение"}},
+  {key:"site",title:"Секции сайта",items:{pricing:"Цены",download:"Скачать",support:"Поддержка",legal:"Правовое",hero_widget:"Виджет на главной",features:"Возможности",numbers:"Цифры",faq:"FAQ",import_bridge:"Импорт своего моста",lang_switcher:"Переключатель языка"}},
+  {key:"pricing",title:"Модели оплаты",items:{subscriptions:"Подписки",balance:"Пакеты часов",balance_300h:"Пакет 300 ч",annual_toggle:"Годовой переключатель",crypto_discount:"Крипто-скидка"}},
+  {key:"app",title:"Возможности приложения",items:{import_bridge:"Импорт моста",wheel:"Колесо",referrals:"Рефералы",network_analysis:"Анализ сети",traffic_map:"Карта трафика",key_checker:"Проверка ключа"}},
+  {key:"coming_soon",title:"Блок «Скоро»",items:{enabled:"Показывать блок",apple_tv:"Apple TV",android_tv:"Android TV",openwrt:"OpenWRT",cli:"CLI"}},
+  {key:"legal",title:"Правовые блоки",items:{canary:"Warrant canary",law_requests:"Запросы органов",key_revocations:"Отзывы ключей",jurisdictions:"Юрисдикции"}},
 ];
-async function viewFlags(){
+VIEWS.flags=async function(){
   const v=$("#view"); v.innerHTML="";
-  const flags=await api("/v1/config/flags");
-  const pending={};
+  const flags=await api("/v1/config/flags"); const pending={};
   const card=el("div",{class:"card"});
-  card.append(el("div",{class:"row"}, el("h3",{style:"margin:0;flex:1"},"Блоки сайта и приложения"),
-    el("span",{class:"muted"},"версия "+(flags.version||1))));
-  card.append(el("p",{class:"hint"},"Выключенный блок мгновенно прячется у клиентов при следующем опросе. Неизвестный флаг считается включённым (витрина не гаснет от опечатки)."));
-  for(const sec of FLAG_SECTIONS){
-    const wrap=el("div",{class:"flagsec"}); wrap.append(el("h4",{},sec.title));
+  card.append(el("div",{class:"row"},el("h3",{style:"margin:0;flex:1"},"Блоки сайта и приложения"),el("span",{class:"muted"},"версия "+(flags.version||1))));
+  card.append(el("p",{class:"hint"},"Выключенный блок мгновенно прячется у клиентов при следующем опросе. Неизвестный флаг считается включённым."));
+  for(const sec of FLAG_SECTIONS){ const wrap=el("div",{class:"flagsec"}); wrap.append(el("h4",{},sec.title));
     const cur=flags[sec.key]||{};
-    for(const k in sec.items){
-      const on = cur[k]!==false;
-      const cb=el("input",{type:"checkbox"}); cb.checked=on;
+    for(const k in sec.items){ const cb=el("input",{type:"checkbox"}); cb.checked=cur[k]!==false;
       cb.addEventListener("change",()=>{ pending[sec.key]=pending[sec.key]||{}; pending[sec.key][k]=cb.checked; });
-      wrap.append(el("div",{class:"flagrow"}, el("span",{},sec.items[k]),
-        el("label",{class:"sw"}, cb, el("span",{}))));
-    }
-    card.append(wrap);
-  }
-  card.append(el("div",{class:"row",style:"margin-top:14px"},
-    el("button",{class:"primary",onclick:async(e)=>{
-      if(!Object.keys(pending).length){ toast("Нет изменений"); return; }
-      e.target.disabled=true;
-      try{ const r=await api("/v1/admin/flags",{method:"POST",body:{flags:pending}});
-        toast("Сохранено · версия "+r.flags.version); renderView(); }
-      catch(err){ toast(err.message,true); e.target.disabled=false; } }},"Сохранить изменения")));
+      wrap.append(el("div",{class:"flagrow"},el("span",{},sec.items[k]),el("label",{class:"sw"},cb,el("span",{})))); }
+    card.append(wrap); }
+  card.append(el("div",{class:"row",style:"margin-top:14px"},el("button",{class:"primary",onclick:async e=>{
+    if(!Object.keys(pending).length){ toast("Нет изменений"); return; } e.target.disabled=true;
+    try{ const r=await api("/v1/admin/flags",{method:"POST",body:{flags:pending}}); toast("Сохранено · версия "+r.flags.version); renderView(); }
+    catch(err){ toast(err.message,true); e.target.disabled=false; } }},"Сохранить изменения")));
   v.append(card);
-}
+};
 
-// ── РАБОТНИКИ (только владелец) ────────────────────────────────────────────────
-const SCOPE_LABELS={nodes:"Серверы",support:"Поддержка",discounts:"Скидки",flags:"Блоки",keys:"Ключи",billing:"Платежи"};
-async function viewStaff(){
+// ── РАБОТНИКИ (владелец) ──────────────────────────────────────────────────────
+VIEWS.staff=async function(){
   const v=$("#view"); v.innerHTML="";
-  const f=el("div",{class:"card"});
-  f.append(el("h3",{},"Добавить работника"));
-  const iName=el("input",{placeholder:"Имя (напр. Оператор Аня)"});
-  f.append(el("label",{},"Имя"),iName);
+  const f=el("div",{class:"card"}); f.append(el("h3",{},"Добавить работника"));
+  const iName=el("input",{placeholder:"Имя (напр. Оператор Аня)"}); f.append(el("label",{},"Имя"),iName);
   f.append(el("label",{},"Права доступа"));
-  const scopeBoxes={};
-  const sc=el("div",{class:"row",style:"gap:14px"});
-  for(const s in SCOPE_LABELS){ const cb=el("input",{type:"checkbox",style:"width:auto"});
-    scopeBoxes[s]=cb; sc.append(el("label",{style:"display:flex;gap:6px;align-items:center;margin:0"},cb,SCOPE_LABELS[s])); }
+  const boxes={}; const sc=el("div",{class:"row",style:"gap:14px"});
+  for(const s in SCOPE_LABELS){ const cb=el("input",{type:"checkbox",style:"width:auto"}); boxes[s]=cb;
+    sc.append(el("label",{style:"display:flex;gap:6px;align-items:center;margin:0"},cb,SCOPE_LABELS[s])); }
   f.append(sc);
-  f.append(el("div",{class:"row",style:"margin-top:12px"},
-    el("button",{class:"primary",onclick:async()=>{
-      const scopes=Object.keys(scopeBoxes).filter(s=>scopeBoxes[s].checked);
-      if(!iName.value.trim()||!scopes.length){ toast("Имя и хотя бы одно право",true); return; }
-      try{ const r=await api("/v1/admin/staff",{method:"POST",body:{name:iName.value.trim(),scopes}});
-        showToken(r); iName.value=""; Object.values(scopeBoxes).forEach(c=>c.checked=false); renderView(); }
-      catch(e){ toast(e.message,true); } }},"Создать токен работника")));
+  f.append(el("div",{class:"row",style:"margin-top:12px"},el("button",{class:"primary",onclick:async()=>{
+    const scopes=Object.keys(boxes).filter(s=>boxes[s].checked);
+    if(!iName.value.trim()||!scopes.length){ toast("Имя и хотя бы одно право",true); return; }
+    try{ const r=await api("/v1/admin/staff",{method:"POST",body:{name:iName.value.trim(),scopes}});
+      showToken(r); iName.value=""; Object.values(boxes).forEach(c=>c.checked=false); renderView(); }catch(e){ toast(e.message,true); } }},"Создать токен работника")));
   v.append(f);
-
   const d=await api("/v1/admin/staff");
-  const card=el("div",{class:"card"});
-  card.append(el("h3",{},"Работники ("+d.total+")"));
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Работники ("+d.total+")"));
   if(!d.total){ card.append(el("div",{class:"empty"},"Работников пока нет.")); }
-  else{
-    const tb=el("table"); tb.append(el("tr",{}, ...["Имя","Права","Статус",""].map(h=>el("th",{},h))));
-    for(const s of d.staff){
-      tb.append(el("tr",{},
-        el("td",{}, el("b",{},esc(s.name))),
-        el("td",{}, (s.scopes||[]).map(x=>el("span",{class:"pill",style:"margin:1px"},SCOPE_LABELS[x]||x))),
-        el("td",{}, s.revoked?el("span",{class:"pill bad"},"отозван"):el("span",{class:"pill ok"},"активен")),
-        el("td",{}, s.revoked?null:el("button",{class:"danger",onclick:async()=>{
-          if(!confirm("Отозвать доступ «"+s.name+"»?"))return;
-          try{ await api("/v1/admin/staff/"+encodeURIComponent(s.id)+"/revoke",{method:"POST"});
-            toast("Отозван"); renderView(); }catch(e){ toast(e.message,true); }}},"Отозвать"))));
-    }
-    card.append(tb);
+  else{ const tb=el("table"); card.append(el("div",{class:"scroll"},tb));
+    tb.append(el("tr",{},...["Имя","Права","Статус",""].map(h=>el("th",{},h))));
+    for(const s of d.staff){ tb.append(el("tr",{},el("td",{},el("b",{},esc(s.name))),
+      el("td",{},(s.scopes||[]).map(x=>el("span",{class:"pill",style:"margin:1px"},SCOPE_LABELS[x]||x))),
+      el("td",{},s.revoked?el("span",{class:"pill bad"},"отозван"):el("span",{class:"pill ok"},"активен")),
+      el("td",{},s.revoked?null:el("div",{class:"row",style:"gap:4px"},
+        el("button",{class:"sm",onclick:()=>editStaff(s)},"Права"),
+        el("button",{class:"danger sm",onclick:async()=>{ if(!confirm("Отозвать доступ «"+s.name+"»?"))return;
+          try{ await api("/v1/admin/staff/"+encodeURIComponent(s.id)+"/revoke",{method:"POST"}); toast("Отозван"); renderView(); }catch(e){ toast(e.message,true); }}},"Отозвать"))))); }
   }
   v.append(card);
-}
-function showToken(r){
-  const overlay=el("div",{style:"position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:60",
-    onclick:(e)=>{ if(e.target===overlay)overlay.remove(); }});
-  const box=el("div",{class:"card",style:"max-width:520px;margin:16px"});
-  box.append(el("h3",{},"Токен работника «"+esc(r.name)+"»"),
-    el("p",{class:"hint"},"Покажется ОДИН раз. Передайте работнику — он войдёт им как «Работник». Права: "
-      +(r.scopes||[]).map(x=>SCOPE_LABELS[x]||x).join(", ")),
-    el("input",{value:r.token,readonly:"",onclick:(e)=>e.target.select()}),
-    el("div",{class:"row",style:"margin-top:12px;justify-content:flex-end"},
-      el("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(r.token); toast("Скопировано"); }catch(_){}}},"Скопировать"),
-      el("button",{class:"primary",onclick:()=>overlay.remove()},"Готово")));
-  overlay.append(box); document.body.append(overlay);
-}
+};
+function editStaff(s){ const b=el("div",{}); b.append(el("h3",{},"Права «"+esc(s.name)+"»"));
+  const boxes={}; const sc=el("div",{class:"row",style:"gap:14px;margin:8px 0"});
+  for(const k in SCOPE_LABELS){ const cb=el("input",{type:"checkbox",style:"width:auto"}); cb.checked=(s.scopes||[]).includes(k); boxes[k]=cb;
+    sc.append(el("label",{style:"display:flex;gap:6px;align-items:center;margin:0"},cb,SCOPE_LABELS[k])); }
+  b.append(sc);
+  b.append(el("div",{class:"row",style:"justify-content:flex-end"},el("button",{onclick:()=>ov.remove()},"Отмена"),
+    el("button",{class:"primary",onclick:async()=>{ const scopes=Object.keys(boxes).filter(k=>boxes[k].checked);
+      if(!scopes.length){ toast("Хотя бы одно право",true); return; }
+      try{ await api("/v1/admin/staff/"+encodeURIComponent(s.id),{method:"PATCH",body:{scopes}}); toast("Права обновлены"); ov.remove(); renderView(); }catch(e){ toast(e.message,true); } }},"Сохранить")));
+  const ov=modal(b); }
+function showToken(r){ const b=el("div",{}); b.append(el("h3",{},"Токен работника «"+esc(r.name)+"»"),
+  el("p",{class:"hint"},"Покажется ОДИН раз. Права: "+(r.scopes||[]).map(x=>SCOPE_LABELS[x]||x).join(", ")),
+  el("input",{value:r.token,readonly:"",onclick:e=>e.target.select(),class:"mono"}),
+  el("div",{class:"row",style:"margin-top:12px;justify-content:flex-end"},
+    el("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(r.token); toast("Скопировано"); }catch(_){}}},"Скопировать"),
+    el("button",{class:"primary",onclick:()=>ov.remove()},"Готово"))); const ov=modal(b); }
+
+// ── ЖУРНАЛ (владелец) ─────────────────────────────────────────────────────────
+const AUDIT_LABELS={grant:"грант",fraud_flag:"фрод",unfraud:"снят фрод",balance_adjust:"баланс",device_revoke:"отзыв устройства",
+  node_remove:"снят узел",discount_create:"скидка +",discount_revoke:"скидка −",flags_set:"блоки",economy_set:"цены",
+  staff_create:"работник +",staff_edit:"работник ✎",staff_revoke:"работник −",key_issue:"ключ +",key_revoke:"ключ −",
+  payment_confirm:"платёж ✓",payment_fail:"платёж ✗",payment_refund:"возврат",rollout:"выкатка",support_reply:"ответ",support_closed:"закрыт",support_open:"открыт"};
+VIEWS.audit=async function(){
+  const v=$("#view"); v.innerHTML="";
+  const d=await api("/v1/admin/audit?limit=200");
+  const card=el("div",{class:"card"}); card.append(el("h3",{},"Журнал действий ("+d.total+")"),
+    el("p",{class:"hint"},"Кто из операторов что сделал. Последние сверху."));
+  if(!d.entries.length){ card.append(el("div",{class:"empty"},"Пока пусто.")); }
+  else{ const tb=el("table"); card.append(el("div",{class:"scroll"},tb));
+    tb.append(el("tr",{},...["Когда","Кто","Действие","Объект","Детали"].map(h=>el("th",{},h))));
+    for(const e of d.entries){ const det=Object.keys(e).filter(k=>!["at","by","role","action","target"].includes(k))
+        .map(k=>k+"="+(typeof e[k]==="object"?JSON.stringify(e[k]):e[k])).join(" ");
+      tb.append(el("tr",{},el("td",{class:"muted"},fmtWhen(e.at)),
+        el("td",{},el("b",{},esc(e.by||"—")),el("span",{class:"pill",style:"margin-left:4px"},e.role==="owner"?"влад.":"раб.")),
+        el("td",{},el("span",{class:"pill blue"},AUDIT_LABELS[e.action]||e.action)),
+        el("td",{class:"mono muted"},e.target?short(e.target):"—"),el("td",{class:"muted"},det))); }
+  }
+  v.append(card);
+};
 
 // ── ВХОД / ВЫХОД ──────────────────────────────────────────────────────────────
-$("#in-role").addEventListener("change",e=>{
-  $("#lbl-token").textContent = e.target.value==="owner" ? "ADMIN_TOKEN" : "Токен работника"; });
-$("#btn-login").addEventListener("click", async ()=>{
-  const base=$("#in-base").value.trim(), role=$("#in-role").value, token=$("#in-token").value.trim();
+$("#in-role").addEventListener("change",e=>{ $("#lbl-token").textContent=e.target.value==="owner"?"ADMIN_TOKEN":"Токен работника"; });
+$("#btn-login").addEventListener("click",async()=>{
+  const base=$("#in-base").value.trim(),role=$("#in-role").value,token=$("#in-token").value.trim();
   if(!base||!token){ $("#login-err").textContent="Заполните адрес и токен."; return; }
-  state.base=base; state.role=role; state.token=token;
-  $("#login-err").textContent="Проверяем…";
-  try{
-    const w=await api("/v1/admin/whoami");
-    state.scopes=w.scopes||[]; state.name=w.name||""; state.role=w.role||role;
-    save(); enterApp();
-  }catch(e){ $("#login-err").textContent="Не удалось войти: "+e.message; }
+  state.base=base; state.role=role; state.token=token; $("#login-err").textContent="Проверяем…";
+  try{ const w=await api("/v1/admin/whoami"); state.scopes=w.scopes||[]; state.name=w.name||""; state.role=w.role||role; save(); enterApp(); }
+  catch(e){ $("#login-err").textContent="Не удалось войти: "+e.message; }
 });
-$("#btn-logout").addEventListener("click",()=>{ localStorage.removeItem("sib-console");
-  location.reload(); });
+$("#btn-logout").addEventListener("click",()=>{ localStorage.removeItem("sib-console"); location.reload(); });
 $("#btn-refresh").addEventListener("click",()=>renderView());
-
-function enterApp(){
-  $("#login").style.display="none"; $("#app").style.display="block";
-  $("#whoami").innerHTML = state.role==="owner"
-    ? "вошли как <b>Владелец</b>" : "работник <b>"+esc(state.name||"—")+"</b> · "+
-      (state.scopes.map(s=>SCOPE_LABELS[s]||s).join(", ")||"без прав");
-  renderTabs(); renderView();
-}
-
-// автологин из localStorage
+function enterApp(){ $("#login").style.display="none"; $("#app").style.display="block";
+  $("#whoami").innerHTML=state.role==="owner"?"вошли как <b>Владелец</b>"
+    :"работник <b>"+esc(state.name||"—")+"</b> · "+(state.scopes.map(s=>SCOPE_LABELS[s]||s).join(", ")||"без прав");
+  renderTabs(); renderView(); }
 (function(){ const s=load();
-  if(s.base){ $("#in-base").value=s.base; }
-  if(s.role){ $("#in-role").value=s.role;
-    $("#lbl-token").textContent = s.role==="owner" ? "ADMIN_TOKEN":"Токен работника"; }
+  if(s.base) $("#in-base").value=s.base;
+  if(s.role){ $("#in-role").value=s.role; $("#lbl-token").textContent=s.role==="owner"?"ADMIN_TOKEN":"Токен работника"; }
   if(s.base&&s.token){ state.base=s.base; state.role=s.role||"owner"; state.token=s.token;
-    api("/v1/admin/whoami").then(w=>{ state.scopes=w.scopes||[]; state.name=w.name||"";
-      state.role=w.role||state.role; enterApp(); }).catch(()=>{ /* остаёмся на логине */ }); }
+    api("/v1/admin/whoami").then(w=>{ state.scopes=w.scopes||[]; state.name=w.name||""; state.role=w.role||state.role; enterApp(); }).catch(()=>{}); }
 })();
 </script>
 </body>
