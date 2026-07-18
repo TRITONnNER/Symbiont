@@ -75,7 +75,10 @@
     var sub = be.subscription || {}, mins = sub.active_minutes_left || 0;
     var out = { balance: { hours: Math.floor(mins / 60), minutes: mins % 60 } };
     if (Array.isArray(be.entries)) {
-      out.entries = be.entries.slice().reverse().map(function (e) {
+      // Бэкенд уже отдаёт журнал новыми записями сверху (API.md: «Новые записи —
+      // сверху»), и оболочка рендерит их в порядке массива — доп. reverse переворачивал
+      // ленту в старые-сверху.
+      out.entries = be.entries.slice().map(function (e) {
         var val = '', unit = '';
         if (e.days != null) { val = (e.days >= 0 ? '+' : '') + e.days; unit = 'd'; }
         else if (e.minutes != null) { val = (e.kind === 'debit' ? '−' : '+') + Math.abs(e.minutes); unit = 'm'; }
@@ -128,7 +131,7 @@
     getDevices: function () { return this._get(this.endpoints.devices); },
     getPayment: function (id) { return this._get(this.endpoints.payment + encodeURIComponent(id)); },
     parseBridge: function (uri) { return this._post(this.endpoints.parseBridge, { uri: uri }); },
-    checkDiscount: function (code, product) { return this._post(this.endpoints.discountCheck, { code: code, product: product }); },
+    checkDiscount: function (code, product, region) { return this._post(this.endpoints.discountCheck, { code: code, product: product, region: region || 'ru' }); },
 
     purchase: function (payload) {
       payload = payload || {};
@@ -147,7 +150,11 @@
 
     // ── аккаунт (login-gate) ──
     _sha256hex: function (str) { var buf = new TextEncoder().encode(str); return crypto.subtle.digest('SHA-256', buf).then(function (d) { return Array.from(new Uint8Array(d)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join(''); }); },
-    _solvePow: function (ch, bits) { var self = this; bits = bits | 0; if (!ch || bits <= 0) return Promise.resolve('0'); var prefix = new Array(bits + 1).join('0'), n = 0; function step() { return self._sha256hex(String(ch) + n).then(function (h) { if (h.slice(0, bits) === prefix) return String(n); n++; return n > 5000000 ? '0' : step(); }); } return step(); },
+    // Число ведущих НУЛЕВЫХ БИТ в hex-дайджесте (1:1 с backend identity.pow_ok:
+    // sha256(challenge:nonce) < 2^(256-bits)). Раньше клиент считал нулевые hex-символы
+    // и не ставил разделитель ':' — nonce не проходил серверную проверку при POW_BITS>0.
+    _powBits: function (h) { var c = 0; for (var i = 0; i < h.length; i++) { var v = parseInt(h[i], 16); if (v === 0) { c += 4; continue; } c += (v >= 8 ? 0 : v >= 4 ? 1 : v >= 2 ? 2 : 3); break; } return c; },
+    _solvePow: function (ch, bits) { var self = this; bits = bits | 0; if (!ch || bits <= 0) return Promise.resolve('0'); var n = 0; function step() { return self._sha256hex(String(ch) + ':' + n).then(function (h) { if (self._powBits(h) >= bits) return String(n); n++; return n > 5000000 ? '0' : step(); }); } return step(); },
     register: function (opts) {
       opts = opts || {}; var self = this;
       return this._get('/v1/account/pow').then(function (p) {

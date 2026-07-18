@@ -1340,12 +1340,16 @@ def referral_info(token: str = Depends(auth)):
     refs = acc.get("referrals", [])
     converted = len([r for r in refs if idaccounts.get(r, {}).get("paid_months", 0) > 0])
     rep_meta = next((x for x in _eff_economy()["reputation"] if x["level"] == lvl), {})
+    # Всего начислено дней за рефералов (для стата «выплаты» в приложении/на сайте) —
+    # из журнала бонусов по реферальным причинам. Без этого клиент показывал демо-число.
+    earned_days = sum(int(e.get("days", 0)) for e in acc.get("bonus_log", [])
+                      if str(e.get("reason", "")).startswith("ref"))
     return {"invite_code": acc.get("invite_code"),
             "reputation": {"level": lvl, "name": rep_meta.get("name", {}),
                            "payout_cap_month": cap, "multiplier": mult,
                            "payouts_used": used,
                            "payouts_left": (None if cap == 0 else max(0, cap - used))},
-            "invited": len(refs), "converted": converted}
+            "invited": len(refs), "converted": converted, "earned_days": earned_days}
 
 class FraudReq(BaseModel):
     account_id: str

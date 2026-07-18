@@ -59,20 +59,21 @@
     return data;
   }
 
-  // ── Proof-of-Work: sha256(challenge+nonce) с `bits` ведущими нулевыми hex-символами ──
+  // ── Proof-of-Work: sha256(challenge:nonce) с `bits` ведущими нулевыми БИТАМИ ──
+  // 1:1 с backend identity.pow_ok (sha256(challenge:nonce) < 2^(256-bits)).
   async function sha256hex(str) {
     var buf = new TextEncoder().encode(str);
     var dig = await crypto.subtle.digest('SHA-256', buf);
     var arr = Array.from(new Uint8Array(dig));
     return arr.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
+  function powBits(h) { var c = 0; for (var i = 0; i < h.length; i++) { var v = parseInt(h[i], 16); if (v === 0) { c += 4; continue; } c += (v >= 8 ? 0 : v >= 4 ? 1 : v >= 2 ? 2 : 3); break; } return c; }
   async function solvePow(challenge, bits) {
     bits = bits | 0;
     if (!challenge || bits <= 0) return '0';               // bits=0 → любой nonce годится
-    var prefix = new Array(bits + 1).join('0');
     for (var n = 0; n < 5000000; n++) {
-      var h = await sha256hex(String(challenge) + n);
-      if (h.slice(0, bits) === prefix) return String(n);
+      var h = await sha256hex(String(challenge) + ':' + n);
+      if (powBits(h) >= bits) return String(n);
     }
     return '0';
   }
