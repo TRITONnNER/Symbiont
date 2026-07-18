@@ -91,12 +91,17 @@ def parse_bridge(uri: str) -> dict:
     if scheme not in _ALLOWED:
         raise BridgeError("protocol_not_supported")
 
-    if scheme == "vless":
-        node = _parse_vless(uri)
-    elif scheme in ("ss", "shadowsocks"):
-        node = _parse_ss(uri)
-    else:                                          # hysteria2 / hy2
-        node = _parse_hy2(uri)
+    try:
+        if scheme == "vless":
+            node = _parse_vless(uri)
+        elif scheme in ("ss", "shadowsocks"):
+            node = _parse_ss(uri)
+        else:                                      # hysteria2 / hy2
+            node = _parse_hy2(uri)
+    except BridgeError:
+        raise
+    except ValueError:                             # urlparse(...).port вне 0..65535 и пр. → чистый 4xx, не 500
+        raise BridgeError("bad_port")
 
     warnings = []
     if _is_private_host(node["server"]):

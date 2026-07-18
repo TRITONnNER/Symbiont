@@ -12,12 +12,12 @@ server.py — референс-бэкенд «Симбионта» (FastAPI). Р
 (создаётся при старте). ADMIN_TOKEN — из переменной окружения (по умолчанию demo).
 """
 from __future__ import annotations
-import os, json, secrets, base64, time, threading
+import os, json, secrets, base64, time, threading, tempfile
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Header, Depends, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # Порядок тиров (ранг). Гранты/ключи ПОВЫШАЮТ тир, но никогда не понижают:
 # премиум-пользователь, погасивший ultimate-ключ, становится ultimate.
@@ -27,6 +27,25 @@ _TIER_RANK = {"free": 0, "premium": 1, "ultimate": 2}
 # (`def`) эндпоинты FastAPI исполняются в общем пуле потоков, поэтому «проверить,
 # затем начислить» без лока допускает гонку (напр. двойной спин колеса за день).
 _state_lock = threading.RLock()
+
+def _atomic_write_json(path: str, obj) -> None:
+    """Атомарная запись JSON: temp-файл в том же каталоге → fsync → os.replace. Краш или
+    диск-фул посреди записи не оставит обрезанный файл (иначе economy.json/flags.json
+    повреждается, а _eff_economy()/flags() тихо откатываются на дефолт — цены/флаги
+    молча сбрасываются)."""
+    d = os.path.dirname(os.path.abspath(path)) or "."
+    fd, tmp = tempfile.mkstemp(dir=d, prefix=".tmp_", suffix=".json")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(obj, f, ensure_ascii=False, indent=2)
+            f.flush(); os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 import hmac, hashlib
 from fastapi import Request
@@ -203,11 +222,31 @@ def _is_owner(token: str) -> bool:
 import collections
 POW_BITS = int(os.environ.get("SYMBIONT_POW_BITS", "0"))
 REG_LIMIT_PER_HOUR = int(os.environ.get("SYMBIONT_REG_LIMIT", "20"))
+# Лимиты неаутентифицированных/дешёвых-но-абьюзимых эндпоинтов (в час на /24):
+# anon — иначе безлимитное создание аккаунтов/тредов (DoS); login — брутфорс пароля
+# + CPU-усиление через scrypt; discount — перебор купонов. Все настраиваются env.
+ANON_LIMIT_PER_HOUR = int(os.environ.get("SYMBIONT_ANON_LIMIT", "30"))
+LOGIN_LIMIT_PER_HOUR = int(os.environ.get("SYMBIONT_LOGIN_LIMIT", "30"))
+DISCOUNT_LIMIT_PER_HOUR = int(os.environ.get("SYMBIONT_DISCOUNT_LIMIT", "60"))
 _pow_challenges: dict[str, float] = {}
 _reg_by_subnet: dict[str, list] = collections.defaultdict(list)
+_rl_buckets: dict[str, list] = {}
 
 def _subnet24(ip: str) -> str:
     p = ip.split("."); return ".".join(p[:3]) if len(p) == 4 else ip
+
+def _rate_limit(name: str, request: "Request", limit: int, window: int = 3600):
+    """Скользящее окно попыток по /24-подсети. 429 при превышении. Пустые/просроченные
+    ключи не копятся: чистим на каждом обращении (иначе словарь рос бы бесконечно)."""
+    now = time.time()
+    ip = request.client.host if request.client else "0.0.0.0"
+    key = f"{name}:{_subnet24(ip)}"
+    hits = [t for t in _rl_buckets.get(key, ()) if now - t < window]
+    if len(hits) >= limit:
+        _rl_buckets[key] = hits
+        raise HTTPException(429, "rate_limited")
+    hits.append(now)
+    _rl_buckets[key] = hits
 
 def _mint_session(account_id: str, label: str, device_id: str = None) -> str:
     """Выдать сессионный токен поверх аккаунта (совместимо с auth/redeem/support)."""
@@ -235,6 +274,24 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Предел размера тела запроса. Несколько эндпоинтов (node/register, node/heartbeat,
+# billing/webhook, node/authorize) читают тело ЦЕЛИКОМ в память ДО проверки подписи;
+# без предела неаутентифицированный multi-GB body раздувал бы RAM. Тела API маленькие
+# (JSON), 256 KiB с запасом. Отвергаем по Content-Length (быстрый путь до чтения тела).
+MAX_BODY_BYTES = int(os.environ.get("SYMBIONT_MAX_BODY", str(256 * 1024)))
+
+@app.middleware("http")
+async def _limit_body_size(request: Request, call_next):
+    cl = request.headers.get("content-length")
+    if cl is not None:
+        try:
+            n = int(cl)
+        except ValueError:
+            return Response('{"detail":"bad_content_length"}', status_code=400, media_type="application/json")
+        if n > MAX_BODY_BYTES:
+            return Response('{"detail":"payload_too_large"}', status_code=413, media_type="application/json")
+    return await call_next(request)
 
 
 # ── Сквозное логирование запросов + необработанных ошибок ─────────────────────
@@ -341,10 +398,10 @@ class AnonReq(BaseModel):
     label: Optional[str] = None
 
 class LabelReq(BaseModel):
-    label: str
+    label: str = Field(max_length=200)      # метка косметическая, но без предела раздувала бы БД
 
 class RedeemReq(BaseModel):
-    code: str
+    code: str = Field(max_length=4000)      # разумный предел на длину кода ключа
 
 class IssueReq(BaseModel):
     plan: str = "pro"
@@ -352,7 +409,7 @@ class IssueReq(BaseModel):
     uses: int = 1
 
 class MsgReq(BaseModel):
-    text: str
+    text: str = Field(max_length=8000)      # верхний предел размера сообщения (анти-раздувание тредов)
     diag: Optional[dict] = None
 
 class AttestReq(BaseModel):
@@ -362,11 +419,12 @@ class AttestReq(BaseModel):
 
 # ── 1. Аккаунт без данных ─────────────────────────────────────────────────────
 @app.post("/v1/account/anon")
-def account_anon(req: AnonReq):
+def account_anon(req: AnonReq, request: Request):
+    _rate_limit("anon", request, ANON_LIMIT_PER_HOUR)   # иначе безлимитная фарма аккаунтов/тредов
     token = b32(secrets.token_bytes(20))           # 160-битный непрозрачный токен
     accounts[token] = {"label": req.label or "guest", "plan": "free",
                        "paid_until": None, "max_sessions": 1}
-    threads[token] = [{"from": "support",
+    threads[_thread_key(token)] = [{"from": "support",
                        "text": "Здравствуйте! Опишите проблему — отвечаем прямо здесь, данные не нужны.",
                        "at": _now()}]
     _save_accounts(); _save_threads()
@@ -408,8 +466,17 @@ class LoginReq(BaseModel):
 @app.get("/v1/account/pow")
 def account_pow():
     """Выдать PoW-челлендж для регистрации (анти-фрод). bits=0 → PoW выключен."""
+    now = time.time()
+    # TTL лениво: эндпоинт публичный и без лимита, а при POW_BITS=0 register вообще
+    # не удаляет челленджи — без чистки словарь рос бы бесконечно (утечка памяти).
+    # Sweep запускаем только когда накопилось (амортизация O(n)); при флуде — сброс.
+    if len(_pow_challenges) > 1000:
+        for k in [k for k, exp in _pow_challenges.items() if exp < now]:
+            _pow_challenges.pop(k, None)
+        if len(_pow_challenges) > 50000:
+            _pow_challenges.clear()          # предохранитель от флуда неаутентифицированными запросами
     chal = b32(secrets.token_bytes(12))
-    _pow_challenges[chal] = time.time() + 120
+    _pow_challenges[chal] = now + 120
     return {"challenge": chal, "bits": POW_BITS}
 
 @app.post("/v1/account/register")
@@ -465,7 +532,10 @@ def account_register(req: RegisterReq, request: Request):
             "subscription": {"plan": "free", "maxConcurrentSessions": 1}}
 
 @app.post("/v1/account/login")
-def account_login(req: LoginReq):
+def account_login(req: LoginReq, request: Request):
+    # Лимит попыток: без него — офлайн-скоростной брутфорс пароля по алиасу и
+    # CPU-усиление (каждая попытка запускает серверный scrypt).
+    _rate_limit("login", request, LOGIN_LIMIT_PER_HOUR)
     aid = None
     if req.recovery_code:
         try:
@@ -491,8 +561,8 @@ def account_login(req: LoginReq):
     return {"token": _mint_session(aid, "user", device_id=did), "account_id": aid, "device_id": did}
 
 @app.post("/v1/account/recover")
-def account_recover(req: LoginReq):
-    return account_login(req)
+def account_recover(req: LoginReq, request: Request):
+    return account_login(req, request)
 
 
 # ── 1c. Устройства ────────────────────────────────────────────────────────────
@@ -651,8 +721,7 @@ def admin_set_flags(req: FlagsReq, p: Principal = Depends(require("flags"))):
     merged = _deep_merge(cur, req.flags or {})
     merged["version"] = (cur.get("version", 1) or 1) + 1
     try:
-        with open("flags.json", "w", encoding="utf-8") as f:
-            json.dump(merged, f, ensure_ascii=False, indent=2)
+        _atomic_write_json("flags.json", merged)
     except OSError as e:
         raise HTTPException(500, f"flags_write_failed:{e}")
     log.info("флаги обновлены из панели → v%s", merged["version"])
@@ -677,8 +746,7 @@ def admin_set_economy(req: EconomyReq, p: Principal = Depends(require("economy")
     cur = economy()
     merged = _deep_merge(cur, req.economy)
     try:
-        with open("economy.json", "w", encoding="utf-8") as f:
-            json.dump(merged, f, ensure_ascii=False, indent=2)
+        _atomic_write_json("economy.json", merged)
     except OSError as e:
         raise HTTPException(500, f"economy_write_failed:{e}")
     log.info("экономика обновлена из панели")
@@ -845,6 +913,17 @@ def _coverage(aid: str) -> str:
 # списание: узел шлёт ИТОГО минут сессии, сервер вычитает только прирост. Эфемерно
 # (в память): падение процесса просто закрывает сессии — узел переавторизуется.
 node_sessions: dict[str, dict] = {}
+NODE_SESSION_TTL = 2 * 3600      # лиз ≤30 мин; всё старше 2ч — заведомо мёртвая сессия
+
+def _evict_node_sessions():
+    """Убрать протухшие сессии (узел переавторизуется каждые ≤30 мин, получая НОВЫЙ
+    токен — старые мертвы), иначе node_sessions растёт без предела. Sweep только когда
+    накопилось (амортизация)."""
+    if len(node_sessions) <= 1000:
+        return
+    cutoff = int(time.time()) - NODE_SESSION_TTL
+    for st in [st for st, s in node_sessions.items() if s.get("created_at", 0) < cutoff]:
+        node_sessions.pop(st, None)
 
 # ── Репутация и реферальные выплаты ────────────────────────────────────────────
 def _reputation(aid: str):
@@ -1010,6 +1089,8 @@ def purchase(req: PurchaseReq, token: str = Depends(auth)):
 def mock_checkout(payment_id: str):
     """Мок «страницы провайдера»: сумма + кнопка «Оплатить (тест)». Кнопка шлёт confirm,
     как будто пользователь оплатил у провайдера. Только для dev-режима PAY_PROVIDER=mock."""
+    if PAY_PROVIDER != "mock":
+        raise HTTPException(404, "not_found")   # в боевом/sandbox режиме мок-роут закрыт
     pay = payments.get(payment_id)
     if not pay:
         raise HTTPException(404, "no_payment")
@@ -1035,7 +1116,13 @@ def mock_checkout(payment_id: str):
 @app.post("/v1/billing/mock/confirm/{payment_id}")
 def mock_confirm(payment_id: str):
     """Эмуляция успешного колбэка провайдера: подтверждает pending-платёж и начисляет
-    продукт. Идемпотентно (повторный вызов не начисляет дважды). Только dev (mock)."""
+    продукт. Идемпотентно (повторный вызов не начисляет дважды). Только dev (mock).
+
+    ГЕЙТ: работает ТОЛЬКО при PAY_PROVIDER=='mock'. Иначе (боевой провайдер/sandbox)
+    роут закрыт (404) — иначе после перехода на реального провайдера любой мог бы
+    подтвердить свой pending-платёж бесплатно этим неаутентифицированным колбэком."""
+    if PAY_PROVIDER != "mock":
+        raise HTTPException(404, "not_found")
     pay = payments.get(payment_id)
     if not pay:
         raise HTTPException(404, "no_payment")
@@ -1052,9 +1139,10 @@ class DiscountCheckReq(BaseModel):
     region: str = "ru"
 
 @app.post("/v1/billing/discount/check")
-def discount_check(req: DiscountCheckReq, token: str = Depends(auth)):
+def discount_check(req: DiscountCheckReq, request: Request, token: str = Depends(auth)):
     """Проверить код-купон до оплаты (как проверка ключа): годен ли к этому продукту,
     какой процент и итоговая сумма. Ничего не списывает."""
+    _rate_limit("discount", request, DISCOUNT_LIMIT_PER_HOUR)   # против перебора купонов
     aid = _account_of(token)
     if not aid:
         raise HTTPException(400, "no_account")
@@ -1231,6 +1319,7 @@ async def node_authorize(request: Request):
         lease = min(int(sub.get("active_minutes_left", 0)), 30)
     else:
         lease = 30
+    _evict_node_sessions()
     stoken = b32(secrets.token_bytes(12))
     node_sessions[stoken] = {"node_id": node_id, "account_id": aid,
                              "charged": 0, "created_at": int(time.time())}
@@ -1303,8 +1392,10 @@ class GrantReq(BaseModel):
     reason: str = "owner_grant"
 
 @app.post("/v1/admin/grant")
-def admin_grant(req: GrantReq, p: "Principal" = Depends(require("users"))):
-    """Грант премиума по решению оператора (комп/бонус; не покупается массово)."""
+def admin_grant(req: GrantReq, p: "Principal" = Depends(require("billing"))):
+    """Грант премиума по решению оператора (комп/бонус; не покупается массово).
+    Требует scope `billing`: это МИНТ ценности (в т.ч. пожизненный ultimate) — не под
+    `users` (управление пользователями), иначе саппорт-работник начислял бы безлимит."""
     if req.account_id not in idaccounts:
         raise HTTPException(404, "no_account")
     g = {"tier": req.tier, "expires": req.days, "source": "owner_grant", "reason": req.reason}
@@ -1550,8 +1641,12 @@ async def node_register(request: Request):
                                 "load_pct": node.get("loadPct", node.get("load_pct"))}
     _save_node_health()
     _bump_and_rebuild()                    # набор узлов изменился → версия+подпись
-    # выдаём узлу ЕГО собственный секрет для дальнейших вызовов (node/session, heartbeat)
-    node_secret = _node_secrets.get(node["id"]) or b32(secrets.token_bytes(24))
+    # Выдаём узлу СВЕЖИЙ per-node секрет и РОТИРУЕМ старый. id узлов публичны (они в
+    # подписанном манифесте), а register авторизуется общим NODE_SECRET — если бы мы
+    # возвращали уже выданный секрет, любой со знанием общего секрета мог бы восстановить
+    # per-node секрет каждого узла и подделывать его heartbeat/session. Легитимный узел
+    # берёт секрет из ответа последнего register.
+    node_secret = b32(secrets.token_bytes(24))
     _node_secrets[node["id"]] = node_secret
     persist.jsave("node_secrets.json", _node_secrets)
     return {"ok": True, "id": node["id"], "total_nodes": len(cur),
@@ -1630,7 +1725,13 @@ async def node_heartbeat(request: Request):
 # кладётся в тред и ждёт ОПЕРАТОРА (никаких фейковых авто-ответов). Оператор
 # (владелец/работник со scope «support») отвечает из панели Server-in-a-Box.
 def _thread_key(token: str) -> str:
-    return accounts.get(token, {}).get("account_id") or token
+    aid = accounts.get(token, {}).get("account_id")
+    if aid:
+        return aid                       # зарегистрированный: account_id публичен и безопасен
+    # Гость: НЕ ключуем тред самим bearer-токеном — иначе он утекает работникам
+    # поддержки (список тредов /v1/admin/support/threads) и позволяет угнать сессию.
+    # Берём необратимый хеш токена — он идентифицирует тред, но не является ключом входа.
+    return "g:" + hashlib.sha256(token.encode()).hexdigest()[:32]
 
 @app.get("/v1/support/thread")
 def get_thread(token: str = Depends(auth)):
@@ -1640,9 +1741,12 @@ def get_thread(token: str = Depends(auth)):
 def post_message(req: MsgReq, token: str = Depends(auth)):
     key = _thread_key(token)
     msg = {"from": "user", "text": req.text, "at": _now()}
-    if req.diag:
+    if req.diag and len(json.dumps(req.diag)) <= 8000:   # ограничиваем размер диагностики
         msg["diag"] = req.diag
-    threads.setdefault(key, []).append(msg)
+    th = threads.setdefault(key, [])
+    th.append(msg)
+    if len(th) > 200:                        # предел сообщений в треде (анти-спам, как audit_log)
+        del th[:len(th) - 200]
     _save_threads()
     log.info("support: новое обращение в треде %s (ждёт оператора)", key[:8])
     return {"ok": True, "awaiting_operator": True}
@@ -1790,8 +1894,9 @@ class BalanceAdjustReq(BaseModel):
     reason: str = "operator_adjust"
 
 @app.post("/v1/admin/user/{aid}/balance")
-def admin_adjust_balance(aid: str, req: BalanceAdjustReq, p: Principal = Depends(require("users"))):
-    """Начислить/списать активные минуты (комп/возврат/коррекция). Пишет в журнал."""
+def admin_adjust_balance(aid: str, req: BalanceAdjustReq, p: Principal = Depends(require("billing"))):
+    """Начислить/списать активные минуты (комп/возврат/коррекция). Пишет в журнал.
+    Требует scope `billing` (минт баланса — деньги), не `users`."""
     if aid not in idaccounts:
         raise HTTPException(404, "no_account")
     sub = _sub(aid)

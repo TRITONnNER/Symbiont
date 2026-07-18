@@ -32,6 +32,7 @@ def _conn() -> sqlite3.Connection:
         c = sqlite3.connect(path, check_same_thread=False)
         c.execute("PRAGMA journal_mode=WAL")
         c.execute("PRAGMA synchronous=NORMAL")
+        c.execute("PRAGMA busy_timeout=5000")   # ждём до 5с при блокировке (напр. параллельный бэкап-процесс), а не мгновенный "database is locked"
         c.execute("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)")
         c.commit()
         _conns[path] = c
