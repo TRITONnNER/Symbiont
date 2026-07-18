@@ -451,7 +451,7 @@ def account_register(req: RegisterReq, request: Request):
         if inviter:
             idaccounts[aid]["invited_by"] = inviter
             idaccounts[inviter].setdefault("referrals", []).append(aid)
-            reg = DEFAULT_ECONOMY["referral"]["register"]
+            reg = _eff_economy()["referral"]["register"]
             _grant_days(aid, reg["invitee"], "ref_register")
             if _can_payout(inviter) and not idaccounts[inviter].get("fraud"):
                 _grant_days(inviter, reg["inviter"], "ref_register")
@@ -477,8 +477,13 @@ def account_login(req: LoginReq):
         aid = aliases.get(identity.alias_hmac(req.alias.value, req.alias.kind))
         if aid:
             acc = idaccounts[aid]
-            if acc.get("password_hash") and not (
-                    req.password and identity.verify_password(req.password, acc["password_hash"])):
+            # Алиас (ник/почта/телефон) — ПУБЛИЧНЫЙ и непроверенный. Вход по нему
+            # разрешён ТОЛЬКО с верным паролем. У аккаунта без пароля единственный
+            # секрет — recovery-код; пускать его по одному алиасу нельзя, иначе любой,
+            # кто знает ник, захватывает аккаунт.
+            ok = bool(acc.get("password_hash")) and bool(req.password) and \
+                identity.verify_password(req.password, acc["password_hash"])
+            if not ok:
                 aid = None
     if not aid:
         raise HTTPException(401, "login_failed")
@@ -566,9 +571,12 @@ DEFAULT_ECONOMY = {
     ]},
 }
 
-@app.get("/v1/config/economy")
-def economy():
-    """Все числа экономики — отсюда; приложение рендерит тарифы/награды/репутацию из этого."""
+def _eff_economy() -> dict:
+    """Действующая экономика: правки владельца (economy.json) поверх дефолта.
+    ЕДИНЫЙ источник и для витрины, и для реальных сумм/наград — иначе цена, которую
+    видит пользователь, расходится со списанием, а правки цен/наград в панели не
+    влияют на списания и выплаты. economy.json всегда полный (deep-merge при записи),
+    поэтому обращения по ключам безопасны."""
     if os.path.exists("economy.json"):
         try:
             with open("economy.json", encoding="utf-8") as f:
@@ -576,6 +584,11 @@ def economy():
         except Exception as e:
             log.warning("economy.json не загружен: %s", e)
     return DEFAULT_ECONOMY
+
+@app.get("/v1/config/economy")
+def economy():
+    """Все числа экономики — отсюда; приложение рендерит тарифы/награды/репутацию из этого."""
+    return _eff_economy()
 
 
 # ── Фиче-флаги: что показывать на сайте и в приложении ─────────────────────────
@@ -729,7 +742,7 @@ def _price_of(product: str, region: str = "ru", method: str = "sbp") -> dict:
     """Сумма к оплате из экономики. region: 'ru'→₽, иначе 'intl'→$. Крипта даёт
     −crypto_discount. Возвращает {amount, currency}. Правда о цене — здесь (и её же
     отдаём боевому провайдеру при интеграции)."""
-    pr = DEFAULT_ECONOMY["prices"]
+    pr = _eff_economy()["prices"]
     reg = "ru" if region == "ru" else "intl"
     cur = "RUB" if reg == "ru" else "USD"
     if product.startswith("balance_"):
@@ -911,14 +924,14 @@ def _apply_purchase(aid: str, product: str, method: str) -> dict:
         before = idaccounts[aid].get("paid_months", 0)
         after = before + add_months
         idaccounts[aid]["paid_months"] = after
-        combo = DEFAULT_ECONOMY["combo"]
+        combo = _eff_economy()["combo"]
         for thr, bonus in zip(combo["thresholds_months"], combo["bonus_days"]):
             if before < thr <= after:
                 _grant_days(aid, bonus, f"combo_{thr}m")
         # реферальная награда инвайтеру за покупку (метится лимитом репутации)
         inviter = idaccounts[aid].get("invited_by")
         if inviter and inviter in idaccounts and _can_payout(inviter) and not idaccounts[inviter].get("fraud"):
-            ref = DEFAULT_ECONOMY["referral"]
+            ref = _eff_economy()["referral"]
             key = ("premium_year" if product == "premium_year" else
                    "ultimate" if "ultimate" in product else "premium_month")
             r = ref.get(key, ref["premium_month"])
@@ -1326,7 +1339,7 @@ def referral_info(token: str = Depends(auth)):
     used = len([t for t in acc.get("payout_log", []) if now - t < 30 * 86400])
     refs = acc.get("referrals", [])
     converted = len([r for r in refs if idaccounts.get(r, {}).get("paid_months", 0) > 0])
-    rep_meta = next((x for x in DEFAULT_ECONOMY["reputation"] if x["level"] == lvl), {})
+    rep_meta = next((x for x in _eff_economy()["reputation"] if x["level"] == lvl), {})
     return {"invite_code": acc.get("invite_code"),
             "reputation": {"level": lvl, "name": rep_meta.get("name", {}),
                            "payout_cap_month": cap, "multiplier": mult,
@@ -1350,6 +1363,11 @@ def admin_fraud(req: FraudReq, p: "Principal" = Depends(require("users"))):
             return
         acc["fraud"] = True
         s = _sub(a); s["days_left"] = 0; s["active_minutes_left"] = 0; s["tier"] = "free"
+        # Снимаем и пожизненное покрытие: _coverage() отдаёт "lifetime" при
+        # granted_tier(expires=None) ИЛИ sub.lifetime, поэтому обнуления days/minutes
+        # мало — без этого ферма с owner-грантом сохраняла бы полный доступ.
+        s.pop("lifetime", None)
+        acc.pop("granted_tier", None)
         acc["tier"] = "free"
         flagged.append(a)
         for r in list(acc.get("referrals", [])):
@@ -1379,7 +1397,7 @@ def _today() -> str:
     return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d")
 
 def _wheel_segments():
-    return DEFAULT_ECONOMY.get("wheel", {}).get("segments", [])
+    return _eff_economy().get("wheel", {}).get("segments", [])
 
 def _wheel_index(aid: str, date: str) -> int:
     """Детерминированный индекс: hash(аккаунт:дата:сид). Один и тот же для пары —
@@ -1441,15 +1459,19 @@ def redeem(req: RedeemReq, token: str = Depends(auth)):
                   "key_expired": 410, "key_invalid": 422}.get(code, 422)
         raise HTTPException(status, code)
     a = accounts[token]
-    base = datetime.now(timezone.utc)
-    if a["paid_until"]:
-        cur = datetime.fromisoformat(a["paid_until"])
-        if cur > base: base = cur
-    paid_until = base + timedelta(days=res["grant_days"])
-    a["plan"] = res["plan"] if res["plan"] != "topup" else a["plan"]
-    a["paid_until"] = paid_until.isoformat()
-    a["max_sessions"] = 5 if a["plan"] == "pro" else a["max_sessions"]
-    _save_accounts()
+    # Продлеваем сессионную запись ТОЛЬКО при реальном погашении. Идемпотентный
+    # повтор (тот же ключ той же личностью/токеном) НЕ должен добавлять дни ещё раз —
+    # иначе одноразовый ключ бесконечно продлевает премиум повторными вызовами.
+    if not res.get("idempotent"):
+        base = datetime.now(timezone.utc)
+        if a["paid_until"]:
+            cur = datetime.fromisoformat(a["paid_until"])
+            if cur > base: base = cur
+        paid_until = base + timedelta(days=res["grant_days"])
+        a["plan"] = res["plan"] if res["plan"] != "topup" else a["plan"]
+        a["paid_until"] = paid_until.isoformat()
+        a["max_sessions"] = 5 if a["plan"] == "pro" else a["max_sessions"]
+        _save_accounts()
     # Начислить и на ИДЕНТИТИ-слой (billing/ledger видят оплату ключом; переживает
     # перелогин). Только для зарегистрированных и только при реальном (не идемпотентном) погашении.
     if aid and not res.get("idempotent") and res["grant_days"] > 0:

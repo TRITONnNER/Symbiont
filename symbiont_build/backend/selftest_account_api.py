@@ -26,9 +26,10 @@ rec = d["recovery_code"]; aid = d["account_id"]
 r = c.post("/v1/account/register", json={"aliases": [{"value": "+ 1", "kind": "phone"}]})
 check(r.status_code == 409, "повтор '+ 1' → 409 alias_taken")
 
-# 3. Вход по нику (регистронезависимо)
+# 3. Вход по ОДНОМУ нику без секрета — ОТКАЗ (алиас публичен, не является ключом;
+#    единственный ключ к беспарольному аккаунту — recovery-код, см. п.4).
 r = c.post("/v1/account/login", json={"alias": {"value": "cooldude", "kind": "nick"}})
-check(r.status_code == 200 and r.json()["account_id"] == aid, "вход по нику → тот же аккаунт")
+check(r.status_code == 401, "вход по одному нику (без секрета) → 401")
 
 # 4. Вход по recovery-коду
 r = c.post("/v1/account/recover", json={"recovery_code": rec})

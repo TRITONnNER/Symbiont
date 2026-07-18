@@ -57,7 +57,8 @@ code = c.post("/v1/admin/issue", headers=ADMIN, json={"plan": "pro", "grant_days
 u2 = reg("multi")
 r1 = c.post("/v1/key/redeem", json={"code": code}, headers=hdr(u2["token"]))
 check(r1.status_code == 200 and r1.json()["idempotent"] is False, "#2 многоразовый ключ: первое погашение")
-relog = c.post("/v1/account/login", json={"alias": {"value": "multi", "kind": "nick"}}).json()
+# перелогин защищённым путём — recovery-код (вход по одному нику отклоняется)
+relog = c.post("/v1/account/login", json={"recovery_code": u2["recovery_code"]}).json()
 r2 = c.post("/v1/key/redeem", json={"code": code}, headers=hdr(relog["token"]))
 check(r2.status_code == 200 and r2.json()["idempotent"] is True,
       "#2 тот же аккаунт после перелогина → идемпотентно (не тратит use)")
