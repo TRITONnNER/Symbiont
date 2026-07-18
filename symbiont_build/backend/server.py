@@ -1397,6 +1397,41 @@ async def node_register(request: Request):
             "stale_after_sec": NODE_STALE_SEC}
 
 
+# ── 3b. Управление узлами для оператора (Server-in-a-Box) ──────────────────────
+@app.get("/v1/admin/nodes")
+def admin_list_nodes(_: None = Depends(admin)):
+    """Список зарегистрированных узлов + живость/загрузка — для управления флотом."""
+    data = persist.jload("nodes.json", {"nodes": []})
+    cur = data.get("nodes") if isinstance(data, dict) else (data or [])
+    now = int(time.time())
+    out = []
+    for n in cur:
+        h = _node_health.get(n["id"], {})
+        last = h.get("last_seen")
+        out.append({"id": n["id"], "code": n.get("code"), "country": n.get("country"),
+                    "host": n.get("host"), "protocols": n.get("protocols"),
+                    "roles": n.get("roles", []),
+                    "load_pct": h.get("load_pct", n.get("loadPct")),
+                    "last_seen": last,
+                    "alive": (last is not None and (now - last) <= NODE_STALE_SEC)})
+    return {"nodes": out, "total": len(out), "version": MANIFEST_VERSION,
+            "stale_after_sec": NODE_STALE_SEC}
+
+@app.post("/v1/admin/node/{node_id}/remove")
+def admin_remove_node(node_id: str, _: None = Depends(admin)):
+    """Снять узел из манифеста (оператор). Секрет узла отзывается, манифест пересобирается."""
+    data = persist.jload("nodes.json", {"nodes": []})
+    cur = data.get("nodes") if isinstance(data, dict) else (data or [])
+    new = [n for n in cur if n.get("id") != node_id]
+    if len(new) == len(cur):
+        raise HTTPException(404, "no_node")
+    persist.jsave("nodes.json", {"nodes": new})
+    _node_health.pop(node_id, None); _save_node_health()
+    _node_secrets.pop(node_id, None); persist.jsave("node_secrets.json", _node_secrets)
+    _bump_and_rebuild()
+    return {"ok": True, "removed": node_id, "total_nodes": len(new), "version": MANIFEST_VERSION}
+
+
 # ── 3c. Heartbeat узла (само-починка: живой → в манифесте, замолчал → выпал) ───
 @app.post("/v1/node/heartbeat")
 async def node_heartbeat(request: Request):

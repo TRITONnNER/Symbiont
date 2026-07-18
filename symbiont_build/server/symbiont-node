@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# symbiont-node — управление узлом Симбионта прямо на сервере (Server-in-a-Box CLI).
+#   symbiont-node status            состояние узла и heartbeat, инфо об узле
+#   symbiont-node logs [N] [-f]     логи sing-box (N строк; -f — следить)
+#   symbiont-node restart           перезапустить узел
+#   symbiont-node update            обновить узел до свежей версии (та же команда установки)
+#   symbiont-node remove            снять узел (пропадёт из списка серверов; файлы — вручную)
+#   symbiont-node info              полный манифест узла
+set -euo pipefail
+GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; NC='\033[0m'
+
+ENVF=/etc/symbiont/sib.env
+[ -f "$ENVF" ] && . "$ENVF" || true
+NODE_SVC="sing-box-symbiont"
+HB_TIMER="symbiont-heartbeat.timer"
+MANIFEST="${DEST:-/opt/symbiont}/server/out/manifest_node.json"
+
+_active() { systemctl is-active --quiet "$1" 2>/dev/null; }
+
+case "${1:-status}" in
+  status)
+    if _active "$NODE_SVC"; then echo -e "${GREEN}узел:${NC} активен ✓"; else echo -e "${RED}узел:${NC} не активен ✗ (symbiont-node logs)"; fi
+    if _active "$HB_TIMER"; then echo -e "${GREEN}heartbeat:${NC} активен ✓ (виден в списке серверов)"; else echo -e "${YELLOW}heartbeat:${NC} выключен (узел уйдёт из списка)"; fi
+    if [ -f "$MANIFEST" ]; then
+      python3 - "$MANIFEST" <<'PY' 2>/dev/null || true
+import json,sys
+d=json.load(open(sys.argv[1]))
+print("узел:", d.get("id"), "·", d.get("country"), d.get("code",""))
+print("протоколы:", ", ".join(d.get("protocols", [])))
+PY
+    fi
+    ;;
+  logs)
+    n="100"; follow=""
+    for a in "${@:2}"; do case "$a" in -f|--follow) follow="-f";; [0-9]*) n="$a";; esac; done
+    # shellcheck disable=SC2086
+    journalctl -u "$NODE_SVC" -n "$n" --no-pager $follow
+    ;;
+  restart)
+    systemctl restart "$NODE_SVC" && echo -e "${GREEN}узел перезапущен${NC}"
+    ;;
+  update)
+    [ -n "${SYMBIONT_SRC:-}" ] && [ -n "${REGISTER_TO:-}" ] && [ -n "${NODE_SECRET:-}" ] \
+      || { echo -e "${RED}нет /etc/symbiont/sib.env — переустанови через get.sh${NC}"; exit 1; }
+    echo "обновляю узел…"
+    curl -fsSL "$SYMBIONT_SRC/server/get.sh" | SYMBIONT_SRC="$SYMBIONT_SRC" bash -s -- \
+      --register-to "$REGISTER_TO" --node-secret "$NODE_SECRET"
+    ;;
+  remove)
+    echo "снимаю узел с сервера…"
+    systemctl disable --now "$HB_TIMER" >/dev/null 2>&1 || true
+    systemctl disable --now "$NODE_SVC" >/dev/null 2>&1 || true
+    echo -e "${GREEN}остановлен и отключён.${NC} Без heartbeat бэкенд сам уберёт его из списка"
+    echo "серверов через ~2–3 мин (self-heal). Удалить файлы:  rm -rf /opt/symbiont /etc/symbiont"
+    ;;
+  info)
+    [ -f "$MANIFEST" ] && cat "$MANIFEST" || echo "манифест узла не найден ($MANIFEST)"
+    ;;
+  -h|--help|help)
+    grep '^#' "$0" | sed 's/^# \{0,1\}//'
+    ;;
+  *)
+    echo "symbiont-node <status|logs [N] [-f]|restart|update|remove|info>"; exit 1;;
+esac
