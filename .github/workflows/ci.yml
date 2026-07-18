@@ -47,6 +47,21 @@ jobs:
           go build ./...
           go vet ./...
 
+  web:
+    name: Web/JS (syntax + inline .dc.html + connector self-tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax-check all JS + inline .dc.html scripts
+        run: node tools/check_js.mjs
+      - name: Connector self-tests (app + site ↔ backend contract)
+        run: |
+          node app/selftest_connector.js
+          node site/selftest_connector.js
+
   client:
     name: Flutter analyze (advisory)
     runs-on: ubuntu-latest
