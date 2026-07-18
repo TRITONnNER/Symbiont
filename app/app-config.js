@@ -96,16 +96,18 @@
     /* ── Список узлов (серверов) ──────────────────────────────────────────
        Нейтральные поля; названия страны/города берутся из локализации
        (SYM_I18N geo) либо из полей country/city, если сервер их пришлёт. */
-    nodes: [
-      { code: 'NL', host: 'ams-03.symbiont.net', ping: 38,  load: 34, fav: true },
-      { code: 'DE', host: 'fra-01.symbiont.net', ping: 46,  load: 58, fav: true },
-      { code: 'FI', host: 'hel-02.symbiont.net', ping: 31,  load: 22, fav: false },
-      { code: 'SE', host: 'sto-01.symbiont.net', ping: 41,  load: 67, fav: false },
-      { code: 'FR', host: 'par-04.symbiont.net', ping: 52,  load: 81, fav: false },
-      { code: 'TR', host: 'ist-02.symbiont.net', ping: 69,  load: 44, fav: false },
-      { code: 'US', host: 'nyc-07.symbiont.net', ping: 118, load: 39, fav: false },
-      { code: 'JP', host: 'tyo-01.symbiont.net', ping: 142, load: 93, fav: false }
-    ],
+    // БЕЗ заготовок: реальных серверов пока нет. Узлы приходят из /v1/manifest
+    // (адаптер app-api.js). Пустой список = честное состояние «серверов ещё нет».
+    nodes: [],
+
+    /* ── Контакты/бренд (владелец заполняет реальными) ── */
+    contacts: {
+      email: 'support@example.com',          // TODO: реальный e-mail поддержки
+      telegram: '',                          // TODO: https://t.me/…
+      site: '',                              // TODO: домен
+      legal_entity: '',                      // TODO: юрлицо для копирайта
+      socials: []                            // TODO: ссылки
+    },
 
     /* ── GET /v1/account/status → кошелёк, план, токен ────────────────── */
     account: {
