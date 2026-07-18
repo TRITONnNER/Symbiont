@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="./site-i18n.js"></script>
+<script src="./site-config.js"></script>
+<script src="./site-api.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html{scroll-behavior:smooth;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  ::-webkit-scrollbar-track{background:#070A0F;}
+  @keyframes sym-aurora1{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-42%,-46%) scale(1.15)}}
+  @keyframes sym-aurora2{0%,100%{transform:translate(0,0) scale(1.05)}50%{transform:translate(-6%,-8%) scale(1)}}
+  @keyframes sym-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes sym-ping2{0%{transform:scale(0.7);opacity:0.7}100%{transform:scale(2.4);opacity:0}}
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(120% 80% at 50% -10%, #0C1614, #070A0F 58%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; overflow-x:hidden; direction:{{ dir }};">
+
+  <dc-import name="SiteHeader" active="home" style="display:block; width:100%;" hint-size="100%,64px"></dc-import>
+
+  <!-- ===== HERO ===== -->
+  <section style="position:relative; max-width:1240px; margin:0 auto; padding:76px 32px 70px;">
+    <div style="position:absolute; left:64%; top:34%; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(52,229,176,0.20), transparent 62%); filter:blur(30px); animation:sym-aurora1 14s ease-in-out infinite; pointer-events:none; z-index:0;"></div>
+    <div style="position:absolute; left:2%; top:8%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(91,155,255,0.12), transparent 65%); filter:blur(34px); animation:sym-aurora2 17s ease-in-out infinite; pointer-events:none; z-index:0;"></div>
+
+    <div style="position:relative; z-index:1; display:grid; grid-template-columns:1.02fr 0.98fr; gap:40px; align-items:center;">
+      <div style="display:flex; flex-direction:column; gap:24px; min-width:0;">
+        <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px 7px 11px; border-radius:999px; background:rgba(52,229,176,0.09); border:1px solid rgba(52,229,176,0.22); width:fit-content;">
+          <span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:15px; color:#34E5B0;">auto_awesome</span>
+          <span style="font-size:12.5px; font-weight:600; color:#34E5B0; letter-spacing:0.01em;">{{ badge }}</span>
+        </div>
+        <h1 style="margin:0; font-size:57px; line-height:1.03; font-weight:800; letter-spacing:-0.028em; color:#EAF1EF;">{{ title1 }}<br><span style="background:linear-gradient(120deg,#3DF0BB,#5BE5A6 55%,#7FE3D0); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;">{{ title2 }}</span></h1>
+        <p style="margin:0; font-size:18px; line-height:1.55; color:#9DABA8; max-width:500px;">{{ subA }}<span style="color:#C2CCCA;">{{ chain }}</span>{{ subB }}</p>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:2px;">
+          <a href="Симбионт - сайт - Скачать.dc.html" style="display:inline-flex; align-items:center; gap:9px; padding:15px 24px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15.5px; text-decoration:none; box-shadow:0 14px 34px -12px rgba(31,166,125,0.6);" style-hover="filter:brightness(1.06); transform:translateY(-1px);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">download</span>{{ ctaDownload }}</a>
+          <a href="#cascade" style="display:inline-flex; align-items:center; gap:9px; padding:15px 22px; border-radius:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:15.5px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.07); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">play_circle</span>{{ ctaHow }}</a>
+        </div>
+        <div style="display:flex; align-items:center; gap:18px; margin-top:8px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:9px; color:#7C8A99;">
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">phone_iphone</span>
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">android</span>
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">desktop_windows</span>
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">laptop_mac</span>
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">terminal</span>
+            <span style="font-family:'Material Symbols Rounded'; font-size:19px;">extension</span>
+          </div>
+          <span style="width:1px; height:18px; background:rgba(255,255,255,0.12);"></span>
+          <span style="font-size:13px; color:#7C8A99;"><span style="color:#EAF1EF; font-weight:600;">{{ platforms }}</span> · {{ nodesRegions }}</span>
+          <span style="width:1px; height:18px; background:rgba(255,255,255,0.12);"></span>
+          <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#7C8A99;"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#34E5B0;">visibility_off</span>{{ noLogs }}</span>
+        </div>
+      </div>
+
+      <div style="position:relative; display:flex; justify-content:center; align-items:center; min-height:480px;">
+        <div style="position:relative; width:100%; max-width:440px; padding:34px 28px 30px; border-radius:26px; background:linear-gradient(165deg, rgba(18,28,26,0.9), rgba(10,15,17,0.85)); border:1px solid rgba(255,255,255,0.08); box-shadow:0 40px 100px -34px rgba(0,0,0,0.75); display:flex; flex-direction:column; align-items:center; gap:22px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+            <span style="font-size:10.5px; font-weight:800; letter-spacing:0.16em; color:#566270;">{{ brandCaps }}</span>
+            <span style="display:inline-flex; align-items:center; gap:7px; padding:5px 11px; border-radius:999px; background:rgba(52,229,176,0.10); border:1px solid rgba(52,229,176,0.24);"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:13px; color:#34E5B0;">gpp_good</span><span style="font-size:11px; font-weight:700; color:#34E5B0;">{{ protectedTxt }}</span></span>
+          </div>
+          <dc-import name="ConnectionCore" state="connected" stage="tunnel" size="260" ping="38" protocol="reality" lang="{{ lang }}" hint-size="270px,380px"></dc-import>
+          <div style="display:flex; gap:9px; width:100%;">
+            <div style="flex:1; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:11px 8px;"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">38</div><div style="font-size:10px; color:#6E7B8A; margin-top:2px;">{{ pingMs }}</div></div>
+            <div style="flex:1; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:11px 8px;"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">0.0</div><div style="font-size:10px; color:#6E7B8A; margin-top:2px;">{{ lossPct }}</div></div>
+            <div style="flex:1; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:11px 8px;"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:15px; color:#34E5B0; margin-top:2px;">reality</div><div style="font-size:10px; color:#6E7B8A; margin-top:3px;">{{ protoLabel }}</div></div>
+          </div>
+        </div>
+        <div style="position:absolute; top:8px; left:-6px; display:flex; align-items:center; gap:9px; padding:10px 13px; border-radius:13px; background:rgba(14,20,19,0.94); border:1px solid rgba(245,196,81,0.28); box-shadow:0 18px 40px -18px rgba(0,0,0,0.7); animation:sym-float 6s ease-in-out infinite;">
+          <span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#F5C451;">radar</span>
+          <div style="line-height:1.25;"><div style="font-size:12px; font-weight:700; color:#EAF1EF;">{{ curtainFound }}</div><div style="font-size:10.5px; color:#7C8A99;">{{ curtainHold }}</div></div>
+        </div>
+        <div style="position:absolute; bottom:24px; right:-8px; display:flex; align-items:center; gap:9px; padding:10px 13px; border-radius:13px; background:rgba(14,20,19,0.94); border:1px solid rgba(52,229,176,0.26); box-shadow:0 18px 40px -18px rgba(0,0,0,0.7); animation:sym-float 6s ease-in-out infinite 1.5s;">
+          <span style="width:16px; height:16px; border-radius:5px; overflow:hidden; background:linear-gradient(180deg,#AE1C28 33%,#F4F4F4 33% 66%,#21468B 66%); flex:0 0 auto;"></span>
+          <div style="line-height:1.25;"><div style="font-size:12px; font-weight:700; color:#EAF1EF;">{{ city }}</div><div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#5BE5A6;">38 мс · 34%</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CASCADE (signature) ===== -->
+  <section id="cascade" style="scroll-margin-top:80px; border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1240px; margin:0 auto; padding:84px 32px;">
+      <div style="display:flex; flex-direction:column; gap:12px; max-width:680px; margin-bottom:40px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ cascLabel }}</span>
+        <h2 style="margin:0; font-size:38px; font-weight:800; letter-spacing:-0.02em; line-height:1.08;">{{ cascTitle }}</h2>
+        <p style="margin:0; font-size:16.5px; line-height:1.55; color:#7C8A99;">{{ cascSub }}</p>
+      </div>
+
+      <div style="display:flex; align-items:stretch; gap:0; flex-wrap:wrap;">
+        <sc-for list="{{ stages }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex; align-items:stretch; flex:1 1 180px; min-width:150px;">
+            <sc-if value="{{ s.showConn }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; padding:0 2px;"><span style="{{ s.connStyle }}"></span></div>
+            </sc-if>
+            <div onClick="{{ s.onClick }}" style="{{ s.chipStyle }}" style-hover="border-color:rgba(255,255,255,0.16);">
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <span style="{{ s.iconStyle }}">{{ s.icon }}</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#566270;">0{{ s.n }}</span>
+              </div>
+              <div style="{{ s.nameStyle }}">{{ s.name }}</div>
+              <div style="font-size:11.5px; color:#7C8A99;">{{ s.tagline }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:22px; display:grid; grid-template-columns:auto 1fr; gap:24px; align-items:center; padding:26px 28px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+        <div style="{{ detailIconWrap }}"><span style="{{ detailIcon }}">{{ detailIconName }}</span></div>
+        <div style="display:flex; flex-direction:column; gap:9px; min-width:0;">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;"><span style="font-weight:800; font-size:22px; color:#EAF1EF; letter-spacing:-0.01em;">{{ detailName }}</span><span style="{{ detailExStyle }}">{{ detailEx }}</span></div>
+          <p style="margin:0; font-size:15px; line-height:1.55; color:#C2CCCA; max-width:720px;">{{ detailDesc }}</p>
+          <div style="display:inline-flex; align-items:center; gap:8px; margin-top:2px; font-size:12.5px; color:#7C8A99;"><span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#34E5B0;">verified</span>{{ honest }}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="features" style="scroll-margin-top:80px; max-width:1240px; margin:0 auto; padding:84px 32px;">
+    <div style="display:flex; flex-direction:column; gap:12px; max-width:680px; margin-bottom:38px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ featLabel }}</span>
+      <h2 style="margin:0; font-size:38px; font-weight:800; letter-spacing:-0.02em; line-height:1.08;">{{ featTitle }}</h2>
+      <p style="margin:0; font-size:16.5px; line-height:1.55; color:#7C8A99;">{{ featSub }}</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(292px,1fr)); gap:16px;">
+      <sc-for list="{{ features }}" as="f" hint-placeholder-count="6">
+        <div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:17px; padding:22px; display:flex; flex-direction:column; gap:13px;" style-hover="border-color:rgba(52,229,176,0.22); background:rgba(52,229,176,0.02);">
+          <div style="{{ f.iconWrap }}"><span style="{{ f.iconStyle }}">{{ f.icon }}</span></div>
+          <div style="font-weight:700; font-size:17px; color:#EAF1EF; letter-spacing:-0.01em;">{{ f.title }}</div>
+          <div style="font-size:13.5px; line-height:1.55; color:#8E9A9F;">{{ f.body }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== LIVE INTERFACE ===== -->
+  <section style="border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1240px; margin:0 auto; padding:84px 32px;">
+      <div style="display:flex; flex-direction:column; gap:12px; max-width:680px; margin-bottom:38px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ liveLabel }}</span>
+        <h2 style="margin:0; font-size:38px; font-weight:800; letter-spacing:-0.02em; line-height:1.08;">{{ liveTitle }}</h2>
+        <p style="margin:0; font-size:16.5px; line-height:1.55; color:#7C8A99;">{{ liveSub }}</p>
+      </div>
+      <div style="display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="flex:1 1 620px; min-width:0; border-radius:15px; overflow:hidden; background:#0C1110; border:1px solid #232b2a; box-shadow:0 40px 100px -34px rgba(0,0,0,0.7);">
+          <div style="height:40px; background:#11181A; display:flex; align-items:center; gap:9px; padding:0 16px; border-bottom:1px solid rgba(255,255,255,0.06); position:relative;">
+            <span style="width:12px; height:12px; border-radius:50%; background:#FF5F57;"></span>
+            <span style="width:12px; height:12px; border-radius:50%; background:#FEBC2E;"></span>
+            <span style="width:12px; height:12px; border-radius:50%; background:#28C840;"></span>
+            <span style="position:absolute; left:0; right:0; text-align:center; font-size:13px; font-weight:600; color:#8A97A0; pointer-events:none;">{{ winTitle }}</span>
+          </div>
+          <div style="width:100%; height:600px; position:relative;">
+            <dc-import name="Симбионт" vw="1140" screen="home" lang="{{ lang }}" chrome="0" embed="1" style="position:absolute; inset:0; width:100%; height:100%;" hint-size="100%,600px"></dc-import>
+          </div>
+        </div>
+        <div style="flex:0 0 300px; width:300px; border-radius:40px; padding:9px; background:#04080A; border:1px solid rgba(255,255,255,0.07); box-shadow:0 40px 90px -30px rgba(0,0,0,0.7);">
+          <div style="position:relative; background:#0A0F11; border-radius:32px; overflow:hidden; height:640px; display:flex; flex-direction:column;">
+            <div style="height:42px; flex:0 0 auto; background:#070A0F; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 8px; position:relative;">
+              <span style="font-weight:700; font-size:13px; color:#EAF1EF;">9:41</span>
+              <div style="position:absolute; left:50%; top:8px; transform:translateX(-50%); width:92px; height:25px; background:#000; border-radius:14px;"></div>
+              <div style="display:flex; align-items:center; gap:5px; color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:14px;">signal_cellular_alt</span><span style="font-family:'Material Symbols Rounded'; font-size:14px;">wifi</span><span style="font-family:'Material Symbols Rounded'; font-size:16px;">battery_full</span></div>
+            </div>
+            <div style="flex:1; min-height:0; position:relative;">
+              <dc-import name="Симбионт" vw="360" screen="routing" lang="{{ lang }}" chrome="0" embed="1" style="position:absolute; inset:0; width:100%; height:100%;" hint-size="100%,560px"></dc-import>
+            </div>
+            <div style="height:20px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; background:#070A0F;"><div style="width:120px; height:5px; border-radius:3px; background:rgba(255,255,255,0.5);"></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:22px; display:flex; justify-content:center;">
+        <a href="Симбионт - сайт - Скачать.dc.html" style="display:inline-flex; align-items:center; gap:9px; padding:13px 22px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14.5px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.07); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#34E5B0;">devices</span>{{ liveAll }}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== NUMBERS ===== -->
+  <section style="max-width:1240px; margin:0 auto; padding:66px 32px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;">
+      <sc-for list="{{ metrics }}" as="m" hint-placeholder-count="4">
+        <div style="display:flex; flex-direction:column; gap:6px; padding:24px 22px; border-radius:16px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+          <div style="display:flex; align-items:baseline; gap:5px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:34px; color:#EAF1EF; letter-spacing:-0.02em;">{{ m.v }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#34E5B0;">{{ m.u }}</span></div>
+          <div style="font-size:13.5px; color:#7C8A99;">{{ m.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:16px; display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; padding:16px; border-radius:14px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);">
+      <span style="font-size:12.5px; color:#7C8A99;">{{ numProtocols }}</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:#34E5B0; background:rgba(52,229,176,0.10); padding:5px 12px; border-radius:7px;">reality</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:#5B9BFF; background:rgba(91,155,255,0.10); padding:5px 12px; border-radius:7px;">hysteria2</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:#A78BFA; background:rgba(167,139,250,0.10); padding:5px 12px; border-radius:7px;">SS2022</span>
+    </div>
+  </section>
+
+  <!-- ===== PRICING TEASER ===== -->
+  <section style="border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1240px; margin:0 auto; padding:84px 32px;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:34px;">
+        <div style="display:flex; flex-direction:column; gap:12px; max-width:560px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ priceLabel }}</span>
+          <h2 style="margin:0; font-size:38px; font-weight:800; letter-spacing:-0.02em; line-height:1.08;">{{ priceTitle }}</h2>
+          <p style="margin:0; font-size:16.5px; line-height:1.55; color:#7C8A99;">{{ priceSub }}</p>
+        </div>
+        <a href="Симбионт - сайт - Цены.dc.html" style="display:inline-flex; align-items:center; gap:8px; padding:12px 18px; border-radius:11px; border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14px; text-decoration:none;" style-hover="color:#EAF1EF; border-color:rgba(52,229,176,0.3);">{{ priceAll }}<span style="font-family:'Material Symbols Rounded'; font-size:18px;">arrow_forward</span></a>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px;">
+        <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+          <div style="{{ p.cardStyle }}">
+            <sc-if value="{{ p.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute; top:16px; right:16px; font-size:10px; font-weight:800; letter-spacing:0.08em; color:#06231A; background:#34E5B0; padding:4px 10px; border-radius:6px;">{{ optimal }}</span></sc-if>
+            <div style="font-weight:700; font-size:17px; color:#EAF1EF;">{{ p.name }}</div>
+            <div style="display:flex; align-items:baseline; gap:4px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:34px; color:#EAF1EF; letter-spacing:-0.02em;">{{ p.price }}</span><span style="font-size:14px; color:#7C8A99;">{{ p.per }}</span></div>
+            <div style="height:1px; background:rgba(255,255,255,0.07); margin:4px 0;"></div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <sc-for list="{{ p.feats }}" as="ft" hint-placeholder-count="3">
+                <div style="display:flex; align-items:flex-start; gap:9px;"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#34E5B0; flex:0 0 auto;">check</span><span style="font-size:13.5px; color:#C2CCCA; line-height:1.4;">{{ ft }}</span></div>
+              </sc-for>
+            </div>
+            <a href="Симбионт - сайт - Цены.dc.html" style="{{ p.btnStyle }}" style-hover="filter:brightness(1.05);">{{ p.cta }}</a>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ TEASER ===== -->
+  <section style="max-width:900px; margin:0 auto; padding:84px 32px;">
+    <div style="display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; margin-bottom:34px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ faqLabel }}</span>
+      <h2 style="margin:0; font-size:36px; font-weight:800; letter-spacing:-0.02em; line-height:1.08;">{{ faqTitle }}</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:11px;">
+      <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="4">
+        <div onClick="{{ q.onClick }}" style="{{ q.cardStyle }}">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="flex:1; font-weight:600; font-size:16px; color:#EAF1EF;">{{ q.q }}</span>
+            <span style="{{ q.iconStyle }}">expand_more</span>
+          </div>
+          <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:12px 0 0; font-size:14.5px; line-height:1.6; color:#9DABA8;">{{ q.a }}</p>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:22px; display:flex; justify-content:center;">
+      <a href="Симбионт - сайт - Поддержка.dc.html#faq" style="display:inline-flex; align-items:center; gap:8px; color:#34E5B0; font-weight:600; font-size:14.5px; text-decoration:none;" style-hover="text-decoration:underline;">{{ faqAll }}<span style="font-family:'Material Symbols Rounded'; font-size:18px;">arrow_forward</span></a>
+    </div>
+  </section>
+
+  <!-- ===== FINAL CTA ===== -->
+  <section style="max-width:1240px; margin:0 auto; padding:20px 32px 88px;">
+    <div style="position:relative; overflow:hidden; border-radius:26px; padding:56px 40px; background:radial-gradient(120% 140% at 12% 0%, rgba(52,229,176,0.14), rgba(10,15,17,0.6) 55%), #0A0F11; border:1px solid rgba(52,229,176,0.22); display:flex; flex-direction:column; align-items:center; text-align:center; gap:20px;">
+      <div style="position:absolute; right:-60px; bottom:-90px; width:320px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(52,229,176,0.16), transparent 62%); filter:blur(30px); pointer-events:none;"></div>
+      <h2 style="position:relative; margin:0; font-size:40px; font-weight:800; letter-spacing:-0.022em; line-height:1.06; max-width:640px;">{{ ctaTitle1 }}<br>{{ ctaTitle2 }}</h2>
+      <p style="position:relative; margin:0; font-size:17px; color:#9DABA8; max-width:520px; line-height:1.5;">{{ ctaSub }}</p>
+      <div style="position:relative; display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-top:4px;">
+        <a href="Симбионт - сайт - Скачать.dc.html" style="display:inline-flex; align-items:center; gap:9px; padding:15px 26px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15.5px; text-decoration:none; box-shadow:0 14px 34px -12px rgba(31,166,125,0.6);" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">download</span>{{ ctaDownload }}</a>
+        <a href="Симбионт - сайт - Цены.dc.html#key" style="display:inline-flex; align-items:center; gap:9px; padding:15px 24px; border-radius:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.13); color:#EAF1EF; font-weight:600; font-size:15.5px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.09);"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">key</span>{{ checkKey }}</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" style="display:block; width:100%;" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { stage:'tunnel', faqOpen:0, lang:'ru' };
+  componentDidMount(){
+    try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({ lang:l }); }catch(e){}
+    this._onLang = (e) => { let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({ lang:l }); };
+    this._onStore = (e) => { if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({ lang:e.newValue }); };
+    this._onI18n = () => this.forceUpdate();
+    window.addEventListener('sym-lang', this._onLang);
+    window.addEventListener('storage', this._onStore);
+    window.addEventListener('sym-site-i18n', this._onI18n);
+  }
+  componentWillUnmount(){
+    if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
+    if(this._onStore) window.removeEventListener('storage', this._onStore);
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n);
+  }
+  renderVals(){
+    const lang = this.state.lang;
+    const T = (k)=> (typeof window!=='undefined' && window.symSiteT) ? window.symSiteT(lang,k) : k;
+    const rtl = (typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
+    const brand = (typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
+
+    const SC = { direct:'#5BE5A6', bypass:'#F5C451', tunnel:'#34E5B0', relay:'#A78BFA' };
+    const meta = [ {key:'direct',icon:'arrow_forward'}, {key:'bypass',icon:'blur_on'}, {key:'tunnel',icon:'vpn_lock'}, {key:'relay',icon:'hub'} ];
+    const stg = T('h_stages'); const stgArr = Array.isArray(stg) ? stg : [];
+    const sel = this.state.stage;
+    const selIdx = Math.max(0, meta.findIndex(d=>d.key===sel));
+    const stages = meta.map((d,i)=>{
+      const t = stgArr[i] || {};
+      const on = d.key===sel;
+      return { n:String(i+1), name:t.name, icon:d.icon, tagline:t.tagline, showConn:i>0,
+        onClick:()=>this.setState({stage:d.key}),
+        connStyle:{ width:'26px', height:'2px', borderRadius:'2px', background: i<=selIdx ? SC[sel]+'88' : 'rgba(255,255,255,0.10)' },
+        chipStyle:{ flex:1, display:'flex', flexDirection:'column', gap:'10px', padding:'18px 16px', borderRadius:'16px', cursor:'pointer',
+          border: on ? '1.5px solid '+SC[d.key] : '1px solid rgba(255,255,255,0.07)',
+          background: on ? SC[d.key]+'14' : 'rgba(255,255,255,0.025)',
+          boxShadow: on ? '0 0 44px -16px '+SC[d.key] : 'none', transition:'all .18s ease' },
+        iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings: on?"'FILL' 1":"'FILL' 0", fontSize:'26px', color: on?SC[d.key]:'#7E8B92' },
+        nameStyle:{ fontWeight:700, fontSize:'17px', color: on?'#EAF1EF':'#C2CCCA', letterSpacing:'-0.01em' } };
+    });
+    const curMeta = meta[selIdx]; const curT = stgArr[selIdx] || {};
+    const detailIconWrap = { width:'72px', height:'72px', borderRadius:'19px', background:SC[sel]+'1a', border:'1px solid '+SC[sel]+'44', display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' };
+    const detailIcon = { fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'36px', color:SC[sel] };
+    const detailExStyle = { fontFamily:"'JetBrains Mono',monospace", fontSize:'12px', fontWeight:600, color:SC[sel], background:SC[sel]+'16', padding:'4px 10px', borderRadius:'7px' };
+
+    const FC = ['#34E5B0','#5B9BFF','#5BE5A6','#A78BFA','#F5C451','#34E5B0'];
+    const FIC = ['gpp_good','alt_route','vital_signs','key','shield_lock','language'];
+    const featArr = Array.isArray(T('h_feats')) ? T('h_feats') : [];
+    const features = FIC.map((icon,i)=>({ icon, title:(featArr[i]||{}).title, body:(featArr[i]||{}).body,
+      iconWrap:{ width:'48px', height:'48px', borderRadius:'13px', background:FC[i]+'1a', border:'1px solid '+FC[i]+'33', display:'flex', alignItems:'center', justifyContent:'center' },
+      iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'25px', color:FC[i] } }));
+
+    const metrics = Array.isArray(T('h_metrics')) ? T('h_metrics') : [];
+
+    const planArr = Array.isArray(T('h_plans')) ? T('h_plans') : [];
+    const cur = lang==='ru' ? 'rub' : 'usd';
+    const planPrice = cur==='rub' ? ['0','199','349'] : ['0','2.99','4.99'];
+    const plans = planArr.map((p,i)=>{ const popular = i===1; return {
+      name:p.name, price:planPrice[i], per: cur==='rub' ? p.per : (p.per||'').replace('₽','$'), feats:p.feats||[], cta:p.cta, popular,
+      cardStyle:{ position:'relative', display:'flex', flexDirection:'column', gap:'13px', padding:'26px 24px', borderRadius:'18px',
+        background: popular ? 'linear-gradient(180deg, rgba(52,229,176,0.07), rgba(255,255,255,0.02))' : 'rgba(255,255,255,0.025)',
+        border: popular ? '1.5px solid rgba(52,229,176,0.4)' : '1px solid rgba(255,255,255,0.07)' },
+      btnStyle:{ marginTop:'6px', textAlign:'center', padding:'12px', borderRadius:'11px', fontWeight:700, fontSize:'14px', textDecoration:'none',
+        background: popular ? 'linear-gradient(135deg,#3DF0BB,#1FA67D)' : 'rgba(255,255,255,0.05)',
+        color: popular ? '#06231A' : '#EAF1EF', border: popular ? 'none' : '1px solid rgba(255,255,255,0.12)' } }; });
+
+    const faqArr = Array.isArray(T('h_faq')) ? T('h_faq') : [];
+    const faqs = faqArr.map((f,i)=>{
+      const open = this.state.faqOpen===i;
+      return { q:f.q, a:f.a, open, onClick:()=>this.setState({faqOpen: open?-1:i}),
+        cardStyle:{ padding:'18px 20px', borderRadius:'14px', cursor:'pointer',
+          background: open?'rgba(52,229,176,0.04)':'rgba(255,255,255,0.025)',
+          border: open?'1px solid rgba(52,229,176,0.24)':'1px solid rgba(255,255,255,0.07)', transition:'all .16s' },
+        iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontSize:'22px', color: open?'#34E5B0':'#7C8A99', transform: open?'rotate(180deg)':'none', transition:'transform .18s' } };
+    });
+
+    return {
+      lang, dir: rtl?'rtl':'ltr', brandCaps:(brand||'').toUpperCase(),
+      badge:T('h_badge'), title1:T('h_title1'), title2:T('h_title2'),
+      subA:T('h_subA'), chain:T('h_chain'), subB:T('h_subB'),
+      ctaDownload:T('h_ctaDownload'), ctaHow:T('h_ctaHow'),
+      platforms:T('h_platforms'), nodesRegions:T('h_nodesRegions'), noLogs:T('h_noLogs'),
+      protectedTxt:T('h_protected'), pingMs:T('h_pingMs'), lossPct:T('h_lossPct'), protoLabel:T('h_protoLabel'),
+      curtainFound:T('h_curtainFound'), curtainHold:T('h_curtainHold'), city:T('h_city'),
+      cascLabel:T('h_cascLabel'), cascTitle:T('h_cascTitle'), cascSub:T('h_cascSub'), honest:T('h_honest'),
+      featLabel:T('h_featLabel'), featTitle:T('h_featTitle'), featSub:T('h_featSub'),
+      liveLabel:T('h_liveLabel'), liveTitle:T('h_liveTitle'), liveSub:T('h_liveSub'),
+      winTitle:brand+' — '+T('h_winProtect'), liveAll:T('h_liveAll'), numProtocols:T('h_numProtocols'),
+      priceLabel:T('h_priceLabel'), priceTitle:T('h_priceTitle'), priceSub:T('h_priceSub'), priceAll:T('h_priceAll'), optimal:T('h_optimal'),
+      faqLabel:T('h_faqLabel'), faqTitle:T('h_faqTitle'), faqAll:T('h_faqAll'),
+      ctaTitle1:T('h_ctaTitle1'), ctaTitle2:T('h_ctaTitle2'), ctaSub:T('h_ctaSub'), checkKey:T('h_checkKey'),
+      stages, detailName:curT.name, detailDesc:curT.desc, detailEx:curT.ex, detailIconName:curMeta.icon,
+      detailIconWrap, detailIcon, detailExStyle, features, metrics, plans, faqs };
+  }
+}
+</script>
+</body>
+</html>

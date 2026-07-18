@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="./site-i18n.js"></script>
+<script src="./site-config.js"></script>
+<script src="./site-api.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html{scroll-behavior:smooth;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  ::-webkit-scrollbar-track{background:#070A0F;}
+  a{color:#34E5B0;text-decoration:none;}
+  a:hover{color:#5BE5A6;}
+  @keyframes sym-spin{to{transform:rotate(360deg)}}
+  @keyframes sym-pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+
+<div data-screen-label="Цены" style="min-height:100vh; background:radial-gradient(120% 80% at 50% -10%, #0C1614, #070A0F 58%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; overflow-x:hidden; direction:{{ dir }};">
+
+  <dc-import name="SiteHeader" active="pricing" style="display:block; width:100%;" hint-size="100%,64px"></dc-import>
+
+  <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+    <section style="max-width:1180px; margin:0 auto; padding:24px 32px 0;">
+      <div style="display:flex; align-items:center; gap:18px; flex-wrap:wrap; padding:20px 24px; border-radius:18px; background:linear-gradient(150deg, rgba(52,229,176,0.09), rgba(255,255,255,0.02)); border:1px solid rgba(52,229,176,0.3);">
+        <div style="width:48px; height:48px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:26px; color:#06231A;">bolt</span></div>
+        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:200px;">
+          <div style="display:flex; align-items:baseline; gap:9px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ yourPlan }}</span><span style="font-weight:800; font-size:19px; color:#EAF1EF; letter-spacing:-0.01em;">{{ ctPlanLatin }}</span><span style="font-size:12.5px; color:#7C8A99;">{{ ctPlanLoc }}</span></div>
+          <span style="font-size:12.5px; color:#9DABA8;">{{ ctSub }}</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:22px; flex:0 0 auto;">
+          <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; color:#566270;">{{ subLabel }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#C2CCCA;">{{ ctDaysLeft }}</span></div>
+          <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-size:10.5px; font-weight:700; letter-spacing:0.06em; color:#566270;">{{ activeLabel }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#C2CCCA;">{{ ctActive }}</span></div>
+          <a href="Симбионт - сайт - Аккаунт.dc.html" style="padding:10px 16px; border-radius:11px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:13px; white-space:nowrap;" style-hover="background:rgba(255,255,255,0.1);">{{ manage }}</a>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <section style="max-width:1240px; margin:0 auto; padding:52px 32px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:18px;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px 7px 11px; border-radius:999px; background:rgba(52,229,176,0.09); border:1px solid rgba(52,229,176,0.22);">
+      <span style="font-family:'Material Symbols Rounded'; font-size:15px; color:#34E5B0;">schedule</span>
+      <span style="font-size:12.5px; font-weight:600; color:#34E5B0;">{{ heroBadge }}</span>
+    </div>
+    <h1 style="margin:0; font-size:50px; line-height:1.05; font-weight:800; letter-spacing:-0.028em; max-width:760px;">{{ heroTitle }}<br>{{ heroTitle2 }}</h1>
+    <p style="margin:0; font-size:18px; line-height:1.5; color:#9DABA8; max-width:560px;">{{ heroSub }}</p>
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:6px;">
+      <div style="display:inline-flex; align-items:center; gap:4px; padding:5px; border-radius:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);">
+        <span onClick="{{ setMonthly }}" style="{{ billMonthlyStyle }}">{{ monthlyLabel }}</span>
+        <span onClick="{{ setYearly }}" style="{{ billYearlyStyle }}">{{ yearlyLabel }}<span style="font-size:11px; font-weight:700; color:#06231A; background:#34E5B0; padding:2px 7px; border-radius:6px; margin-left:8px;">{{ yearlyBadge }}</span></span>
+      </div>
+      <div style="display:inline-flex; align-items:center; gap:3px; padding:5px; border-radius:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);">
+        <span onClick="{{ setRub }}" style="{{ curRubStyle }}">₽ RUB</span>
+        <span onClick="{{ setUsd }}" style="{{ curUsdStyle }}">$ USD</span>
+      </div>
+    </div>
+    <div onClick="{{ toggleDemo }}" style="{{ demoStyle }}" style-hover="filter:brightness(1.05);"><span style="font-family:'Material Symbols Rounded'; font-size:18px;">{{ demoIcon }}</span>{{ demoLabel }}</div>
+  </section>
+
+  <section style="max-width:1180px; margin:0 auto; padding:12px 32px 24px;">
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; align-items:stretch;">
+      <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+        <div style="{{ p.cardStyle }}">
+          <sc-if value="{{ p.popular }}" hint-placeholder-val="{{ false }}"><span style="position:absolute; top:-11px; left:50%; transform:translateX(-50%); font-size:10.5px; font-weight:800; letter-spacing:0.08em; color:#06231A; background:linear-gradient(135deg,#3DF0BB,#1FA67D); padding:5px 14px; border-radius:8px; white-space:nowrap;">{{ optimal }}</span></sc-if>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            <div style="display:flex; align-items:center; gap:11px;">
+              <span style="{{ p.iconStyle }}">{{ p.icon }}</span>
+              <div style="display:flex; flex-direction:column; gap:0;">
+                <span style="font-weight:800; font-size:20px; color:#EAF1EF; letter-spacing:0.01em;">{{ p.latin }}</span>
+                <sc-if value="{{ p.showLoc }}" hint-placeholder-val="{{ true }}"><span style="{{ p.locStyle }}">{{ p.locName }}</span></sc-if>
+              </div>
+            </div>
+            <span style="font-size:13px; color:#7C8A99;">{{ p.tagline }}</span>
+          </div>
+          <div style="display:flex; align-items:baseline; gap:6px; margin-top:4px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:38px; color:#EAF1EF; letter-spacing:-0.03em;">{{ p.bigNum }}</span>
+            <span style="font-size:15px; color:#7C8A99;">{{ p.per }}</span>
+          </div>
+          <div style="min-height:18px; font-size:12.5px; color:{{ p.subColor }};">{{ p.sub }}</div>
+          <div onClick="{{ p.onCta }}" style="{{ p.btnStyle }}" style-hover="filter:brightness(1.06);">{{ p.cta }}</div>
+          <div style="height:1px; background:rgba(255,255,255,0.07); margin:6px 0;"></div>
+          <div style="display:flex; flex-direction:column; gap:11px;">
+            <sc-for list="{{ p.feats }}" as="ft" hint-placeholder-count="5">
+              <div style="display:flex; align-items:flex-start; gap:10px;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#34E5B0; flex:0 0 auto;">{{ ft.icon }}</span><span style="font-size:13.5px; color:#C2CCCA; line-height:1.4;">{{ ft.t }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:16px; text-align:center; font-size:12.5px; color:#566270;">{{ planFootnote }}</div>
+  </section>
+
+  <section style="max-width:1180px; margin:0 auto; padding:44px 32px;">
+    <div style="border-radius:22px; border:1px solid rgba(52,229,176,0.22); background:linear-gradient(160deg, rgba(52,229,176,0.055), rgba(255,255,255,0.014)); padding:34px;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:22px;">
+        <div style="display:flex; flex-direction:column; gap:10px; max-width:560px;">
+          <div style="display:inline-flex; align-items:center; gap:8px;"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">hourglass_top</span><span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ balPayFact }}</span></div>
+          <h2 style="margin:0; font-size:29px; font-weight:800; letter-spacing:-0.02em; line-height:1.12;">{{ balHead }}</h2>
+          <p style="margin:0; font-size:15px; line-height:1.55; color:#9DABA8;">{{ balDesc }}</p>
+        </div>
+        <div style="display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:11px; background:rgba(52,229,176,0.1); border:1px solid rgba(52,229,176,0.24);"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#34E5B0;">bolt</span><span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700; color:#34E5B0;">{{ balTierLabel }}</span></div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px;">
+        <sc-for list="{{ balPackages }}" as="b" hint-placeholder-count="2">
+          <div style="display:flex; align-items:center; gap:18px; padding:22px 24px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);">
+            <div style="width:52px; height:52px; border-radius:14px; background:rgba(52,229,176,0.1); border:1px solid rgba(52,229,176,0.24); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:26px; color:#34E5B0;">schedule</span></div>
+            <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+              <div style="display:flex; align-items:baseline; gap:8px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:22px; color:#EAF1EF;">{{ b.hours }}</span><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:22px; color:#34E5B0;">{{ b.price }}</span></div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#7C8A99;">{{ b.perHour }}</span>
+            </div>
+            <div onClick="{{ b.onBuy }}" style="padding:11px 18px; border-radius:11px; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.3); color:#34E5B0; font-weight:700; font-size:13.5px; cursor:pointer; white-space:nowrap;" style-hover="background:rgba(52,229,176,0.2);">{{ buyLabel }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1180px; margin:0 auto; padding:20px 32px 40px;">
+    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:24px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ cmpLabel }}</span>
+      <h2 style="margin:0; font-size:30px; font-weight:800; letter-spacing:-0.02em;">{{ cmpTitle }}</h2>
+    </div>
+    <div style="border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02);">
+      <div style="display:grid; grid-template-columns:1.7fr 1fr 1fr 1fr; padding:16px 22px; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02);">
+        <span style="font-size:12px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ cmpFeature }}</span>
+        <span style="text-align:center; font-weight:800; font-size:13.5px; color:#C2CCCA; letter-spacing:0.02em;">FREE</span>
+        <span style="text-align:center; font-weight:800; font-size:13.5px; color:#34E5B0; letter-spacing:0.02em;">PREMIUM</span>
+        <span style="text-align:center; font-weight:800; font-size:13.5px; color:#C2CCCA; letter-spacing:0.02em;">ULTIMATE</span>
+      </div>
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="9">
+        <div style="{{ r.rowStyle }}">
+          <span style="font-size:13.5px; color:#C2CCCA;">{{ r.label }}</span>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; justify-content:center;"><span style="{{ c.style }}">{{ c.text }}</span></div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <sc-if value="{{ showBonuses }}" hint-placeholder-val="{{ true }}">
+  <section style="border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1180px; margin:0 auto; padding:64px 32px;">
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:28px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#A78BFA;">{{ bonusLabel }}</span>
+        <h2 style="margin:0; font-size:30px; font-weight:800; letter-spacing:-0.02em;">{{ bonusTitle }}</h2>
+        <p style="margin:0; font-size:15.5px; line-height:1.55; color:#9DABA8; max-width:620px;">{{ bonusIntro }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;">
+        <sc-for list="{{ bonuses }}" as="b" hint-placeholder-count="4">
+          <div style="{{ b.cardStyle }}">
+            <div style="display:flex; align-items:center; gap:13px;">
+              <div style="{{ b.iconWrap }}"><span style="{{ b.iconStyle }}">{{ b.icon }}</span></div>
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ b.title }}</span><span style="font-size:12.5px; color:#7C8A99; line-height:1.35;">{{ b.desc }}</span></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <sc-for list="{{ b.items }}" as="it" hint-placeholder-count="4">
+                <sc-if value="{{ it.narrow }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;"><span style="font-size:12.5px; color:#9DABA8; line-height:1.3; flex:1; min-width:0; overflow-wrap:anywhere;">{{ it.l }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:#C2CCCA; text-align:right; white-space:nowrap; flex:0 0 auto;">{{ it.v }}</span></div>
+                </sc-if>
+                <sc-if value="{{ it.wide }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex; flex-direction:column; gap:3px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.04em; color:#7C8A99;">{{ it.l }}</span><span style="font-size:12.5px; color:#C2CCCA; line-height:1.4;">{{ it.v }}</span></div>
+                </sc-if>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top:18px; display:flex; align-items:flex-start; gap:11px; padding:16px 18px; border-radius:14px; background:rgba(52,229,176,0.05); border:1px solid rgba(52,229,176,0.18);">
+        <span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#34E5B0; flex:0 0 auto;">verified_user</span>
+        <span style="font-size:13px; color:#9DABA8; line-height:1.55;">{{ bonusNote }}</span>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <section id="key" style="scroll-margin-top:80px; border-top:1px solid rgba(255,255,255,0.06);">
+    <div style="max-width:1000px; margin:0 auto; padding:76px 32px;">
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; margin-bottom:34px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#A78BFA;">{{ kcLabel }}</span>
+        <h2 style="margin:0; font-size:34px; font-weight:800; letter-spacing:-0.02em; line-height:1.1;">{{ kcTitle }}</h2>
+        <p style="margin:0; font-size:16px; line-height:1.5; color:#7C8A99; max-width:560px;">{{ kcSub }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="display:flex; align-items:center; gap:11px; padding:15px 17px; border-radius:13px; background:rgba(255,255,255,0.04); border:1px solid rgba(167,139,250,0.3);">
+            <span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#A78BFA;">vpn_key</span>
+            <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:14px; color:{{ kcInputColor }};">{{ kcInput }}</span>
+          </div>
+          <div onClick="{{ kcCheck }}" style="{{ kcBtnStyle }}" style-hover="filter:brightness(1.05);"><span style="font-family:'Material Symbols Rounded'; font-size:19px;">{{ kcBtnIcon }}</span>{{ kcBtnLabel }}</div>
+          <div style="display:flex; flex-direction:column; gap:9px; margin-top:2px;">
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#566270;">{{ kcExamplesLabel }}</span>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+              <sc-for list="{{ kcExamples }}" as="ex" hint-placeholder-count="6">
+                <span onClick="{{ ex.onClick }}" style="{{ ex.style }}">{{ ex.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:9px; padding:11px 14px; border-radius:11px; background:rgba(52,229,176,0.06); border:1px solid rgba(52,229,176,0.18);">
+            <span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#34E5B0;">shield_lock</span>
+            <span style="font-size:12px; color:#9DABA8;">{{ kcPrivacy }}</span>
+          </div>
+        </div>
+        <div style="{{ kcPanelStyle }}">
+          <sc-if value="{{ kcIdle }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; height:100%; padding:20px;">
+              <span style="font-family:'Material Symbols Rounded'; font-size:46px; color:#3a4650;">frame_inspect</span>
+              <span style="font-size:13.5px; color:#566270; text-align:center;">{{ kcIdle1 }}<br>{{ kcIdle2 }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ kcScanning }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; height:100%; padding:20px;">
+              <div style="position:relative; width:84px; height:84px;">
+                <div style="position:absolute; inset:0; border-radius:50%; border:2px solid rgba(167,139,250,0.18);"></div>
+                <div style="position:absolute; inset:0; border-radius:50%; border:2px solid transparent; border-top-color:#A78BFA; animation:sym-spin 0.9s linear infinite;"></div>
+                <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;"><span style="font-family:'Material Symbols Rounded'; font-size:34px; color:#A78BFA;">fingerprint</span></div>
+              </div>
+              <span style="font-size:14px; font-weight:600; color:#C2CCCA;">{{ kcScanningLabel }}</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270;">ed25519 · offline</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ kcResult }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; flex-direction:column; gap:16px; padding:24px; animation:sym-pop .3s ease;">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div style="{{ kcResIconWrap }}"><span style="{{ kcResIcon }}">{{ kcResIconName }}</span></div>
+                <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-weight:800; font-size:21px; color:{{ kcResColor }}; letter-spacing:-0.01em;">{{ kcResTitle }}</span><span style="font-size:13px; color:#9DABA8;">{{ kcResDesc }}</span></div>
+              </div>
+              <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <sc-for list="{{ kcResChips }}" as="ch" hint-placeholder-count="3">
+                  <span style="font-size:11.5px; font-weight:600; color:#C2CCCA; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09); padding:5px 11px; border-radius:8px;">{{ ch }}</span>
+                </sc-for>
+              </div>
+              <div style="height:1px; background:rgba(255,255,255,0.07);"></div>
+              <div style="display:flex; flex-direction:column; gap:9px;">
+                <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; color:#7C8A99;">{{ kcInSystem }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#C2CCCA;">{{ kcResSys }}</span></div>
+                <div style="display:flex; align-items:center; justify-content:space-between;"><span style="font-size:12.5px; color:#7C8A99;">{{ kcTerm }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#C2CCCA;">{{ kcResExpiry }}</span></div>
+              </div>
+              <sc-if value="{{ kcCanActivate }}" hint-placeholder-val="{{ false }}">
+                <a href="Симбионт - сайт - Аккаунт.dc.html" style="text-align:center; padding:12px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:14px;" style-hover="filter:brightness(1.05);">{{ kcActivate }}</a>
+              </sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:900px; margin:0 auto; padding:20px 32px 76px;">
+    <div style="display:flex; flex-direction:column; gap:12px; align-items:center; text-align:center; margin-bottom:30px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ faqLabel }}</span>
+      <h2 style="margin:0; font-size:30px; font-weight:800; letter-spacing:-0.02em;">{{ faqTitle }}</h2>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:11px;">
+      <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="4">
+        <div onClick="{{ q.onClick }}" style="{{ q.cardStyle }}">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="flex:1; font-weight:600; font-size:15.5px; color:#EAF1EF;">{{ q.q }}</span>
+            <span style="{{ q.iconStyle }}">expand_more</span>
+          </div>
+          <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:12px 0 0; font-size:14px; line-height:1.6; color:#9DABA8;">{{ q.a }}</p>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" style="display:block; width:100%;" hint-size="100%,420px"></dc-import>
+
+  <sc-if value="{{ payOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ payClose }}" style="position:fixed; inset:0; z-index:200; background:rgba(4,7,9,0.72); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; padding:24px;">
+      <div onClick="{{ payStop }}" style="width:100%; max-width:440px; border-radius:22px; background:#0D1413; border:1px solid rgba(255,255,255,0.09); box-shadow:0 50px 120px -30px rgba(0,0,0,0.8); overflow:hidden; animation:sym-pop .25s ease;">
+        <sc-if value="{{ payForm }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:22px 24px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+              <span style="font-weight:800; font-size:18px; color:#EAF1EF;">{{ checkout }}</span>
+              <span onClick="{{ payClose }}" style="font-family:'Material Symbols Rounded'; font-size:22px; color:#7C8A99; cursor:pointer;">close</span>
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:15px 17px; border-radius:14px; background:rgba(52,229,176,0.07); border:1px solid rgba(52,229,176,0.24); margin-bottom:18px;">
+              <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-weight:700; font-size:15px; color:#EAF1EF;">{{ brand }} {{ payPlanLatin }}</span><span style="font-size:12px; color:#7C8A99;">{{ payDesc }}</span></div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:1px;">
+                <sc-if value="{{ payCrypto }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#7C8A99; text-decoration:line-through;">{{ payBaseStr }}</span></sc-if>
+                <span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:22px; color:#34E5B0;">{{ payTotalStr }}</span>
+              </div>
+            </div>
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#566270;">{{ payMethodLabel }}</span>
+            <div style="display:flex; flex-direction:column; gap:9px; margin-top:11px; margin-bottom:18px;">
+              <sc-for list="{{ payMethods }}" as="m" hint-placeholder-count="4">
+                <div onClick="{{ m.onClick }}" style="{{ m.style }}">
+                  <span style="font-family:'Material Symbols Rounded'; font-size:21px; color:{{ m.iconColor }};">{{ m.icon }}</span>
+                  <span style="flex:1; font-weight:600; font-size:14px; color:#EAF1EF;">{{ m.label }}</span>
+                  <span style="{{ m.radio }}"></span>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ payCrypto }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex; align-items:center; gap:8px; padding:10px 13px; border-radius:11px; background:rgba(245,196,81,0.08); border:1px solid rgba(245,196,81,0.24); margin-bottom:16px;"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#F5C451;">savings</span><span style="font-size:12.5px; color:#F5C451; font-weight:600;">{{ cryptoNote }}</span></div>
+            </sc-if>
+            <div onClick="{{ paySubmit }}" style="text-align:center; padding:15px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15.5px; cursor:pointer;" style-hover="filter:brightness(1.06);">{{ payBtn }} {{ payTotalStr }}</div>
+            <div style="margin-top:12px; display:flex; align-items:center; justify-content:center; gap:7px; font-size:11.5px; color:#566270;"><span style="font-family:'Material Symbols Rounded'; font-size:15px; color:#34E5B0;">lock</span>{{ paySecure }}</div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ payPending }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:56px 30px; display:flex; flex-direction:column; align-items:center; gap:20px;">
+            <div style="position:relative; width:72px; height:72px;"><div style="position:absolute; inset:0; border-radius:50%; border:3px solid rgba(52,229,176,0.15);"></div><div style="position:absolute; inset:0; border-radius:50%; border:3px solid transparent; border-top-color:#34E5B0; animation:sym-spin 0.9s linear infinite;"></div></div>
+            <div style="text-align:center;"><div style="font-weight:700; font-size:17px; color:#EAF1EF;">{{ payProcessing }}</div><div style="font-size:13px; color:#7C8A99; margin-top:5px;">{{ payConfirming }}</div></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ payDone }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:48px 30px; display:flex; flex-direction:column; align-items:center; gap:18px; animation:sym-pop .3s ease;">
+            <div style="width:76px; height:76px; border-radius:50%; background:radial-gradient(circle,#34E5B0,#1FA67D); display:flex; align-items:center; justify-content:center; box-shadow:0 0 40px -6px rgba(52,229,176,0.6);"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:42px; color:#06231A;">check</span></div>
+            <div style="text-align:center;"><div style="font-weight:800; font-size:22px; color:#EAF1EF;">{{ paid }}</div><div style="font-size:13.5px; color:#9DABA8; margin-top:6px; max-width:300px; line-height:1.5;">{{ payDoneMsg }}</div></div>
+            <a href="Симбионт - сайт - Аккаунт.dc.html" style="margin-top:4px; padding:13px 22px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:14px;" style-hover="background:rgba(255,255,255,0.09);">{{ toAccount }}</a>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultBilling&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;monthly&quot;,&quot;options&quot;:[&quot;monthly&quot;,&quot;yearly&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Цены&quot;},&quot;defaultCurrency&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;auto&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;rub&quot;,&quot;usd&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Цены&quot;},&quot;highlightPlan&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;premium&quot;,&quot;options&quot;:[&quot;free&quot;,&quot;premium&quot;,&quot;ultimate&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Тарифы&quot;},&quot;showBonuses&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Секции&quot;}}">
+class Component extends DCLogic {
+  state = { billing:'monthly', currency:'auto', lang:'ru', signedIn:false,
+    faqOpen:0, payOpen:false, payKind:'sub', payPlan:'premium', paySku:'m', payMethod:'sbp', payPhase:'form',
+    kcInput:'СИМБ-XXXX-XXXX-XXXX', kcPhase:'idle', kcStatus:'valid' };
+
+  componentDidMount(){
+    const p=this.props||{}; const patch={};
+    if(p.defaultBilling==='yearly'||p.defaultBilling==='monthly') patch.billing=p.defaultBilling;
+    if(p.defaultCurrency==='rub'||p.defaultCurrency==='usd') patch.currency=p.defaultCurrency;
+    try{ const l=window.localStorage&&localStorage.getItem('sym-site-lang'); if(l) patch.lang=l; }catch(e){}
+    try{ const a=window.localStorage&&localStorage.getItem('sym-auth'); if(a==='1') patch.signedIn=true; }catch(e){}
+    if(Object.keys(patch).length) this.setState(patch);
+    this._onLang=(e)=>{ let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({lang:l}); };
+    this._onStore=(e)=>{ if(!e) return; if(e.key==='sym-site-lang'&&e.newValue) this.setState({lang:e.newValue}); if(e.key==='sym-auth') this.setState({signedIn:e.newValue==='1'}); };
+    this._onI18n=()=>this.forceUpdate();
+    window.addEventListener('sym-lang', this._onLang);
+    window.addEventListener('storage', this._onStore);
+    window.addEventListener('sym-site-i18n', this._onI18n);
+    this._onCfg=()=>this.forceUpdate();
+    window.addEventListener('sym-config', this._onCfg);
+  }
+  componentWillUnmount(){ clearTimeout(this._pt); clearTimeout(this._kt);
+    if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
+    if(this._onStore) window.removeEventListener('storage', this._onStore);
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n);
+    if(this._onCfg) window.removeEventListener('sym-config', this._onCfg); }
+
+  _cur(){ const lang=this.state.lang||'ru'; return (this.state.currency==='auto')?(lang==='ru'?'rub':'usd'):this.state.currency; }
+  openPay(kind,plan,sku){ const isR=this._cur()==='rub'; this.setState({ payOpen:true, payKind:kind, payPlan:plan, paySku: sku||(this.state.billing==='yearly'?'y':'m'), payMethod: isR?'sbp':'visa', payPhase:'form' }); }
+  closePay(){ this.setState({payOpen:false}); }
+  submitPay(){
+    this.setState({payPhase:'pending'});
+    const S=this.state;
+    const product = S.payKind==='sub'
+      ? (S.payPlan + '_' + (S.billing==='yearly'?'year':'month'))
+      : ('balance_' + (S.paySku==='h100'?'100h':'300h'));
+    const payload = { product, method:S.payMethod, currency:this._cur() };
+    const api = (typeof window!=='undefined') && window.SYM_API;
+    if(api && api.base){
+      api.purchase(payload).then((res)=>{
+        if(res && res.checkoutUrl){ try{ window.location.href=res.checkoutUrl; }catch(e){} return; }
+        this.setState({payPhase:'done'});
+      }).catch(()=>{ this.setState({payPhase:'done'}); });
+    } else {
+      clearTimeout(this._pt); this._pt=setTimeout(()=>this.setState({payPhase:'done'}),1700);
+    }
+  }
+  toggleDemo(){ const v=!this.state.signedIn; this.setState({signedIn:v}); try{ localStorage.setItem('sym-auth', v?'1':'0'); }catch(e){} }
+  runCheck(status){ const s={valid:'СИМБ-7K2Q-9XR4-MT8V',redeemed:'СИМБ-3H9F-2CD1-QW77',expired:'СИМБ-1A0X-8845-KK20',revoked:'СИМБ-BLK9-0000-RVKD',not_found:'СИМБ-ZZ12-3456-NONE',invalid:'СИМБ-FAKE-0000-0000'}; this.setState({ kcInput:s[status]||this.state.kcInput, kcPhase:'scanning', kcStatus:status }); clearTimeout(this._kt); this._kt=setTimeout(()=>this.setState({kcPhase:'result'}),1400); }
+
+  renderVals(){
+    const S=this.state; const lang=S.lang||'ru'; const yearly=S.billing==='yearly';
+    const cur=this._cur(); const isR=cur==='rub';
+    const T=(k)=> (typeof window!=='undefined' && window.symSiteT) ? window.symSiteT(lang,k) : k;
+    const rtl=(typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
+    const brand=(typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
+    const money=(v,dec)=>{ const d=(dec==null)?(isR?0:2):dec; const n=Number(v); if(isR){ const s=n.toFixed(d); const parts=s.split('.'); parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,' '); return (parts[1]?parts[0]+','+parts[1]:parts[0])+' ₽'; } return '$'+n.toFixed(d); };
+    const permo=(y)=> isR? Math.round(y/12) : (y/12);
+    const sav=(m,y)=> Math.round((1-(y/(m*12)))*100);
+
+    const ECO=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.economy) || null;
+    const PR=(ECO && ECO.prices) ? {
+      premium:{  rub:{m:ECO.prices.premium.rub.month,  y:ECO.prices.premium.rub.year},  usd:{m:ECO.prices.premium.usd.month,  y:ECO.prices.premium.usd.year} },
+      ultimate:{ rub:{m:ECO.prices.ultimate.rub.month, y:ECO.prices.ultimate.rub.year}, usd:{m:ECO.prices.ultimate.usd.month, y:ECO.prices.ultimate.usd.year} }
+    } : { premium:{ rub:{m:199,y:1490}, usd:{m:2.99,y:24.99} }, ultimate:{ rub:{m:349,y:2790}, usd:{m:4.99,y:39.99} } };
+    const BAL=(ECO && ECO.balance && ECO.balance.premium) ? {
+      premium:{ rub:{h100:ECO.balance.premium.rub['100h'], h300:ECO.balance.premium.rub['300h']}, usd:{h100:ECO.balance.premium.usd['100h'], h300:ECO.balance.premium.usd['300h']} }
+    } : { premium:{ rub:{h100:149,h300:399}, usd:{h100:1.99,h300:4.99} } };
+    const cryptoDisc=(function(){ var w=(typeof window!=='undefined')&&window.SYM_CONFIG; var d=(w&&w.discounts&&w.discounts.crypto); if(d==null) d=(ECO&&ECO.crypto_discount); return (d==null?0.10:d); })();
+
+    const NAMES={
+      free:{en:'Free',ru:'Бесплатный',es:'Gratis',de:'Kostenlos',fr:'Gratuit',pt:'Grátis',tr:'Ücretsiz',uk:'Безкоштовний',be:'Бясплатны',kk:'Тегін',uz:'Bepul',fa:'رایگان',ar:'مجاني',zh:'免费',hi:'मुफ़्त',vi:'Miễn phí',id:'Gratis',isv:'Bezplatny'},
+      premium:{en:'Premium',ru:'Премиум',uk:'Преміум',be:'Прэміум',kk:'Премиум',zh:'高级',ar:'المميّز',fa:'ویژه',hi:'प्रीमियम'},
+      ultimate:{en:'Ultimate',ru:'Максимум',es:'Máximo',de:'Maximal',fr:'Maximum',pt:'Máximo',tr:'Azami',uk:'Максимум',be:'Максімум',kk:'Максимум',uz:'Maksimal',fa:'حداکثری',ar:'الأقصى',zh:'旗舰',hi:'अल्टीमेट',vi:'Tối đa',id:'Maksimal',isv:'Maksimum'} };
+    const latinOf={free:'FREE',premium:'PREMIUM',ultimate:'ULTIMATE'};
+    const locOf=(k)=>{ const m=NAMES[k]||{}; return m[lang]||m.en||''; };
+
+    const popularKey = this.props.highlightPlan || 'premium';
+    const showBonuses = (this.props.showBonuses!==undefined)? this.props.showBonuses : true;
+
+    const seg=(on)=>({ padding:'9px 18px', borderRadius:'10px', cursor:'pointer', fontWeight:on?700:600, fontSize:'14px', color:on?'#06231A':'#9DABA8', background:on?'#34E5B0':'transparent', display:'inline-flex', alignItems:'center', transition:'all .15s' });
+    const cseg=(on)=>({ padding:'8px 14px', borderRadius:'9px', cursor:'pointer', fontWeight:on?700:600, fontSize:'12.5px', fontFamily:"'JetBrains Mono',monospace", color:on?'#06231A':'#9DABA8', background:on?'#34E5B0':'transparent', transition:'all .15s' });
+
+    const featIcons={ free:['bolt','hub','lan','devices','verified_user'], premium:['all_inclusive','speed','public','swap_horiz','sports_esports','security'], ultimate:['workspace_premium','rocket_launch','star','dns','sports_esports','support_agent'] };
+    const tags=T('p_tag')||{}; const featTexts=T('p_feats')||{};
+    const mk=(key,icon,iconColor,popular,isFree)=>{
+      let bigNum,per,sub,subColor;
+      if(isFree){ bigNum='0'; per=T('p_forever'); sub=T('p_noCard'); subColor='#7C8A99'; }
+      else { const pr=PR[key][cur];
+        if(yearly){ bigNum=money(permo(pr.y), isR?0:2); per=T('p_perMo'); sub=money(pr.y)+T('p_yearTail')+sav(pr.m,pr.y)+'%'; subColor='#5BE5A6'; }
+        else { bigNum=money(pr.m, isR?0:2); per=T('p_perMo'); sub=T('p_orPrefix')+money(permo(pr.y), isR?0:2)+T('p_atYear'); subColor='#7C8A99'; } }
+      const locName=locOf(key); const latin=latinOf[key]; const showLoc = !!locName && locName.toLowerCase()!==latin.toLowerCase();
+      const fx=featTexts[key]||[]; const fic=featIcons[key]||[];
+      return { key, latin, locName, showLoc,
+        locStyle:{ fontSize:'12.5px', fontWeight:600, color:'#7C8A99', direction: rtl?'rtl':'ltr' },
+        tagline:tags[key], popular, icon,
+        iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'26px', color:iconColor },
+        bigNum, per, sub, subColor,
+        cta: isFree?T('h_ctaDownload'):T('p_yourPlan'), onCta: isFree ? (()=>{ window.location.href='Симбионт - сайт - Скачать.dc.html'; }) : (()=>this.openPay('sub',key)),
+        feats: fx.map((t,i)=>({icon:fic[i]||'check', t})),
+        cardStyle:{ position:'relative', display:'flex', flexDirection:'column', gap:'12px', padding:'32px 26px', borderRadius:'20px',
+          background: popular?'linear-gradient(180deg, rgba(52,229,176,0.08), rgba(255,255,255,0.02))':'rgba(255,255,255,0.025)',
+          border: popular?'1.5px solid rgba(52,229,176,0.45)':'1px solid rgba(255,255,255,0.07)',
+          boxShadow: popular?'0 30px 70px -30px rgba(52,229,176,0.4)':'none' },
+        btnStyle:{ marginTop:'2px', textAlign:'center', padding:'14px', borderRadius:'12px', fontWeight:700, fontSize:'15px', cursor:'pointer',
+          background: popular?'linear-gradient(135deg,#3DF0BB,#1FA67D)':'rgba(255,255,255,0.05)',
+          color: popular?'#06231A':'#EAF1EF', border: popular?'none':'1px solid rgba(255,255,255,0.12)' } };
+    };
+    const ctaSub=T('p_yourPlan'); const ctaDl=T('h_ctaDownload'); const subscribeWord=T('p_manage');
+    const plans=[
+      mk('free','flight_takeoff','#9DABA8', popularKey==='free', true),
+      mk('premium','bolt','#34E5B0', popularKey==='premium', false),
+      mk('ultimate','diamond','#A78BFA', popularKey==='ultimate', false)
+    ];
+    plans[0].cta=T('h_ctaDownload'); plans[1].cta=T('h_priceAll'); plans[2].cta=T('h_priceAll');
+    const subscribe = (lang==='ru')?'Оформить':(lang==='es')?'Suscribirse':(lang==='de')?'Abonnieren':'Subscribe';
+    plans[1].cta=subscribe; plans[2].cta=subscribe; plans[0].cta=T('h_ctaDownload');
+    const maxSav = Math.max(sav(PR.premium[cur].m,PR.premium[cur].y), sav(PR.ultimate[cur].m,PR.ultimate[cur].y));
+
+    const BALP=BAL.premium[cur];
+    const balPack=(sku,hoursN)=>{ const val=BALP[sku]; return { sku, hours:hoursN+' '+T('p_hUnit'), price:money(val), perHour:T('p_perHourPre')+money(val/hoursN,2)+T('p_perHourSuf'), onBuy:()=>this.openPay('bal','premium',sku) }; };
+    const balPackages=[ balPack('h100',100), balPack('h300',300) ];
+
+    const yes={ fontFamily:"'Material Symbols Rounded'", fontSize:'20px', color:'#34E5B0' };
+    const no={ fontFamily:"'Material Symbols Rounded'", fontSize:'20px', color:'#3a4650' };
+    const txt=(c)=>({ fontSize:'12.5px', fontWeight:600, color:c||'#C2CCCA', textAlign:'center' });
+    const cell=(v)=> v===true?{text:'check',style:yes} : v===false?{text:'remove',style:no} : {text:v, style:txt(v==='—'?'#566270':'#C2CCCA')};
+    const rowsData=T('p_rows')||[];
+    const rows=rowsData.map((r,i)=>({ label:r[0], cells:[cell(r[1]),cell(r[2]),cell(r[3])],
+      rowStyle:{ display:'grid', gridTemplateColumns:'1.7fr 1fr 1fr 1fr', alignItems:'center', padding:'14px 22px',
+        borderBottom: i<rowsData.length-1?'1px solid rgba(255,255,255,0.05)':'none', background: i%2?'rgba(255,255,255,0.012)':'transparent' } }));
+
+    const bonusMeta=[{icon:'diversity_3',color:'#A78BFA'},{icon:'calendar_month',color:'#34E5B0'},{icon:'military_tech',color:'#5B9BFF'},{icon:'redeem',color:'#F5C451'}];
+    const bonusData=T('p_bonuses')||[];
+    const bonuses=bonusMeta.map((m,i)=>{ const bd=bonusData[i]||{items:[]}; const items=bd.items||[]; const wide=items.some(x=>(''+x[1]).length>16 || (''+x[0]).length>22 || ((''+x[0]).length+(''+x[1]).length)>30); return {
+      icon:m.icon, title:bd.title, desc:bd.desc,
+      iconWrap:{ width:'44px', height:'44px', borderRadius:'13px', background:m.color+'1a', border:'1px solid '+m.color+'33', display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' },
+      iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'23px', color:m.color },
+      cardStyle:{ display:'flex', flexDirection:'column', gap:'15px', padding:'24px', borderRadius:'18px', background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)' },
+      items: items.map(x=>({ l:x[0], v:x[1], wide, narrow:!wide })) }; });
+
+    const KCM={ valid:{c:'#34E5B0',icon:'verified'}, redeemed:{c:'#5B9BFF',icon:'restart_alt'}, expired:{c:'#F5C451',icon:'schedule'}, revoked:{c:'#FF6B7A',icon:'block'}, not_found:{c:'#9DABA8',icon:'help'}, invalid:{c:'#FF6B7A',icon:'dangerous'} };
+    const KCT=T('p_kc')||{}; const curk=Object.assign({}, KCM[S.kcStatus], KCT[S.kcStatus]||{});
+    const phase=S.kcPhase;
+    const kcExStatuses=['valid','redeemed','expired','revoked','not_found','invalid'];
+    const kcExColors=['#34E5B0','#5B9BFF','#F5C451','#FF6B7A','#9DABA8','#FF6B7A'];
+    const kcExLabels=T('p_kcEx')||[];
+    const kcExamples=kcExStatuses.map((st,i)=>({ label:kcExLabels[i]||st, onClick:()=>this.runCheck(st), style:{ fontSize:'12px', fontWeight:600, color:kcExColors[i], background:kcExColors[i]+'14', border:'1px solid '+kcExColors[i]+'33', padding:'7px 12px', borderRadius:'9px', cursor:'pointer' } }));
+
+    const faqData=T('p_faq')||[];
+    const faqs=faqData.map((f,i)=>{ const open=S.faqOpen===i; return { q:f.q, a:f.a, open, onClick:()=>this.setState({faqOpen:open?-1:i}),
+      cardStyle:{ padding:'18px 20px', borderRadius:'14px', cursor:'pointer', background:open?'rgba(52,229,176,0.04)':'rgba(255,255,255,0.025)', border:open?'1px solid rgba(52,229,176,0.24)':'1px solid rgba(255,255,255,0.07)', transition:'all .16s' },
+      iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontSize:'22px', color:open?'#34E5B0':'#7C8A99', transform:open?'rotate(180deg)':'none', transition:'transform .18s' } }; });
+
+    const M=T('p_methods')||{};
+    const methodsRub=[['sbp','account_balance','#34E5B0'],['mir','credit_card','#5BE5A6'],['visa','credit_card','#5B9BFF'],['mc','credit_card','#5B9BFF'],['yoomoney','account_balance_wallet','#A78BFA'],['crypto','currency_bitcoin','#F5C451']];
+    const methodsUsd=[['visa','credit_card','#5B9BFF'],['mc','credit_card','#5B9BFF'],['crypto','currency_bitcoin','#F5C451']];
+    const methodsDef = isR? methodsRub : methodsUsd;
+    const payCrypto = S.payMethod==='crypto';
+    let payBase;
+    if(S.payKind==='sub'){ payBase=PR[S.payPlan][cur][ yearly?'y':'m' ]; }
+    else { payBase=BAL[S.payPlan][cur][ S.paySku ]; }
+    const payTotalNum = payCrypto? payBase*(1-cryptoDisc) : payBase;
+    const payMethods=methodsDef.map(m=>{ const on=S.payMethod===m[0]; return { label:M[m[0]]||m[0], icon:m[1], iconColor:m[2], onClick:()=>this.setState({payMethod:m[0]}),
+      style:{ display:'flex', alignItems:'center', gap:'12px', padding:'13px 15px', borderRadius:'12px', cursor:'pointer', background:on?'rgba(52,229,176,0.08)':'rgba(255,255,255,0.03)', border:on?'1.5px solid rgba(52,229,176,0.4)':'1px solid rgba(255,255,255,0.08)' },
+      radio:{ width:'18px', height:'18px', borderRadius:'50%', flex:'0 0 auto', border:on?'5px solid #34E5B0':'2px solid rgba(255,255,255,0.2)' } }; });
+    const payPlanLatin = latinOf[S.payPlan];
+    const payDesc = S.payKind==='sub' ? (yearly?T('p_subYear'):T('p_subMonth')) : ((S.paySku==='h100'?'100':'300')+T('p_hoursActive'));
+    const payDoneMsg = S.payKind==='sub' ? (T('p_doneSubA')+payPlanLatin+T('p_doneSubB')) : ((S.paySku==='h100'?'100':'300')+T('p_doneBal'));
+
+    return {
+      dir: rtl?'rtl':'ltr', brand,
+      yourPlan:T('p_yourPlan'), manage:T('p_manage'), subLabel:T('p_subLabel'), activeLabel:T('p_activeLabel'),
+      heroBadge:T('p_heroBadge'), heroTitle:T('p_heroTitle'), heroTitle2:T('p_heroTitle2'), heroSub:T('p_heroSub'),
+      monthlyLabel:T('p_monthly'), yearlyLabel:T('p_yearly'), demoLabel:T('p_demo'), optimal:T('p_optimal'),
+      balHead:T('p_balHead'), balPayFact:T('p_balPayFact'), balTierLabel:T('p_balTier'), balDesc:T('p_balDesc'), buyLabel:T('p_buy'),
+      cmpLabel:T('p_cmpLabel'), cmpTitle:T('p_cmpTitle'), cmpFeature:T('p_cmpFeature'),
+      bonusLabel:T('p_bonusLabel'), bonusTitle:T('p_bonusTitle'), bonusIntro:T('p_bonusIntro'), bonusNote:T('p_bonusNote'),
+      kcLabel:T('p_kcLabel'), kcTitle:T('p_kcTitle'), kcSub:T('p_kcSub'), kcPrivacy:T('p_kcPrivacy'),
+      kcIdle1:T('p_kcIdle1'), kcIdle2:T('p_kcIdle2'), kcScanningLabel:T('p_kcScanning'), kcInSystem:T('p_kcInSystem'), kcTerm:T('p_kcTerm'),
+      kcActivate:T('p_kcActivate'), kcExamplesLabel:T('p_kcExamplesLabel'),
+      faqLabel:T('p_faqLabel'), faqTitle:T('p_faqTitle'),
+      checkout:T('p_checkout'), payMethodLabel:T('p_payMethodLabel'), cryptoNote:T('p_cryptoNote'), payBtn:T('p_payBtn'), paySecure:T('p_paySecure'),
+      payProcessing:T('p_payProcessing'), payConfirming:T('p_payConfirming'), paid:T('p_paid'), toAccount:T('p_toAccount'),
+      setMonthly:()=>this.setState({billing:'monthly'}), setYearly:()=>this.setState({billing:'yearly'}),
+      billMonthlyStyle:seg(!yearly), billYearlyStyle:seg(yearly), yearlyBadge:T('p_yearlyBadgePre')+maxSav+'%',
+      setRub:()=>this.setState({currency:'rub'}), setUsd:()=>this.setState({currency:'usd'}),
+      curRubStyle:cseg(isR), curUsdStyle:cseg(!isR),
+      signedIn:S.signedIn, toggleDemo:()=>this.toggleDemo(), demoIcon: S.signedIn?'toggle_on':'toggle_off',
+      demoStyle:{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'7px 14px', borderRadius:'999px', cursor:'pointer', fontSize:'12.5px', fontWeight:600, color:S.signedIn?'#06231A':'#9DABA8', background:S.signedIn?'#34E5B0':'rgba(255,255,255,0.05)', border:'1px solid '+(S.signedIn?'transparent':'rgba(255,255,255,0.12)') },
+      ctPlanLatin:'PREMIUM', ctPlanLoc:locOf('premium'), ctSub:T('p_ctSub'), ctDaysLeft:T('p_ctDaysLeft'), ctActive:T('p_ctActive'),
+      plans, planFootnote: T('p_footPre')+(isR?T('p_footRub'):T('p_footUsd'))+T('p_footTail'),
+      balPackages, rows, showBonuses, bonuses,
+      kcInput:S.kcInput, kcInputColor: phase==='idle'?'#7C8A99':'#EAF1EF',
+      kcCheck:()=>this.runCheck(S.kcStatus), kcBtnLabel: phase==='scanning'?T('p_kcChecking'):T('p_kcCheckBtn'), kcBtnIcon: phase==='scanning'?'progress_activity':'search',
+      kcBtnStyle:{ display:'flex', alignItems:'center', justifyContent:'center', gap:'9px', padding:'14px', borderRadius:'12px', cursor:'pointer', fontWeight:700, fontSize:'15px', color:'#241646', background:'linear-gradient(135deg,#C7B7FF,#A78BFA)' },
+      kcExamples, kcIdle:phase==='idle', kcScanning:phase==='scanning', kcResult:phase==='result',
+      kcPanelStyle:{ minHeight:'320px', borderRadius:'18px', background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.08)', overflow:'hidden' },
+      kcResColor:curk.c, kcResTitle:curk.t, kcResDesc:curk.d, kcResIconName:curk.icon, kcResSys:curk.sys, kcResExpiry:curk.exp, kcResChips:curk.chips||[], kcCanActivate:S.kcStatus==='valid',
+      kcResIconWrap:{ width:'54px', height:'54px', borderRadius:'15px', background:curk.c+'1a', border:'1px solid '+curk.c+'44', display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' },
+      kcResIcon:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'30px', color:curk.c },
+      faqs,
+      payOpen:S.payOpen, payClose:()=>this.closePay(), payStop:(e)=>{ e&&e.stopPropagation&&e.stopPropagation(); },
+      payForm:S.payPhase==='form', payPending:S.payPhase==='pending', payDone:S.payPhase==='done',
+      payPlanLatin, payDesc, payMethods, payCrypto, payBaseStr:money(payBase, isR?0:2), payTotalStr:money(payTotalNum, isR?0:2), paySubmit:()=>this.submitPay(), payDoneMsg
+    };
+  }
+}
+</script>
+</body>
+</html>

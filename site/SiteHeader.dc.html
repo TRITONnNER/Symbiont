@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="./site-i18n.js"></script>
+</helmet>
+<div style="{{ barStyle }}">
+  <div style="{{ innerStyle }}">
+    <a href="Симбионт - сайт - Главная.dc.html" style="{{ logoStyle }}">
+      <span style="{{ markStyle }}"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1,'wght' 600; font-size:20px; color:#06231A;">all_inclusive</span></span>
+      <span style="font-weight:800; font-size:17px; color:#EAF1EF; letter-spacing:-0.01em;">{{ brand }}</span>
+    </a>
+
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; align-items:center; gap:2px; margin-left:6px;">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+          <a href="{{ n.href }}" style="{{ n.style }}" style-hover="color:#EAF1EF; background:rgba(255,255,255,0.05);">{{ n.label }}</a>
+        </sc-for>
+      </div>
+      <span style="flex:1;"></span>
+      <div style="display:flex; align-items:center; gap:12px; flex:0 0 auto;">
+        <div onClick="{{ toggleLang }}" style="{{ langBtnStyle }}" style-hover="border-color:rgba(255,255,255,0.16); color:#EAF1EF;">
+          <img src="{{ curFlag }}" style="{{ flagStyle }}" />
+          <span style="font-family:'JetBrains Mono',monospace; letter-spacing:0.03em;">{{ curCode }}</span>
+          <span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#7C8A99;">expand_more</span>
+        </div>
+        <a href="Симбионт - сайт - Аккаунт.dc.html" style="{{ loginStyle }}" style-hover="background:rgba(255,255,255,0.06); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">person</span>{{ tLogin }}</a>
+        <a href="Симбионт - сайт - Скачать.dc.html" style="{{ ctaStyle }}" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:17px;">download</span>{{ tDownload }}</a>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+      <span style="flex:1;"></span>
+      <div onClick="{{ toggleLang }}" style="{{ langBtnStyleM }}">
+        <img src="{{ curFlag }}" style="{{ flagStyle }}" />
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#C2CCCA;">{{ curCode }}</span>
+      </div>
+      <div onClick="{{ toggleMenu }}" style="width:42px; height:42px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#EAF1EF; cursor:pointer; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:24px;">{{ menuIcon }}</span></div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="border-top:1px solid rgba(255,255,255,0.07); background:rgba(6,9,10,0.98); padding:12px 20px 20px; display:flex; flex-direction:column; gap:5px;">
+      <sc-for list="{{ mnav }}" as="n" hint-placeholder-count="5">
+        <a href="{{ n.href }}" style="{{ n.style }}">{{ n.label }}</a>
+      </sc-for>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <a href="Симбионт - сайт - Аккаунт.dc.html" style="flex:1; text-align:center; padding:12px; border-radius:11px; border:1px solid rgba(255,255,255,0.12); color:#C2CCCA; font-weight:600; font-size:14px; text-decoration:none;">{{ tLogin }}</a>
+        <a href="Симбионт - сайт - Скачать.dc.html" style="flex:1; text-align:center; padding:12px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:14px; text-decoration:none;">{{ tDownload }}</a>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ langOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeLang }}" style="position:fixed; inset:0; z-index:190;"></div>
+    <div style="{{ langPanelStyle }}">
+      <div style="display:flex; align-items:center; gap:9px; padding:13px 15px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#7C8A99;">search</span>
+        <input value="{{ langQuery }}" onChange="{{ onLangSearch }}" placeholder="{{ langSearchPh }}" style="flex:1; min-width:0; background:transparent; border:none; outline:none; color:#EAF1EF; font-size:14px; font-family:'Golos Text',sans-serif;" />
+      </div>
+      <div style="overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:1px;">
+        <sc-for list="{{ langList }}" as="l" hint-placeholder-count="8">
+          <div onClick="{{ l.onClick }}" style="{{ l.rowStyle }}" style-hover="background:rgba(255,255,255,0.05);">
+            <img src="{{ l.flagSrc }}" style="{{ flagStyle }}" />
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; color:#7C8A99; background:rgba(255,255,255,0.05); border-radius:5px; padding:3px 4px; min-width:26px; text-align:center; flex:0 0 auto;">{{ l.code }}</span>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+              <span style="font-size:13.5px; font-weight:600; color:#EAF1EF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ l.name }}</span>
+              <sc-if value="{{ l.locShow }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px; color:#7C8A99; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ l.locName }}</span></sc-if>
+            </div>
+            <sc-if value="{{ l.on }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#34E5B0;">check</span></sc-if>
+          </div>
+        </sc-for>
+        <sc-if value="{{ langEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:18px; text-align:center; font-size:13px; color:#7C8A99;">—</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;download&quot;,&quot;pricing&quot;,&quot;account&quot;,&quot;support&quot;],&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { vw:(typeof window!=='undefined' && window.innerWidth) ? window.innerWidth : 1280, menuOpen:false, langOpen:false, langQuery:'', lang:'ru' };
+  componentDidMount(){
+    this._onR = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener('resize', this._onR);
+    try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({ lang:l }); }catch(e){}
+    this._onLang = (e) => { let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({ lang:l }); };
+    this._onStore = (e) => { if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({ lang:e.newValue }); };
+    this._onI18n = () => this.forceUpdate();
+    window.addEventListener('sym-lang', this._onLang);
+    window.addEventListener('storage', this._onStore);
+    window.addEventListener('sym-site-i18n', this._onI18n);
+  }
+  componentWillUnmount(){
+    if(this._onR) window.removeEventListener('resize', this._onR);
+    if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
+    if(this._onStore) window.removeEventListener('storage', this._onStore);
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n);
+  }
+  setLang(lc){
+    this.setState({ lang:lc, langOpen:false, langQuery:'' });
+    try{ localStorage.setItem('sym-site-lang', lc); }catch(e){}
+    try{ window.dispatchEvent(new CustomEvent('sym-lang',{ detail:lc })); }catch(e){}
+  }
+  renderVals(){
+    const lang = this.state.lang;
+    const T = (k)=> (typeof window!=='undefined' && window.symSiteT) ? window.symSiteT(lang,k) : k;
+    const rtl = (typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
+    const brand = (typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
+    const active = this.props.active || 'home';
+    const vw = this.state.vw;
+    const isDesktop = vw >= 1120;
+    const items = [
+      {key:'home', k:'navHome', href:'Симбионт - сайт - Главная.dc.html'},
+      {key:'download', k:'navDownload', href:'Симбионт - сайт - Скачать.dc.html'},
+      {key:'pricing', k:'navPricing', href:'Симбионт - сайт - Цены.dc.html'},
+      {key:'account', k:'navAccount', href:'Симбионт - сайт - Аккаунт.dc.html'},
+      {key:'support', k:'navSupport', href:'Симбионт - сайт - Поддержка.dc.html'}
+    ];
+    const nav = items.map(it => { const on = it.key === active; return { label:T(it.k), href:it.href, style:{
+      display:'block', padding:'8px 13px', borderRadius:'9px', fontSize:'13.5px', fontWeight: on?700:600,
+      color: on?'#EAF1EF':'#9DABA8', background: on?'rgba(255,255,255,0.055)':'transparent',
+      textDecoration:'none', whiteSpace:'nowrap', transition:'color .15s, background .15s' } }; });
+    const mnav = items.map(it => { const on = it.key === active; return { label:T(it.k), href:it.href, style:{
+      display:'block', padding:'13px 14px', borderRadius:'11px', fontSize:'15px', fontWeight: on?700:600,
+      color: on?'#EAF1EF':'#C2CCCA', background: on?'rgba(52,229,176,0.10)':'rgba(255,255,255,0.03)', textDecoration:'none' } }; });
+
+    const all = (typeof window!=='undefined' && window.SYM_LANGS) ? window.SYM_LANGS : [{code:'ru',name:'Русский',en:'Russian',flag:'ru'}];
+    const flagUrl = (x)=> (typeof window!=='undefined' && window.symSiteFlag) ? window.symSiteFlag(x.code, x.flag) : null;
+    const sorted = all.slice().sort((a,b)=> (''+(a.name||'')).localeCompare(''+(b.name||'')));
+    const cur = all.find(x=>x.code===lang) || all[0] || {code:'ru'};
+    const q = (this.state.langQuery||'').trim().toLowerCase();
+    const _names = (typeof window!=='undefined' && window.SYM_LANG_NAMES) ? window.SYM_LANG_NAMES : {};
+    const _hay = (x)=>{ const a=[x.name, x.en, x.code]; for(const ui in _names){ if(_names[ui] && _names[ui][x.code]) a.push(_names[ui][x.code]); } return a.map(v=>(''+(v||'')).toLowerCase()).join('|'); };
+    const filtered = sorted.filter(x=> !q || _hay(x).indexOf(q)>=0);
+    const langList = filtered.map(x=>{ const on=x.code===lang; const locName=(typeof window!=='undefined'&&window.symSiteLangName)?window.symSiteLangName(lang,x.code):''; const locShow=!!locName && (''+locName).toLowerCase()!==(''+(x.name||'')).toLowerCase(); return {
+      name:x.name, code:(x.code||'').toUpperCase(), flagSrc:flagUrl(x), locName, locShow, on, onClick:()=>this.setLang(x.code),
+      rowStyle:{ display:'flex', alignItems:'center', gap:'10px', padding:'9px 12px', borderRadius:'9px', cursor:'pointer',
+        background:on?'rgba(52,229,176,0.10)':'transparent' } }; });
+
+    const flagStyle = { width:'21px', height:'14px', borderRadius:'3px', objectFit:'cover', flex:'0 0 auto', boxShadow:'0 0 0 1px rgba(255,255,255,0.12)' };
+    const langBtnStyle = { display:'inline-flex', alignItems:'center', gap:'6px', padding:'6px 9px', borderRadius:'9px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', cursor:'pointer', color:'#C2CCCA', fontSize:'12px', fontWeight:600, transition:'all .15s' };
+    const langBtnStyleM = { display:'inline-flex', alignItems:'center', gap:'6px', padding:'8px 10px', borderRadius:'10px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)', cursor:'pointer', marginRight:'8px', flex:'0 0 auto' };
+    const langPanelStyle = { position:'fixed', top:'60px', right: rtl?'auto':'24px', left: rtl?'24px':'auto', zIndex:200, width:'300px', maxWidth:'calc(100vw - 32px)', maxHeight:'62vh', overflow:'hidden', display:'flex', flexDirection:'column', background:'rgba(12,17,20,0.98)', backdropFilter:'blur(14px)', WebkitBackdropFilter:'blur(14px)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'14px', boxShadow:'0 30px 70px -25px rgba(0,0,0,0.8)' };
+
+    const barStyle = { position:'sticky', top:'0', zIndex:100, backdropFilter:'blur(14px)', WebkitBackdropFilter:'blur(14px)', background:'rgba(7,10,15,0.82)', borderBottom:'1px solid rgba(255,255,255,0.07)' };
+    const innerStyle = { maxWidth:'1240px', margin:'0 auto', padding:'0 32px', height:'64px', display:'flex', alignItems:'center', gap:'6px', minWidth:0, direction: rtl?'rtl':'ltr' };
+    const logoStyle = { display:'flex', alignItems:'center', gap:'10px', textDecoration:'none', flex:'0 0 auto' };
+    const markStyle = { width:'32px', height:'32px', borderRadius:'9px', background:'linear-gradient(135deg,#3DF0BB,#1FA67D)', display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' };
+    const loginStyle = { display:'inline-flex', alignItems:'center', gap:'6px', padding:'8px 14px', borderRadius:'10px', border:'1px solid rgba(255,255,255,0.10)', color:'#C2CCCA', fontWeight:600, fontSize:'13px', textDecoration:'none', whiteSpace:'nowrap', transition:'all .15s' };
+    const ctaStyle = { display:'inline-flex', alignItems:'center', gap:'7px', padding:'9px 16px', borderRadius:'10px', background:'linear-gradient(135deg,#3DF0BB,#1FA67D)', color:'#06231A', fontWeight:700, fontSize:'13px', textDecoration:'none', whiteSpace:'nowrap', boxShadow:'0 8px 24px -10px rgba(31,166,125,0.55)', transition:'filter .15s' };
+
+    return { isDesktop, isMobile:!isDesktop, nav, mnav, brand, barStyle, innerStyle, logoStyle, markStyle, loginStyle, ctaStyle,
+      tLogin:T('ctaLogin'), tDownload:T('ctaDownload'), langSearchPh:T('langSearch'),
+      curCode:(cur.code||'').toUpperCase(), curFlag:flagUrl(cur),
+      langBtnStyle, langBtnStyleM, langPanelStyle, flagStyle,
+      langOpen:this.state.langOpen, toggleLang:()=>this.setState(s=>({langOpen:!s.langOpen})), closeLang:()=>this.setState({langOpen:false}),
+      langQuery:this.state.langQuery, onLangSearch:(e)=>this.setState({langQuery:e.target.value}),
+      langList, langEmpty:filtered.length===0,
+      menuOpen:this.state.menuOpen, menuIcon:this.state.menuOpen?'close':'menu', toggleMenu:()=>this.setState(s=>({menuOpen:!s.menuOpen})) };
+  }
+}
+</script>
+</body>
+</html>

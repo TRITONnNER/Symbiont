@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="./site-i18n.js"></script>
+<script src="./site-config.js"></script>
+<script src="./site-api.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html{scroll-behavior:smooth;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  ::-webkit-scrollbar-track{background:#070A0F;}
+  @keyframes sym-spin{to{transform:rotate(360deg)}}
+  @keyframes sym-pop{0%{transform:scale(0.94);opacity:0}100%{transform:scale(1);opacity:1}}
+  @keyframes sym-ping2{0%{transform:scale(0.7);opacity:0.7}100%{transform:scale(2.4);opacity:0}}
+</style>
+</helmet>
+
+<div data-screen-label="Сайт · Поддержка" style="min-height:100vh; background:radial-gradient(120% 80% at 50% -10%, #0C1614, #070A0F 58%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; overflow-x:hidden; direction:{{ dir }};">
+
+  <dc-import name="SiteHeader" active="support" style="display:block; width:100%;" hint-size="100%,64px"></dc-import>
+
+  <!-- ===== HERO ===== -->
+  <section style="max-width:1240px; margin:0 auto; padding:64px 32px 34px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:20px;">
+    <div style="display:inline-flex; align-items:center; gap:9px; padding:7px 14px 7px 11px; border-radius:999px; background:rgba(52,229,176,0.09); border:1px solid rgba(52,229,176,0.22);">
+      <span style="font-family:'Material Symbols Rounded'; font-size:15px; color:#34E5B0;">support_agent</span>
+      <span style="font-size:12.5px; font-weight:600; color:#34E5B0;">{{ badge }}</span>
+    </div>
+    <h1 style="margin:0; font-size:48px; line-height:1.06; font-weight:800; letter-spacing:-0.028em; max-width:720px;">{{ title1 }}<br>{{ title2 }}</h1>
+    <p style="margin:0; font-size:18px; line-height:1.5; color:#9DABA8; max-width:540px;">{{ heroSub }}</p>
+  </section>
+
+  <!-- ===== SELF-FIX + ENGINEER ===== -->
+  <section style="max-width:1240px; margin:0 auto; padding:20px 32px 40px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:stretch;">
+      <!-- auto fix -->
+      <div style="padding:28px; border-radius:20px; background:rgba(52,229,176,0.05); border:1px solid rgba(52,229,176,0.24); display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; align-items:center; gap:13px;">
+          <div style="width:50px; height:50px; border-radius:14px; background:rgba(52,229,176,0.14); border:1px solid rgba(52,229,176,0.3); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:26px; color:#34E5B0;">healing</span></div>
+          <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-weight:800; font-size:19px; color:#EAF1EF;">{{ autoTitle }}</span><span style="font-size:13px; color:#7C8A99;">{{ autoSub }}</span></div>
+        </div>
+        <sc-if value="{{ fixIdle }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ runFix }}" style="text-align:center; padding:15px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; cursor:pointer;" style-hover="filter:brightness(1.06);">{{ runDiag }}</div>
+        </sc-if>
+        <sc-if value="{{ fixActive }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <sc-for list="{{ fixSteps }}" as="s" hint-placeholder-count="3">
+              <div style="display:flex; align-items:center; gap:12px; padding:12px 15px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);">
+                <span style="{{ s.iconStyle }}">{{ s.icon }}</span>
+                <span style="flex:1; font-size:13.5px; font-weight:600; color:{{ s.color }};">{{ s.label }}</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270;">{{ s.meta }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ fixDone }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex; align-items:center; gap:11px; padding:13px 16px; border-radius:12px; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.32); animation:sym-pop .3s ease;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:20px; color:#34E5B0;">task_alt</span><span style="flex:1; font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ fixDoneLabel }}</span><span onClick="{{ resetFix }}" style="font-size:12px; color:#7C8A99; cursor:pointer;">{{ againLabel }}</span></div>
+          </sc-if>
+        </sc-if>
+        <div style="display:flex; flex-direction:column; gap:9px; margin-top:auto;">
+          <div style="display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:11px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); cursor:pointer;" style-hover="border-color:rgba(255,255,255,0.14);"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#F5C451;">report</span><div style="flex:1;"><div style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ reportBlock }}</div><div style="font-size:11.5px; color:#7C8A99;">{{ reportSub }}</div></div><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">chevron_right</span></div>
+        </div>
+      </div>
+
+      <!-- engineer chat -->
+      <div style="padding:0; border-radius:20px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; overflow:hidden;">
+        <div style="padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px;">
+          <span style="position:relative; width:38px; height:38px; border-radius:11px; background:rgba(91,155,255,0.14); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:21px; color:#5B9BFF;">support_agent</span></span>
+          <div style="flex:1;"><div style="font-weight:700; font-size:15px; color:#EAF1EF;">{{ engOnline }}</div><div style="display:flex; align-items:center; gap:6px;"><span style="position:relative; width:7px; height:7px;"><span style="position:absolute; inset:0; border-radius:50%; background:#34E5B0;"></span><span style="position:absolute; inset:0; border-radius:50%; border:1.5px solid rgba(52,229,176,.6); animation:sym-ping2 1.8s ease-out infinite;"></span></span><span style="font-size:11.5px; color:#34E5B0;">{{ engStatus }}</span></div></div>
+        </div>
+        <div style="flex:1; padding:18px 20px; display:flex; flex-direction:column; gap:12px; min-height:230px;">
+          <div style="max-width:82%; align-self:flex-start; padding:11px 14px; border-radius:14px 14px 14px 4px; background:rgba(255,255,255,0.05); font-size:13.5px; line-height:1.5; color:#C2CCCA;">{{ chat1 }}</div>
+          <div style="max-width:82%; align-self:flex-end; padding:11px 14px; border-radius:14px 14px 4px 14px; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.22); font-size:13.5px; line-height:1.5; color:#EAF1EF;">{{ chat2 }}</div>
+          <div style="max-width:82%; align-self:flex-start; padding:11px 14px; border-radius:14px 14px 14px 4px; background:rgba(255,255,255,0.05); font-size:13.5px; line-height:1.5; color:#C2CCCA;">{{ chat3 }}</div>
+        </div>
+        <div style="padding:14px 16px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; padding:11px 14px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); font-size:13px; color:#566270;">{{ chatPh }}</div>
+          <div style="width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#06231A;">send</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== NODE STATUS ===== -->
+  <section id="status" style="scroll-margin-top:80px; border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1240px; margin:0 auto; padding:76px 32px;">
+      <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:28px;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ statusLabel }}</span>
+          <h2 style="margin:0; font-size:32px; font-weight:800; letter-spacing:-0.02em;">{{ statusTitle }}</h2>
+          <p style="margin:0; font-size:14.5px; color:#7C8A99; max-width:520px; line-height:1.5;">{{ statusSub }}</p>
+        </div>
+        <div style="display:inline-flex; align-items:center; gap:10px; padding:11px 16px; border-radius:12px; background:rgba(52,229,176,0.08); border:1px solid rgba(52,229,176,0.22);">
+          <span style="position:relative; width:9px; height:9px;"><span style="position:absolute; inset:0; border-radius:50%; background:#34E5B0;"></span><span style="position:absolute; inset:0; border-radius:50%; border:1.5px solid rgba(52,229,176,.6); animation:sym-ping2 1.8s ease-out infinite;"></span></span>
+          <span style="font-weight:700; font-size:14px; color:#34E5B0;">{{ allNormal }}</span>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:12px;">
+        <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="8">
+          <div style="display:flex; align-items:center; gap:13px; padding:15px 17px; border-radius:14px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+            <span style="width:30px; height:22px; border-radius:5px; overflow:hidden; background:{{ n.flag }}; flex:0 0 auto;"></span>
+            <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; color:#EAF1EF;">{{ n.city }}</div><div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7C8A99;">{{ n.meta }}</div></div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:{{ n.pingColor }};">{{ n.ping }}</span>
+              <span style="{{ n.statusStyle }}">{{ n.status }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section id="faq" style="scroll-margin-top:80px; max-width:960px; margin:0 auto; padding:76px 32px;">
+    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:24px;">
+      <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ faqLabel }}</span>
+      <h2 style="margin:0; font-size:32px; font-weight:800; letter-spacing:-0.02em;">{{ faqTitle }}</h2>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
+      <sc-for list="{{ faqCats }}" as="c" hint-placeholder-count="5">
+        <span onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</span>
+      </sc-for>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:11px;">
+      <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="6">
+        <div onClick="{{ q.onClick }}" style="{{ q.cardStyle }}">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="font-size:9.5px; font-weight:700; letter-spacing:0.04em; color:{{ q.tagColor }}; background:{{ q.tagBg }}; padding:3px 8px; border-radius:6px; flex:0 0 auto;">{{ q.cat }}</span>
+            <span style="flex:1; font-weight:600; font-size:15.5px; color:#EAF1EF;">{{ q.q }}</span>
+            <span style="{{ q.iconStyle }}">expand_more</span>
+          </div>
+          <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:12px 0 0; padding-left:0; font-size:14px; line-height:1.6; color:#9DABA8;">{{ q.a }}</p>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== GLOSSARY ===== -->
+  <section id="glossary" style="scroll-margin-top:80px; border-top:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.012);">
+    <div style="max-width:1240px; margin:0 auto; padding:76px 32px;">
+      <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:26px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#A78BFA;">{{ glossLabel }}</span>
+        <h2 style="margin:0; font-size:32px; font-weight:800; letter-spacing:-0.02em;">{{ glossTitle }}</h2>
+        <p style="margin:0; font-size:14.5px; color:#7C8A99;">{{ glossSub }}</p>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px;">
+        <sc-for list="{{ terms }}" as="t" hint-placeholder-count="9">
+          <div style="padding:18px 20px; border-radius:14px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:7px;">
+            <div style="display:flex; align-items:center; gap:9px;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:{{ t.color }};">{{ t.icon }}</span><span style="font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; color:#EAF1EF;">{{ t.term }}</span></div>
+            <p style="margin:0; font-size:13px; line-height:1.55; color:#8E9A9F;">{{ t.def }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section style="max-width:1240px; margin:0 auto; padding:20px 32px 88px;">
+    <div style="border-radius:24px; padding:44px 40px; background:radial-gradient(120% 140% at 12% 0%, rgba(52,229,176,0.12), rgba(10,15,17,0.6) 55%), #0A0F11; border:1px solid rgba(52,229,176,0.22); display:flex; align-items:center; gap:26px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:260px; display:flex; flex-direction:column; gap:10px;">
+        <h2 style="margin:0; font-size:28px; font-weight:800; letter-spacing:-0.02em;">{{ contactTitle }}</h2>
+        <p style="margin:0; font-size:15px; color:#9DABA8; line-height:1.5; max-width:440px;">{{ contactSub }}</p>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a href="#" style="display:inline-flex; align-items:center; gap:9px; padding:14px 22px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; text-decoration:none;" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">send</span>{{ tgBtn }}</a>
+        <a href="#" style="display:inline-flex; align-items:center; gap:9px; padding:14px 20px; border-radius:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:15px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.09);"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">mail</span>help@symbiont.app</a>
+      </div>
+    </div>
+  </section>
+
+  <dc-import name="SiteFooter" style="display:block; width:100%;" hint-size="100%,420px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { fixStep:-1, faqCat:'all', faqOpen:0, lang:'ru' };
+  runFix(){
+    this.setState({ fixStep:0 });
+    clearTimeout(this._f1); clearTimeout(this._f2); clearTimeout(this._f3);
+    this._f1=setTimeout(()=>this.setState({fixStep:1}),850);
+    this._f2=setTimeout(()=>this.setState({fixStep:2}),1750);
+    this._f3=setTimeout(()=>this.setState({fixStep:3}),2650);
+  }
+  componentDidMount(){
+    try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
+    this._onLang=(e)=>{ let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({lang:l}); };
+    this._onStore=(e)=>{ if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({lang:e.newValue}); };
+    this._onI18n=()=>this.forceUpdate();
+    window.addEventListener('sym-lang', this._onLang);
+    window.addEventListener('storage', this._onStore);
+    window.addEventListener('sym-site-i18n', this._onI18n);
+  }
+  componentWillUnmount(){ clearTimeout(this._f1); clearTimeout(this._f2); clearTimeout(this._f3);
+    if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
+    if(this._onStore) window.removeEventListener('storage', this._onStore);
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n); }
+  renderVals(){
+    const lang=this.state.lang||'ru';
+    const T=(k)=> (typeof window!=='undefined' && window.symSiteT) ? window.symSiteT(lang,k) : k;
+    const rtl=(typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
+    const brand=(typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
+
+    // AUTO FIX
+    const fs = this.state.fixStep;
+    const stepLabels = T('s_fixSteps')||[];
+    const stepMeta = ['reality','1.1.1.1','8/8'];
+    const fixSteps = stepLabels.map((lab,i)=>{
+      const done = fs>i, active = fs===i;
+      return { label:lab, meta: done? '✓' : stepMeta[i],
+        color: done?'#EAF1EF':active?'#C2CCCA':'#7C8A99',
+        icon: done?'check_circle':'progress_activity',
+        iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings: done?"'FILL' 1":"'FILL' 0", fontSize:'20px', color: done?'#34E5B0':active?'#34E5B0':'#566270', animation: active?'sym-spin 0.9s linear infinite':'none' } };
+    });
+
+    // NODES
+    const flags = {
+      nl:'linear-gradient(180deg,#AE1C28 33%,#F4F4F4 33% 66%,#21468B 66%)',
+      de:'linear-gradient(180deg,#000 33%,#DD0000 33% 66%,#FFCE00 66%)',
+      fi:'linear-gradient(#003580,#003580) 8px 0/5px 100% no-repeat, linear-gradient(#003580,#003580) 0 8px/100% 6px no-repeat, #fff',
+      fr:'linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)',
+      us:'linear-gradient(#3C3B6E,#3C3B6E) 0 0/12px 11px no-repeat, repeating-linear-gradient(180deg,#B22234 0 3.1px,#fff 3.1px 6.2px)',
+      pl:'linear-gradient(180deg,#fff 50%,#DC143C 50%)',
+      tr:'radial-gradient(circle at 19px 11px,#fff 0 1.6px,transparent 2px), radial-gradient(circle at 14.5px 11px,#E30A17 0 4px,transparent 4.3px), radial-gradient(circle at 12px 11px,#fff 0 5px,transparent 5.3px), #E30A17',
+      jp:'radial-gradient(circle at 50% 50%, #BC002D 0 24%, #fff 24%)'
+    };
+    const cityNames = T('s_nodes')||[];
+    const stMap = { ok:[T('s_stNorm'),'#34E5B0'], warn:[T('s_stWarn'),'#F5C451'], back:[T('s_stBack'),'#5BE5A6'] };
+    const loadWord = T('s_load'), msU = T('s_ms');
+    const nodeMeta = [
+      {code:'ams-03',ping:38,load:34,flag:'nl',status:'ok'},
+      {code:'fra-01',ping:44,load:51,flag:'de',status:'ok'},
+      {code:'hel-02',ping:52,load:28,flag:'fi',status:'ok'},
+      {code:'par-01',ping:49,load:63,flag:'fr',status:'warn'},
+      {code:'nyc-05',ping:96,load:41,flag:'us',status:'ok'},
+      {code:'waw-02',ping:57,load:22,flag:'pl',status:'back'},
+      {code:'ist-01',ping:71,load:58,flag:'tr',status:'ok'},
+      {code:'nrt-04',ping:112,load:37,flag:'jp',status:'ok'}
+    ];
+    const nodes = nodeMeta.map((n,i)=>{ const st=stMap[n.status]; const pc=n.ping<=45?'#5BE5A6':n.ping<=90?'#34E5B0':'#F5C451';
+      return { city:cityNames[i]||'', code:n.code, meta:n.code+' · '+loadWord+' '+n.load+'%', ping:n.ping+' '+msU, flag:flags[n.flag], pingColor:pc, status:st[0],
+        statusStyle:{ fontSize:'10.5px', fontWeight:700, color:st[1], background:st[1]+'18', padding:'2px 8px', borderRadius:'6px' } }; });
+
+    // FAQ
+    const catDefs = T('s_faqCats')||[];
+    const catColor = { general:'#34E5B0', pay:'#F5C451', sec:'#5B9BFF', dev:'#A78BFA' };
+    const catLabelByKey = {}; catDefs.forEach(c=>{ catLabelByKey[c.key]=c.label; });
+    const faqCat = this.state.faqCat;
+    const faqCats = catDefs.map(c=>{ const on=faqCat===c.key; return { label:c.label, onClick:()=>this.setState({faqCat:c.key, faqOpen:-1}),
+      style:{ fontSize:'13px', fontWeight:600, padding:'8px 15px', borderRadius:'10px', cursor:'pointer',
+        color: on?'#06231A':'#9DABA8', background: on?'#34E5B0':'rgba(255,255,255,0.04)', border: on?'none':'1px solid rgba(255,255,255,0.08)' } }; });
+    const faqData = T('s_faqs')||[];
+    const filtered = faqData.filter(f=> faqCat==='all' || f.cat===faqCat);
+    const faqs = filtered.map((f,i)=>{ const open=this.state.faqOpen===i; const c=catColor[f.cat]||'#9DABA8';
+      return { q:f.q, a:f.a, cat:catLabelByKey[f.cat]||f.cat, tagColor:c, tagBg:c+'1a', open, onClick:()=>this.setState({faqOpen:open?-1:i}),
+        cardStyle:{ padding:'18px 20px', borderRadius:'14px', cursor:'pointer', background:open?'rgba(52,229,176,0.04)':'rgba(255,255,255,0.025)', border:open?'1px solid rgba(52,229,176,0.24)':'1px solid rgba(255,255,255,0.07)', transition:'all .16s' },
+        iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontSize:'22px', color:open?'#34E5B0':'#7C8A99', transform:open?'rotate(180deg)':'none', transition:'transform .18s' } }; });
+
+    // GLOSSARY
+    const termMeta = [
+      ['all_inclusive','#34E5B0'],['theater_comedy','#FF6B7A'],['travel_explore','#F5C451'],['blur_on','#F5C451'],
+      ['vpn_lock','#34E5B0'],['label','#5B9BFF'],['hub','#A78BFA'],['shield_lock','#34E5B0'],
+      ['dns','#5B9BFF'],['alt_route','#A78BFA'],['lan','#9DABA8'],['speed','#34E5B0']
+    ];
+    const terms = (T('s_terms')||[]).map((t,i)=>({ icon:(termMeta[i]||[])[0], color:(termMeta[i]||[])[1], term:t.term, def:t.def }));
+
+    return {
+      dir: rtl?'rtl':'ltr',
+      badge:T('s_badge'), title1:T('s_title1'), title2:T('s_title2'), heroSub:T('s_heroSubA')+brand+T('s_heroSubB'),
+      autoTitle:T('s_autoTitle'), autoSub:T('s_autoSub'), runDiag:T('s_runDiag'), fixDoneLabel:T('s_fixDone'), againLabel:T('s_again'),
+      reportBlock:T('s_reportBlock'), reportSub:T('s_reportSub'),
+      engOnline:T('s_engOnline'), engStatus:T('s_engStatus'), chat1:T('s_chat1'), chat2:T('s_chat2'), chat3:T('s_chat3'), chatPh:T('s_chatPh'),
+      statusLabel:T('s_statusLabel'), statusTitle:T('s_statusTitle'), statusSub:T('s_statusSub'), allNormal:T('s_allNormal'),
+      faqLabel:T('s_faqLabel'), faqTitle:T('s_faqTitle'),
+      glossLabel:T('s_glossLabel'), glossTitle:T('s_glossTitle'), glossSub:T('s_glossSub'),
+      contactTitle:T('s_contactTitle'), contactSub:T('s_contactSub'), tgBtn:T('s_tg'),
+      fixIdle:fs<0, fixActive:fs>=0, fixDone:fs>=3, fixSteps, runFix:()=>this.runFix(), resetFix:()=>this.setState({fixStep:-1}),
+      nodes, faqCats, faqs, terms };
+  }
+}
+</script>
+</body>
+</html>

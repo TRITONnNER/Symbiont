@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+</helmet>
+<div dir="{{ dir }}" onClick="{{ onCardClick }}" onMouseEnter="{{ onEnter }}" onMouseLeave="{{ onLeave }}" role="{{ role }}" tabIndex="{{ tabIndex }}" style="{{ rootStyle }}">
+
+  <sc-if value="{{ hasRail }}" hint-placeholder-val="{{ false }}"><div style="{{ railStyle }}"></div></sc-if>
+
+  <sc-if value="{{ isData }}" hint-placeholder-val="{{ true }}">
+    <div style="{{ dataWrapStyle }}">
+      <div style="{{ dataLabelRowStyle }}">
+        <sc-if value="{{ dataIcon }}" hint-placeholder-val="{{ false }}"><span style="{{ dataIconStyle }}">{{ icon }}</span></sc-if>
+        <span style="{{ dataLabelStyle }}">{{ label }}</span>
+      </div>
+      <div style="{{ dataValueRowStyle }}">
+        <span style="{{ dataValueStyle }}">{{ value }}</span>
+        <sc-if value="{{ hasUnit }}" hint-placeholder-val="{{ false }}"><span style="{{ dataUnitStyle }}">{{ unit }}</span></sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPanel }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ hasPanelHead }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ panelHeadStyle }}">
+        <span style="{{ panelTitleStyle }}">{{ title }}</span>
+        <sc-if value="{{ hasMeta }}" hint-placeholder-val="{{ false }}"><span style="{{ panelMetaStyle }}">{{ meta }}</span></sc-if>
+        <sc-if value="{{ panelHeadIcon }}" hint-placeholder-val="{{ false }}"><span style="{{ panelHeadIconStyle }}">{{ headIcon }}</span></sc-if>
+      </div>
+    </sc-if>
+    <div style="{{ panelBodyStyle }}">{{ children }}</div>
+  </sc-if>
+
+  <sc-if value="{{ isNotice }}" hint-placeholder-val="{{ false }}">
+    <span style="{{ noticeIconStyle }}">{{ noticeIcon }}</span>
+    <div style="{{ noticeBodyStyle }}">
+      <div style="{{ noticeTitleStyle }}">{{ title }}</div>
+      <sc-if value="{{ hasBody }}" hint-placeholder-val="{{ false }}"><div style="{{ noticeTextStyle }}">{{ body }}</div></sc-if>
+      <sc-if value="{{ hasCta }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ onCta }}" role="button" style="{{ ctaStyle }}">
+          <sc-if value="{{ ctaIcon }}" hint-placeholder-val="{{ false }}"><span style="{{ ctaIconStyle }}">{{ ctaIconName }}</span></sc-if>
+          <span style="{{ ctaLabelStyle }}">{{ ctaLabel }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isAction }}" hint-placeholder-val="{{ false }}">
+    <sc-if value="{{ actionIcon }}" hint-placeholder-val="{{ false }}"><span style="{{ actionIconStyle }}">{{ icon }}</span></sc-if>
+    <div style="{{ actionBodyStyle }}">
+      <span style="{{ actionLabelStyle }}">{{ label }}</span>
+      <sc-if value="{{ hasSub }}" hint-placeholder-val="{{ false }}"><span style="{{ actionSubStyle }}">{{ sub }}</span></sc-if>
+    </div>
+    <sc-if value="{{ hasCount }}" hint-placeholder-val="{{ false }}"><span style="{{ actionCountStyle }}">{{ count }}</span></sc-if>
+    <sc-if value="{{ actionChev }}" hint-placeholder-val="{{ false }}"><span style="{{ actionChevStyle }}">{{ actionChevIcon }}</span></sc-if>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:200,&quot;height&quot;:96},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;data&quot;,&quot;options&quot;:[&quot;data&quot;,&quot;panel&quot;,&quot;notice&quot;,&quot;action&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Card&quot;},&quot;tone&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;warn&quot;,&quot;options&quot;:[&quot;accent&quot;,&quot;direct&quot;,&quot;warn&quot;,&quot;relay&quot;,&quot;danger&quot;,&quot;info&quot;,&quot;success&quot;,&quot;neutral&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Card&quot;},&quot;dir&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;ltr&quot;,&quot;options&quot;:[&quot;ltr&quot;,&quot;rtl&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Card&quot;},&quot;rail&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Card&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Пинг&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;value&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;38&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;unit&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;мс&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;valueColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:null,&quot;options&quot;:[&quot;#EAF1EF&quot;,&quot;#34E5B0&quot;,&quot;#F5C451&quot;,&quot;#FF6B6B&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;align&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;start&quot;,&quot;options&quot;:[&quot;start&quot;,&quot;center&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data&quot;},&quot;icon&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Data / Action&quot;},&quot;title&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Каскад связи&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Panel / Notice&quot;},&quot;meta&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;2 из 4 пройдено&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Panel / Notice&quot;},&quot;body&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;DPI активен на :443 — прямой и обход заблокированы.&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Panel / Notice&quot;},&quot;cta&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Panel / Notice&quot;},&quot;sub&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Action&quot;},&quot;dashed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Action&quot;},&quot;center&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Action&quot;},&quot;count&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Action&quot;},&quot;lead&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;any&quot;},&quot;onClick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;},&quot;onCta&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;()=&gt;void&quot;}}">
+class Component extends DCLogic {
+  state = { hover:false };
+  renderVals(){
+    const p = this.props || {};
+    const dir = p.dir || 'ltr';
+    const rtl = dir === 'rtl';
+    const variant = p.variant || 'data';
+    const interactive = !!p.onClick;
+    const hover = interactive && this.state.hover;
+    const hexA = (h,a)=>{ if(!h) return 'transparent'; const n=String(h).replace('#',''); if(n.length<6) return h;
+      const r=parseInt(n.slice(0,2),16), g=parseInt(n.slice(2,4),16), b=parseInt(n.slice(4,6),16); return 'rgba('+r+','+g+','+b+','+a+')'; };
+
+    // ---- semantic tokens (P0 layer; literals live here, not in markup) ----
+    const C = {
+      txt:'#EAF1EF', sub:'#9DABA8', muted:'#6E7B8A', faint:'#566270', accent:'#34E5B0', bodyTxt:'#C2CCCA',
+      surf:'rgba(255,255,255,0.025)', surfSoft:'rgba(255,255,255,0.02)',
+      bd:'rgba(255,255,255,0.07)', hairline:'rgba(255,255,255,0.06)'
+    };
+    // cascade semantics = meaning, not decoration
+    const TONE = { accent:'#34E5B0', tunnel:'#34E5B0', direct:'#5BE5A6', warn:'#F5C451', bypass:'#F5C451',
+      relay:'#A78BFA', boost:'#A78BFA', danger:'#FF6B6B', block:'#FF6B6B', info:'#6BA4FF', success:'#5BE5A6', neutral:'#9DABA8' };
+
+    const isData = variant==='data', isPanel = variant==='panel', isNotice = variant==='notice', isAction = variant==='action';
+    const toneKey = TONE[p.tone] ? p.tone : 'warn';
+    const tc = TONE[toneKey];
+    const RAD = '14px';
+
+    // ---- ROOT (logical box props → free RTL mirroring) ----
+    let rootStyle;
+    if (isNotice){
+      rootStyle = { position:'relative', boxSizing:'border-box', minWidth:0, display:'flex', alignItems:'flex-start', gap:'12px',
+        paddingBlock:'14px', paddingInline:'16px', borderRadius:RAD,
+        background: hexA(tc,0.07), border:'1px solid '+hexA(tc,0.26) };
+    } else if (isAction){
+      const dashed = !!p.dashed;
+      rootStyle = { position:'relative', boxSizing:'border-box', minWidth:0, display:'flex', alignItems:'center',
+        justifyContent: p.center?'center':'flex-start', gap:'13px', paddingBlock:'13px', paddingInline:'16px', borderRadius:RAD,
+        background: dashed ? (hover?'rgba(255,255,255,0.02)':'transparent') : (hover?'rgba(255,255,255,0.045)':C.surf),
+        border:(dashed?'1px dashed ':'1px solid ')+(hover?'rgba(52,229,176,0.30)':(dashed?'rgba(255,255,255,0.11)':C.bd)),
+        cursor: interactive?'pointer':'default', transition:'border-color .16s ease, background .16s ease' };
+    } else if (isPanel){
+      rootStyle = { position:'relative', boxSizing:'border-box', minWidth:0, display:'flex', flexDirection:'column',
+        paddingBlock:'16px', paddingInline:'18px', borderRadius:RAD, background:C.surfSoft, border:'1px solid '+C.bd, overflow:'hidden' };
+    } else { // data
+      rootStyle = { position:'relative', boxSizing:'border-box', minWidth:0, display:'flex', flexDirection:'column', justifyContent:'center',
+        paddingBlock:'14px', paddingInline:'16px', borderRadius:RAD, background:C.surf,
+        border:'1px solid '+(hover?'rgba(52,229,176,0.28)':C.bd), overflow:'hidden',
+        cursor: interactive?'pointer':'default', transition:'border-color .16s ease' };
+    }
+
+    // optional brand rail (top stripe) — serves the "brand on surfaces" direction
+    const hasRail = !!p.rail;
+    const railColor = p.railColor || tc;
+    const railStyle = { position:'absolute', insetBlockStart:0, insetInlineStart:0, insetInlineEnd:0, height:'3px',
+      background:'linear-gradient(90deg,'+railColor+', '+hexA(railColor,0.4)+')' };
+
+    // ---- DATA: label + value(+unit), optional icon; align + label position ----
+    const align = p.align==='center' ? 'center' : 'start';
+    const labelBottom = p.labelPos==='bottom';
+    const labelCaps = (p.labelCaps!==false) && !labelBottom;
+    const dataWrapStyle = { display:'flex', flexDirection:'column', gap: labelBottom?'3px':'7px',
+      alignItems: align==='center'?'center':'flex-start', textAlign:align, minWidth:0 };
+    const dataIcon = isData && !!p.icon;
+    const dataIconStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'16px', color:p.iconColor||C.muted, lineHeight:1,
+      fontVariationSettings:p.iconFill?"'FILL' 1":"'FILL' 0" };
+    const dataLabelRowStyle = { display:'flex', alignItems:'center', gap:'7px', order: labelBottom?2:0 };
+    const dataLabelStyle = labelCaps
+      ? { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'10.5px', fontWeight:600, letterSpacing:'0.07em', color:C.muted, textTransform:'uppercase', whiteSpace:'nowrap' }
+      : { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'11px', fontWeight:500, color:C.muted, whiteSpace:'nowrap' };
+    const hasUnit = p.unit!=null && String(p.unit).length>0;
+    const dataValueRowStyle = { display:'flex', alignItems:'baseline', gap:'4px', order:1, direction:'ltr' };
+    const dataValueStyle = { fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:(p.valueSize||22)+'px',
+      color:p.valueColor||C.txt, lineHeight:1, letterSpacing:'-0.01em' };
+    const dataUnitStyle = { fontFamily:"'JetBrains Mono',monospace", fontSize:'12px', color:C.muted };
+
+    // ---- PANEL: header(title + meta|icon) + children slot ----
+    const hasMeta = p.meta!=null && String(p.meta).length>0;
+    const panelHeadIcon = isPanel && !!p.headIcon;
+    const hasPanelHead = isPanel && (!!p.title || hasMeta || panelHeadIcon);
+    const panelHeadStyle = { display:'flex', alignItems:'center', gap:'10px', marginBlockEnd:'14px' };
+    const panelTitleStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'11px', fontWeight:700, letterSpacing:'0.12em', color:C.muted, textTransform:'uppercase', flex:'1 1 auto', minWidth:0 };
+    const panelMetaStyle = { fontFamily:"'JetBrains Mono',monospace", fontSize:'11px', color:C.faint, flex:'0 0 auto', unicodeBidi:'plaintext', whiteSpace:'nowrap' };
+    const panelHeadIconStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'17px', color:p.headIconColor||C.faint, flex:'0 0 auto',
+      fontVariationSettings:p.headIconFill?"'FILL' 1":"'FILL' 0" };
+    const panelBodyStyle = { minWidth:0 };
+
+    // ---- NOTICE: tonal alert, icon + title + body (+ optional CTA) ----
+    const NIC = { warn:'warning', danger:'gpp_bad', info:'info', success:'check_circle', relay:'swap_horiz', neutral:'info', accent:'verified_user', direct:'bolt', bypass:'shield' };
+    const noticeIcon = p.icon || NIC[toneKey] || 'info';
+    const noticeIconStyle = { fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'20px', color:tc, flex:'0 0 auto', lineHeight:1.15 };
+    const noticeBodyStyle = { display:'flex', flexDirection:'column', gap:'4px', minWidth:0, flex:'1 1 auto' };
+    const noticeTitleStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'13px', fontWeight:700, color:tc };
+    const hasBody = p.body!=null && String(p.body).length>0;
+    const noticeTextStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'12px', lineHeight:1.5, color:C.bodyTxt };
+    const hasCta = isNotice && p.cta!=null && String(p.cta).length>0;
+    const ctaStyle = { display:'inline-flex', alignItems:'center', gap:'7px', alignSelf:'flex-start', marginBlockStart:'4px',
+      paddingBlock:'7px', paddingInline:'12px', borderRadius:'9px', background:hexA(tc,0.12), border:'1px solid '+hexA(tc,0.34), cursor:'pointer' };
+    const ctaIcon = !!p.ctaIcon;
+    const ctaIconName = p.ctaIcon || 'bolt';
+    const ctaIconStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'15px', color:tc, fontVariationSettings:"'FILL' 1" };
+    const ctaLabelStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'12.5px', fontWeight:600, color:tc, whiteSpace:'nowrap' };
+
+    // ---- ACTION: clickable row — icon + label(+sub) + count + chevron, or centered ----
+    const actionIcon = isAction && !!p.icon;
+    const actionIconStyle = { fontFamily:"'Material Symbols Rounded'", fontSize: p.center?'19px':'21px', color:p.iconColor||C.accent, flex:'0 0 auto',
+      fontVariationSettings:p.iconFill?"'FILL' 1":"'FILL' 0", lineHeight:1 };
+    const actionBodyStyle = { display:'flex', flexDirection:'column', gap:'1px', minWidth:0, flex: p.center?'0 0 auto':'1 1 auto', alignItems:'flex-start' };
+    const actionLabelStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'13.5px', fontWeight:600, color:p.labelColor||C.bodyTxt, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%' };
+    const hasSub = isAction && p.sub!=null && String(p.sub).length>0;
+    const actionSubStyle = { fontFamily:"'Golos Text','Noto Sans','Noto Sans Arabic',system-ui,sans-serif", fontSize:'11px', color:C.muted, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%' };
+    const hasCount = isAction && p.count!=null && String(p.count).length>0;
+    const actionCountStyle = { fontFamily:"'JetBrains Mono',monospace", fontSize:'12px', color:C.faint, flex:'0 0 auto', unicodeBidi:'plaintext' };
+    const actionChev = isAction && (p.center ? !!p.chevron : (p.chevron!==false));
+    const actionChevIcon = (typeof p.chevron==='string') ? p.chevron : 'chevron_right';
+    const _dir = (actionChevIcon==='chevron_right'||actionChevIcon==='chevron_left'||actionChevIcon==='arrow_forward');
+    const actionChevStyle = { fontFamily:"'Material Symbols Rounded'", fontSize:'18px', color:C.faint, flex:'0 0 auto', transform:(rtl&&_dir)?'scaleX(-1)':'none' };
+
+    return {
+      children: (p.children != null ? p.children : null),
+      dir, rootStyle, hasRail, railStyle,
+      onCardClick:p.onClick, role:interactive?'button':null, tabIndex:interactive?0:null,
+      onEnter:interactive?()=>this.setState({hover:true}):null, onLeave:interactive?()=>this.setState({hover:false}):null,
+      isData, isPanel, isNotice, isAction, icon:p.icon,
+      dataWrapStyle, dataIcon, dataIconStyle, dataLabelRowStyle, dataLabelStyle, label:p.label,
+      dataValueRowStyle, dataValueStyle, value:p.value, hasUnit, dataUnitStyle, unit:p.unit,
+      hasPanelHead, panelHeadStyle, panelTitleStyle, title:p.title, hasMeta, panelMetaStyle, meta:p.meta,
+      panelHeadIcon, panelHeadIconStyle, headIcon:p.headIcon, panelBodyStyle,
+      noticeIcon, noticeIconStyle, noticeBodyStyle, noticeTitleStyle, hasBody, noticeTextStyle, body:p.body,
+      hasCta, ctaStyle, onCta:p.onCta, ctaIcon, ctaIconName, ctaIconStyle, ctaLabel:p.cta, ctaLabelStyle,
+      actionIcon, actionIconStyle, actionBodyStyle, actionLabelStyle, hasSub, actionSubStyle, sub:p.sub,
+      hasCount, actionCountStyle, count:p.count, actionChev, actionChevIcon, actionChevStyle
+    };
+  }
+}
+</script>
+</body>
+</html>

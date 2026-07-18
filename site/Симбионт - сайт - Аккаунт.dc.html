@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<script src="./site-i18n.js"></script>
+<script src="./site-config.js"></script>
+<script src="./site-api.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html{scroll-behavior:smooth;}
+  ::-webkit-scrollbar{width:11px;height:11px;}
+  ::-webkit-scrollbar-thumb{background:#1c2826;border-radius:6px;border:3px solid #070A0F;}
+  ::-webkit-scrollbar-track{background:#070A0F;}
+  @keyframes sym-pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+  @keyframes sym-toast{0%{transform:translateY(14px);opacity:0}12%{transform:none;opacity:1}88%{opacity:1}100%{opacity:0}}
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:radial-gradient(120% 80% at 50% -10%, #0C1614, #070A0F 58%); color:#EAF1EF; font-family:'Golos Text',system-ui,sans-serif; overflow-x:hidden; direction:{{ dir }};">
+
+  <dc-import name="SiteHeader" active="account" style="display:block; width:100%;" hint-size="100%,64px"></dc-import>
+
+  <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ true }}">
+    <section style="max-width:1080px; margin:0 auto; padding:56px 32px 90px;">
+      <div style="display:grid; grid-template-columns:1fr 0.85fr; gap:36px; align-items:center;">
+        <div style="padding:34px; border-radius:22px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.08); box-shadow:0 40px 100px -40px rgba(0,0,0,0.7);">
+          <div style="display:flex; align-items:center; gap:11px; margin-bottom:22px;">
+            <span style="width:38px; height:38px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1,'wght' 600; font-size:23px; color:#06231A;">all_inclusive</span></span>
+            <div style="display:flex; flex-direction:column; gap:1px;"><span style="font-weight:800; font-size:18px;">{{ loginTitlePre }}{{ brand }}</span><span style="font-size:12.5px; color:#7C8A99;">{{ loginSub }}</span></div>
+          </div>
+
+          <div style="display:flex; gap:4px; padding:4px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); margin-bottom:20px;">
+            <span onClick="{{ tabLogin }}" style="{{ tabLoginStyle }}">{{ tabLoginLabel }}</span>
+            <span onClick="{{ tabCreate }}" style="{{ tabCreateStyle }}">{{ tabCreateLabel }}</span>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:14px;">
+            <span style="font-size:11.5px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ authFieldLabel }}</span>
+            <div style="display:flex; align-items:center; gap:11px; padding:14px 16px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(52,229,176,0.28);">
+              <span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#34E5B0;">{{ authFieldIcon }}</span>
+              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:#7C8A99;">{{ authFieldPh }}</span>
+            </div>
+          </div>
+
+          <div onClick="{{ signIn }}" style="text-align:center; padding:15px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15.5px; cursor:pointer; box-shadow:0 12px 30px -12px rgba(31,166,125,0.55);" style-hover="filter:brightness(1.06);">{{ authCta }}</div>
+
+          <div style="display:flex; align-items:center; gap:12px; margin:18px 0;">
+            <span style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></span><span style="font-size:12px; color:#566270;">{{ orLabel }}</span><span style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></span>
+          </div>
+          <div onClick="{{ signIn }}" style="display:flex; align-items:center; justify-content:center; gap:9px; padding:13px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14px; cursor:pointer;" style-hover="background:rgba(255,255,255,0.07); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#A78BFA;">password</span>{{ recoverBtn }}</div>
+
+          <div style="margin-top:18px; display:flex; align-items:center; gap:9px; padding:12px 14px; border-radius:11px; background:rgba(52,229,176,0.06); border:1px solid rgba(52,229,176,0.18);">
+            <span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#34E5B0;">visibility_off</span>
+            <span style="font-size:12px; color:#9DABA8; line-height:1.45;">{{ loginNote }}</span>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="font-size:20px; font-weight:800; letter-spacing:-0.01em; line-height:1.25;">{{ rightTitleA }}<span style="color:#34E5B0;">{{ rightTitleB }}</span></div>
+          <sc-for list="{{ loginPoints }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex; align-items:flex-start; gap:13px; padding:15px 16px; border-radius:14px; background:rgba(255,255,255,0.022); border:1px solid rgba(255,255,255,0.06);">
+              <span style="width:38px; height:38px; border-radius:11px; background:{{ p.tint }}; display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:20px; color:{{ p.color }};">{{ p.icon }}</span></span>
+              <div style="display:flex; flex-direction:column; gap:3px;"><span style="font-weight:700; font-size:14.5px; color:#EAF1EF;">{{ p.t }}</span><span style="font-size:12.5px; color:#7C8A99; line-height:1.5;">{{ p.d }}</span></div>
+            </div>
+          </sc-for>
+          <a href="Симбионт - сайт - Цены.dc.html" style="display:inline-flex; align-items:center; gap:8px; margin-top:2px; color:#34E5B0; font-weight:600; font-size:14px; text-decoration:none;" style-hover="text-decoration:underline;">{{ noKey }}<span style="font-family:'Material Symbols Rounded'; font-size:17px;">arrow_forward</span></a>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+    <section style="max-width:1240px; margin:0 auto; padding:40px 32px 90px;">
+      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:26px;">
+        <div style="width:52px; height:52px; border-radius:15px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:28px; color:#06231A;">person</span></div>
+        <div style="display:flex; flex-direction:column; gap:3px; flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:800; font-size:22px; letter-spacing:-0.01em;">{{ headerName }}</span><span style="font-size:10px; font-weight:800; letter-spacing:0.06em; color:#06231A; background:#34E5B0; padding:3px 8px; border-radius:6px;">{{ ownerLabel }}</span></div>
+          <span style="font-size:13px; color:#7C8A99;">{{ headerSub }}</span>
+        </div>
+        <div onClick="{{ signOut }}" style="display:inline-flex; align-items:center; gap:7px; padding:10px 16px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:13.5px; cursor:pointer;" style-hover="color:#FF6B7A; border-color:rgba(255,107,122,0.3);"><span style="font-family:'Material Symbols Rounded'; font-size:18px;">logout</span>{{ logoutLabel }}</div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin-bottom:20px;">
+        <sc-for list="{{ statTiles }}" as="s" hint-placeholder-count="4">
+          <div style="padding:18px 20px; border-radius:16px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:{{ s.color }};">{{ s.icon }}</span><span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ s.label }}</span></div>
+            <div style="display:flex; align-items:baseline; gap:5px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:24px; color:#EAF1EF;">{{ s.v }}</span><span style="font-size:12px; color:#7C8A99;">{{ s.u }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:16px; align-items:start;">
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="padding:24px; border-radius:18px; background:linear-gradient(150deg, rgba(52,229,176,0.08), rgba(255,255,255,0.02)); border:1px solid rgba(52,229,176,0.28);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ subscriptionLabel }}</span>
+              <span style="display:inline-flex; align-items:center; gap:6px; padding:4px 11px; border-radius:999px; background:rgba(52,229,176,0.14); border:1px solid rgba(52,229,176,0.3);"><span style="width:7px; height:7px; border-radius:50%; background:#34E5B0;"></span><span style="font-size:10.5px; font-weight:700; color:#34E5B0;">{{ activeLabel }}</span></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+              <div style="width:52px; height:52px; border-radius:14px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:28px; color:#06231A;">bolt</span></div>
+              <div style="flex:1; min-width:0;"><div style="font-weight:800; font-size:20px; color:#EAF1EF;">{{ planName }}</div><div style="font-size:13px; color:#7C8A99;">{{ planFeats }}</div></div>
+              <a href="Симбионт - сайт - Цены.dc.html" style="padding:10px 16px; border-radius:11px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap;" style-hover="background:rgba(255,255,255,0.1);">{{ manageLabel }}</a>
+            </div>
+            <div style="margin-top:16px; display:flex; align-items:center; gap:10px;">
+              <div style="flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="width:72%; height:100%; background:linear-gradient(90deg,#3DF0BB,#34E5B0);"></div></div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#9DABA8; white-space:nowrap;">{{ daysLeft }}</span>
+            </div>
+          </div>
+
+          <div style="padding:22px 24px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ tokenLabel }}</span><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">vpn_key</span></div>
+            <div style="display:flex; align-items:center; gap:11px; padding:13px 15px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09);">
+              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:13.5px; color:#C2CCCA; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ token }}</span>
+              <span onClick="{{ copyToken }}" style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:9px; background:rgba(52,229,176,0.1); border:1px solid rgba(52,229,176,0.28); color:#34E5B0; font-weight:600; font-size:12.5px; cursor:pointer; white-space:nowrap;" style-hover="background:rgba(52,229,176,0.16);"><span style="font-family:'Material Symbols Rounded'; font-size:15px;">{{ copyIcon }}</span>{{ copyLabel }}</span>
+            </div>
+            <div style="margin-top:10px; font-size:12px; color:#7C8A99;">{{ tokenNote }}</div>
+          </div>
+
+          <div style="padding:22px 24px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+              <div style="display:flex; flex-direction:column; gap:5px;">
+                <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ activeTimeLabel }}</span>
+                <div style="display:flex; align-items:baseline; gap:5px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF;">42</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF; margin-left:6px;">6</span><span style="font-size:13px; color:#7C8A99;">{{ hU }}</span></div>
+              </div>
+              <span style="font-size:11px; color:#566270; max-width:150px; text-align:right;">{{ spentConnected }}</span>
+            </div>
+            <div style="height:1px; background:rgba(255,255,255,0.06); margin-bottom:12px;"></div>
+            <div style="display:flex; flex-direction:column; gap:11px;">
+              <sc-for list="{{ ledger }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  <span style="width:32px; height:32px; border-radius:9px; background:{{ l.tint }}; display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:{{ l.color }};">{{ l.icon }}</span></span>
+                  <div style="flex:1; min-width:0;"><div style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ l.t }}</div><div style="font-size:11.5px; color:#7C8A99;">{{ l.d }}</div></div>
+                  <span style="font-family:'JetBrains Mono',monospace; font-size:13.5px; font-weight:600; color:{{ l.amtColor }};">{{ l.amt }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div id="devices" style="scroll-margin-top:80px; padding:22px 24px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;"><span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ devicesLabel }}</span><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">devices</span></div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
+                <div style="display:flex; align-items:center; gap:13px; padding:11px 0; border-bottom:{{ d.divider }};">
+                  <span style="width:36px; height:36px; border-radius:10px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#9DABA8;">{{ d.icon }}</span></span>
+                  <div style="flex:1; min-width:0;"><div style="display:flex; align-items:center; gap:8px;"><span style="font-size:14px; font-weight:600; color:#EAF1EF;">{{ d.name }}</span><sc-if value="{{ d.current }}" hint-placeholder-val="{{ false }}"><span style="font-size:9.5px; font-weight:700; color:#34E5B0; background:rgba(52,229,176,0.12); padding:2px 7px; border-radius:5px;">{{ thisDevice }}</span></sc-if></div><div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7C8A99;">{{ d.meta }}</div></div>
+                  <sc-if value="{{ d.revocable }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px; font-weight:600; color:#FF6B7A; cursor:pointer;">{{ revokeLabel }}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div id="referral" style="scroll-margin-top:80px; padding:22px 24px; border-radius:18px; background:rgba(167,139,250,0.05); border:1px solid rgba(167,139,250,0.24);">
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:14px;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#A78BFA;">diversity_3</span><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ referralsLabel }}</span></div>
+            <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ yourCodeLabel }}</span>
+            <div style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(167,139,250,0.28); margin:8px 0 14px;">
+              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600; color:#C7B7FF; letter-spacing:0.05em;">SYM-7K2Q9X</span>
+              <span onClick="{{ copyRef }}" style="font-family:'Material Symbols Rounded'; font-size:18px; color:#A78BFA; cursor:pointer;">{{ refCopyIcon }}</span>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;">
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">12</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ invitedLabel }}</div></div>
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">7</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ payingLabel }}</div></div>
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#34E5B0;">+120</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ daysLabel }}</div></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:10px; background:rgba(167,139,250,0.1);"><span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#A78BFA;">verified</span><span style="flex:1; font-size:12.5px; color:#C2CCCA;">{{ refNote }}</span></div>
+          </div>
+
+          <div style="padding:22px 24px; border-radius:18px; background:rgba(245,196,81,0.05); border:1px solid rgba(245,196,81,0.22);">
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#F5C451;">redeem</span><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ bonusDaysLabel }}</span></div>
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div style="display:flex; align-items:baseline; gap:4px; flex:0 0 auto;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:34px; color:#F5C451; letter-spacing:-0.02em;">+32</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span></div>
+              <div style="flex:1; min-width:0;"><div style="font-size:12.5px; color:#9DABA8; line-height:1.5;">{{ bonusDesc }}</div></div>
+            </div>
+            <a href="Симбионт - сайт - Аккаунт.dc.html#referral" style="margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border-radius:11px; background:rgba(245,196,81,0.12); border:1px solid rgba(245,196,81,0.28); color:#F5C451; font-weight:700; font-size:13.5px; text-decoration:none;" style-hover="background:rgba(245,196,81,0.18);"><span style="font-family:'Material Symbols Rounded'; font-size:18px;">diversity_3</span>{{ getMore }}</a>
+          </div>
+
+          <div id="recovery" style="scroll-margin-top:80px; padding:22px 24px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex; align-items:center; gap:9px; margin-bottom:10px;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#EAF1EF;">password</span><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ recoveryLabel }}</span></div>
+            <div style="display:flex; align-items:flex-start; gap:9px; padding:11px 13px; border-radius:11px; background:rgba(245,196,81,0.07); border:1px solid rgba(245,196,81,0.22); margin-bottom:13px;">
+              <span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#F5C451; flex:0 0 auto;">warning</span><span style="font-size:11.5px; color:#C2CCCA; line-height:1.45;">{{ recWarn }}</span>
+            </div>
+            <sc-if value="{{ recHidden }}" hint-placeholder-val="{{ true }}">
+              <div onClick="{{ revealRec }}" style="display:flex; align-items:center; justify-content:center; gap:9px; padding:16px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.16); cursor:pointer;" style-hover="background:rgba(255,255,255,0.05);"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#7C8A99;">visibility</span><span style="font-size:13.5px; font-weight:600; color:#9DABA8;">{{ showCode }}</span></div>
+            </sc-if>
+            <sc-if value="{{ recShown }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:7px; animation:sym-pop .25s ease;">
+                <sc-for list="{{ recWords }}" as="w" hint-placeholder-count="8">
+                  <div style="display:flex; align-items:center; gap:8px; padding:9px 11px; border-radius:9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);"><span style="font-family:'JetBrains Mono',monospace; font-size:10px; color:#566270;">{{ w.n }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; color:#EAF1EF;">{{ w.w }}</span></div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="padding:14px; border-radius:18px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:4px;">
+            <sc-for list="{{ quick }}" as="q" hint-placeholder-count="3">
+              <a href="{{ q.href }}" style="display:flex; align-items:center; gap:12px; padding:12px 12px; border-radius:11px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.04);">
+                <span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">{{ q.icon }}</span><span style="flex:1; font-size:14px; font-weight:600; color:#C2CCCA;">{{ q.t }}</span><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">chevron_right</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+  </sc-if>
+
+  <dc-import name="SiteFooter" style="display:block; width:100%;" hint-size="100%,420px"></dc-import>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:26px; left:50%; transform:translateX(-50%); z-index:200; display:flex; align-items:center; gap:10px; padding:13px 20px; border-radius:13px; background:rgba(16,22,21,0.97); border:1px solid rgba(52,229,176,0.28); box-shadow:0 20px 50px -18px rgba(0,0,0,0.7); animation:sym-toast 1.8s ease forwards;">
+      <span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#34E5B0;">check_circle</span>
+      <span style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { loggedIn:false, authTab:'login', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru' };
+  showToast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),1800); }
+  componentDidMount(){
+    try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
+    try{ const a=localStorage.getItem('sym-auth'); if(a==='1') this.setState({loggedIn:true}); }catch(e){}
+    this._onLang=(e)=>{ let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({lang:l}); };
+    this._onStore=(e)=>{ if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({lang:e.newValue}); };
+    this._onI18n=()=>this.forceUpdate();
+    window.addEventListener('sym-lang', this._onLang);
+    window.addEventListener('storage', this._onStore);
+    window.addEventListener('sym-site-i18n', this._onI18n);
+  }
+  componentWillUnmount(){ clearTimeout(this._tt); clearTimeout(this._ct); clearTimeout(this._rt);
+    if(this._onLang) window.removeEventListener('sym-lang', this._onLang);
+    if(this._onStore) window.removeEventListener('storage', this._onStore);
+    if(this._onI18n) window.removeEventListener('sym-site-i18n', this._onI18n); }
+  renderVals(){
+    const lang=this.state.lang||'ru';
+    const T=(k)=> (typeof window!=='undefined' && window.symSiteT) ? window.symSiteT(lang,k) : k;
+    const rtl=(typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
+    const brand=(typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
+    const isLogin = this.state.authTab==='login';
+    const seg = (on)=>({ flex:1, textAlign:'center', padding:'10px', borderRadius:'9px', cursor:'pointer', fontWeight: on?700:600, fontSize:'13.5px', color: on?'#06231A':'#9DABA8', background: on?'#34E5B0':'transparent', transition:'all .15s' });
+
+    const ptMeta=[{icon:'visibility_off',color:'#34E5B0',tint:'rgba(52,229,176,0.12)'},{icon:'devices',color:'#5B9BFF',tint:'rgba(91,155,255,0.12)'},{icon:'lock',color:'#A78BFA',tint:'rgba(167,139,250,0.12)'}];
+    const pts=T('a_points')||[];
+    const loginPoints=ptMeta.map((m,i)=>({icon:m.icon,color:m.color,tint:m.tint,t:(pts[i]||{}).t,d:(pts[i]||{}).d}));
+
+    const stMeta=[{icon:'schedule',color:'#34E5B0',v:'42'},{icon:'devices',color:'#5B9BFF',v:'3'},{icon:'diversity_3',color:'#A78BFA',v:'12'},{icon:'redeem',color:'#F5C451',v:'32'}];
+    const st=T('a_stats')||[];
+    const statTiles=stMeta.map((m,i)=>({icon:m.icon,color:m.color,label:(st[i]||{}).label,v:m.v,u:(st[i]||{}).u}));
+
+    const lgMeta=[{icon:'workspace_premium',color:'#34E5B0',tint:'rgba(52,229,176,0.12)',amtColor:'#34E5B0'},{icon:'redeem',color:'#F5C451',tint:'rgba(245,196,81,0.12)',amtColor:'#34E5B0'},{icon:'diversity_3',color:'#A78BFA',tint:'rgba(167,139,250,0.12)',amtColor:'#34E5B0'},{icon:'bolt',color:'#9DABA8',tint:'rgba(255,255,255,0.06)',amtColor:'#9DABA8'}];
+    const lg=T('a_ledger')||[];
+    const ledger=lgMeta.map((m,i)=>({icon:m.icon,color:m.color,tint:m.tint,t:(lg[i]||{}).t,d:(lg[i]||{}).d,amt:(lg[i]||{}).amt,amtColor:m.amtColor}));
+
+    const dvMeta=[{icon:'desktop_windows',current:true,revocable:false,divider:true},{icon:'phone_iphone',current:false,revocable:true,divider:true},{icon:'laptop_mac',current:false,revocable:true,divider:false}];
+    const dv=T('a_devices')||[];
+    const devices=dvMeta.map((m,i)=>({icon:m.icon,name:(dv[i]||{}).name,meta:(dv[i]||{}).meta,current:m.current,revocable:m.revocable,divider:m.divider?'1px solid rgba(255,255,255,0.05)':'none'}));
+
+    const qkMeta=[{icon:'key',href:'Симбионт - сайт - Цены.dc.html#key'},{icon:'download',href:'Симбионт - сайт - Скачать.dc.html'},{icon:'help',href:'Симбионт - сайт - Поддержка.dc.html'}];
+    const qk=T('a_quick')||[];
+    const quick=qkMeta.map((m,i)=>({icon:m.icon,t:qk[i],href:m.href}));
+
+    const recWords = ['orbit','cedar','flux','delta','north','ember','quartz','maple'].map((w,i)=>({ n:String(i+1).padStart(2,'0'), w }));
+
+    return {
+      dir: rtl?'rtl':'ltr', brand,
+      loggedOut:!this.state.loggedIn, loggedIn:this.state.loggedIn,
+      loginTitlePre:T('a_loginTitlePre'), loginSub:T('a_loginSub'),
+      tabLogin:()=>this.setState({authTab:'login'}), tabCreate:()=>this.setState({authTab:'create'}),
+      tabLoginStyle:seg(isLogin), tabCreateStyle:seg(!isLogin), tabLoginLabel:T('a_tabLogin'), tabCreateLabel:T('a_tabCreate'),
+      authFieldLabel: isLogin?T('a_fieldKey'):T('a_fieldLabel'), authFieldIcon: isLogin?'vpn_key':'devices',
+      authFieldPh: isLogin?'sb_live_…  или  СИМБ-XXXX-XXXX':T('a_phDevice'),
+      authCta: isLogin?T('a_login'):T('a_createAcc'), orLabel:T('a_or'), recoverBtn:T('a_recoverBtn'), loginNote:T('a_loginNote'),
+      rightTitleA:T('a_rightTitleA'), rightTitleB:T('a_rightTitleB'), noKey:T('a_noKey'), loginPoints,
+      signIn:()=>{ this.setState({loggedIn:true}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} },
+      signOut:()=>{ this.setState({loggedIn:false, recShown:false}); try{ localStorage.setItem('sym-auth','0'); }catch(e){} },
+      headerName:(dv[0]||{}).name||'', ownerLabel:T('a_owner'), headerSub:brand+' '+T('a_premium')+' · '+T('a_activeUntil'), logoutLabel:T('a_logout'),
+      statTiles, subscriptionLabel:T('a_subscription'), activeLabel:T('a_active'), planName:brand+' '+T('a_premium'), planFeats:T('a_planFeats'), manageLabel:T('a_manage'), daysLeft:T('a_daysLeft'),
+      tokenLabel:T('a_tokenLabel'), token:'sb_live_9c2f·7K2Q9XR4·MT8V·a91f', tokenNote:T('a_tokenNote'),
+      copyIcon:this.state.copied?'check':'content_copy', copyLabel:this.state.copied?T('a_copied'):T('a_copy'),
+      copyToken:()=>{ this.setState({copied:true}); this.showToast(T('a_toastToken')); clearTimeout(this._ct); this._ct=setTimeout(()=>this.setState({copied:false}),1600); },
+      activeTimeLabel:T('a_activeTime'), dU:T('a_dU'), hU:T('a_hU'), spentConnected:T('a_spentConnected'), ledger,
+      devicesLabel:T('a_devicesLabel'), thisDevice:T('a_thisDevice'), revokeLabel:T('a_revoke'), devices,
+      referralsLabel:T('a_referrals'), yourCodeLabel:T('a_yourCode'), invitedLabel:T('a_invited'), payingLabel:T('a_paying'), daysLabel:T('a_days'), refNote:T('a_refNote'),
+      refCopyIcon:this.state.refCopied?'check':'content_copy',
+      copyRef:()=>{ this.setState({refCopied:true}); this.showToast(T('a_toastCode')); clearTimeout(this._rt); this._rt=setTimeout(()=>this.setState({refCopied:false}),1600); },
+      bonusDaysLabel:T('a_bonusDays'), bonusDesc:T('a_bonusDesc'), getMore:T('a_getMore'),
+      recoveryLabel:T('a_recovery'), recWarn:T('a_recWarn'), showCode:T('a_showCode'),
+      recHidden:!this.state.recShown, recShown:this.state.recShown, revealRec:()=>this.setState({recShown:true}), recWords, quick,
+      toast:this.state.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
