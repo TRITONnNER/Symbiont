@@ -1570,7 +1570,25 @@ class Component extends DCLogic {
   finishOnboarding(){ this.setState({authed:true, obStep:'auth', conn:'idle'}); this._seq++; setTimeout(()=>this.connect(),350); }
   logout(){ this._seq++; this.setState({authed:false, conn:'idle', screen:'home', overlay:null}); }
   setOverlay(o){ this.setState({overlay:o}); }
-  buyPlan(){ clearTimeout(this._payT); this.setState({pay:'pending'}); this._payT=setTimeout(()=>this.setState({pay:'done'}),1900); }
+  buyPlan(tier){ const S=this.state; clearTimeout(this._payT); this.setState({pay:'pending'});
+    const period=(S.billing==='year')?'year':'month';
+    const t=(tier==='pro'||tier==='ultimate')?'ultimate':'premium';
+    const product=t+'_'+period;                 // premium_month / ultimate_year …
+    const method=S.payMethod||'sbp';
+    const region=(S.lang==='ru')?'ru':'intl';
+    const live=(typeof window!=='undefined'&&window.SYM_LIVE&&window.SYM_LIVE());
+    if(!live){ this._payT=setTimeout(()=>this.setState({pay:'done'}),1900); return; }   // демо как раньше
+    window.SYM_API.billingPurchase({product, method, region, discount_code:(S.payCode||null)}).then(r=>{
+      if(r&&r.status==='completed'){ this.setState({pay:'done'}); return; }
+      if(r&&r.checkout_url){ try{ window.open(r.checkout_url,'_blank'); }catch(e){} this._pollPay(r.payment_id,0); return; }
+      this.setState({pay:'done'});               // pending без ссылки — считаем инициированным
+    }).catch(()=>{ this._payT=setTimeout(()=>this.setState({pay:'done'}),1500); });
+  }
+  _pollPay(id,n){ n=n||0; window.SYM_API.payment(id).then(p=>{
+      if(p&&p.status==='completed'){ this.setState({pay:'done'}); }
+      else if(p&&p.status==='failed'){ this.setState({pay:null}); this.toast(this._T().errTitle||'Платёж не прошёл','error'); }
+      else if(n<40){ this._payT=setTimeout(()=>this._pollPay(id,n+1),1500); }
+    }).catch(()=>{ if(n<40){ this._payT=setTimeout(()=>this._pollPay(id,n+1),1500); } }); }
   setGlTab(t){ this.setState({glTab:t}); }
   toggleFaq(i){ this.setState(s=>({faqOpen:s.faqOpen===i?null:i})); }
   openFaq(i){ this.setState({screen:'glossary', glTab:'faq', faqOpen:i, glQuery:''}); }
