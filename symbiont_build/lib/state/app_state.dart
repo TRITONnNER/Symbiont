@@ -39,7 +39,7 @@ const kTrustedPubKey = String.fromEnvironment('SYMBIONT_PUBKEY', defaultValue: '
 ///   --dart-define=SYMBIONT_BASE_URL=http://<IP_VPS>:8000
 /// тогда приложение из коробки смотрит на твой VPS (онбординг можно пропустить).
 const kDefaultBaseUrl = String.fromEnvironment('SYMBIONT_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000');
+    defaultValue: 'http://193.23.219.118:8000');
 
 enum AppScreen { home, nodes, routes, scan, account, support }
 
