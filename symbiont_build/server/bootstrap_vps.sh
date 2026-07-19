@@ -68,6 +68,19 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq python3 python3-venv python3-pip curl tar jq openssl >/dev/null
 
+# ── секрет зачисления узлов: НИКОГДА не публично-известный дефолт ───────────────
+# Раньше здесь молча подставлялся demo-node-secret из репозитория — им кто угодно
+# мог подделать узел в подписанном манифесте (Sybil). Если оператор не задал
+# --node-secret, генерируем СЛУЧАЙНЫЙ и печатаем его (сохрани для узлов и деплоя).
+NODE_SECRET_GENERATED="no"
+if [ -z "$NODE_SECRET" ]; then
+  NODE_SECRET="$(openssl rand -hex 24)"
+  NODE_SECRET_GENERATED="yes"
+  warn "секрет узлов не задан (--node-secret) — сгенерирован случайный:"
+  echo "    SYMBIONT_NODE_SECRET=$NODE_SECRET"
+  echo "    (сохрани его: тем же секретом регистрируются остальные узлы)"
+fi
+
 # ── 1) публичный IP ──────────────────────────────────────────────────────────
 if [ -z "$HOST" ]; then
   say "определяю публичный IP сервера…"
@@ -145,7 +158,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$APP
-Environment=SYMBIONT_NODE_SECRET=${NODE_SECRET:-demo-node-secret}
+Environment=SYMBIONT_NODE_SECRET=${NODE_SECRET}
 ExecStart=$APP/.venv/bin/uvicorn server:app --host 0.0.0.0 --port $BACKEND_PORT
 Restart=on-failure
 RestartSec=3
@@ -175,7 +188,7 @@ fi
 if [ -n "$REGISTER_TO" ]; then
   say "регистрирую узел на бэкенде $REGISTER_TO…"
   SECRET_FILE="/etc/symbiont/node_secret"
-  if SYMBIONT_NODE_SECRET="${NODE_SECRET:-demo-node-secret}" \
+  if SYMBIONT_NODE_SECRET="${NODE_SECRET}" \
        python3 "$SCRIPT_DIR/register_node.py" --node "$OUT/manifest_node.json" \
          --backend "$REGISTER_TO" --secret-out "$SECRET_FILE"; then
     say "узел вписан в манифест бэкенда ✔ (появится у клиентов автоматически)"

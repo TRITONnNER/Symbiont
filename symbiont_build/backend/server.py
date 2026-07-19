@@ -95,7 +95,13 @@ _node_secrets: dict[str, str] = persist.jload("node_secrets.json", {})
 if _secrets_store != _secrets_before:
     persist.jsave("secrets.json", _secrets_store)
     log.info("недостающие секреты сгенерированы и сохранены в secrets.json (НЕ коммитить, держать вне репо)")
-MANIFEST_BASE = 184          # базовая версия (demo-узлы)
+# PROD-режим: боевое развёртывание. В нём клиенту НИКОГДА не отдаются демо-узлы,
+# а платежи по умолчанию не «самоподтверждаются» (нужен реальный провайдер).
+# Включается явным SYMBIONT_ENV=prod ИЛИ автоматически, когда рядом есть nodes.json
+# (реальные узлы = боевое развёртывание). В dev/демо (без узлов) остаётся витрина.
+PROD = (os.environ.get("SYMBIONT_ENV", "").strip().lower() in ("prod", "production")
+        or persist.exists("nodes.json"))
+MANIFEST_BASE = 184          # базовая версия (demo-узлы в dev; в prod — реальные/пусто)
 MANIFEST_VERSION = MANIFEST_BASE
 ROLLOUT = 100                # текущая волна canary-выкатки, % (операторский рычаг)
 
@@ -134,22 +140,27 @@ def _build_manifest():
     MANIFEST_VERSION = MANIFEST_BASE + _node_rev
     body = demo_manifest(MANIFEST_VERSION)
     if persist.exists("nodes.json"):
+        # Есть nodes.json → боевое развёртывание: отдаём ТОЛЬКО реальные живые узлы
+        # (даже если их 0 — например, все протухли). Демо-узлы клиенту НЕ показываем.
+        live = []
         try:
             data = persist.jload("nodes.json", {"nodes": []})
             real = data.get("nodes") if isinstance(data, dict) else data
-            if real:
-                healthy = _healthy_ids()
-                live = []
-                for n in real:
-                    if n.get("id") not in healthy:
-                        continue                       # протухший — само-починка убрала
-                    h = _node_health.get(n.get("id"))
-                    if h and isinstance(h.get("load_pct"), int):
-                        n = {**n, "loadPct": h["load_pct"]}   # живая загрузка из heartbeat
-                    live.append(n)
-                body["nodes"] = live
+            healthy = _healthy_ids()
+            for n in (real or []):
+                if n.get("id") not in healthy:
+                    continue                       # протухший — само-починка убрала
+                h = _node_health.get(n.get("id"))
+                if h and isinstance(h.get("load_pct"), int):
+                    n = {**n, "loadPct": h["load_pct"]}   # живая загрузка из heartbeat
+                live.append(n)
         except Exception as e:
             log.warning("nodes.json не загружен: %s", e)
+        body["nodes"] = live
+    elif PROD:
+        # Прод без nodes.json — реальных узлов ещё нет. Честный пустой список,
+        # без выдуманных демо-узлов (клиент покажет «сеть ещё не развёрнута»).
+        body["nodes"] = []
     body["rollout"] = ROLLOUT
     return sign_manifest(body, _sk)
 
@@ -799,12 +810,18 @@ PRODUCTS = {
 }
 # МИР, Visa, Mastercard, СБП, ЮMoney, крипта.
 ALLOWED_METHODS = {"sbp", "mir", "visa", "mastercard", "yoomoney", "crypto"}
-SANDBOX_PAY = os.environ.get("SYMBIONT_SANDBOX_PAY", "1") == "1"
+# В prod песочница выключена по умолчанию: покупки НЕ должны молча становиться
+# «оплаченными» без реального провайдера. В dev — включена (удобно тестировать UI).
+SANDBOX_PAY = os.environ.get("SYMBIONT_SANDBOX_PAY", "0" if PROD else "1") == "1"
 # Платёжный «провайдер»: 'sandbox' — мгновенное подтверждение (кнопка «Купить» сразу
 # оплачивает); 'mock' — ЗАГЛУШКА ПО РЕАЛЬНОМУ ПРИНЦИПУ: возвращает ссылку/QR и pending,
 # оплата подтверждается «колбэком» провайдера (/v1/billing/mock/confirm). Боевой провайдер
 # ставится сюда позже: purchase вернёт его checkoutUrl, а его вебхук — в /v1/billing/webhook.
 PAY_PROVIDER = os.environ.get("SYMBIONT_PAY_PROVIDER", "sandbox")
+if PROD and (SANDBOX_PAY or PAY_PROVIDER in ("sandbox", "mock")):
+    log.warning("ВНИМАНИЕ: prod с ненастоящей оплатой (SANDBOX_PAY=%s, PAY_PROVIDER=%s) — "
+                "покупки не берут денег. Задай реального провайдера перед приёмом платежей.",
+                SANDBOX_PAY, PAY_PROVIDER)
 
 def _price_of(product: str, region: str = "ru", method: str = "sbp") -> dict:
     """Сумма к оплате из экономики. region: 'ru'→₽, иначе 'intl'→$. Крипта даёт

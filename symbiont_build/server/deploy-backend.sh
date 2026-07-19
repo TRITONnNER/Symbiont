@@ -72,11 +72,14 @@ After=network.target
 [Service]
 WorkingDirectory=$DATA
 Environment=PYTHONPATH=$BACKEND
-Environment=SYMBIONT_CORS_ORIGINS=*
-# ТЕСТОВЫЙ платёжный режим «формальная покупка»: работает КАК реальная (страница
-# оплаты + подтверждение колбэком), но деньги НЕ списываются. Перед приёмом реальных
-# денег: SYMBIONT_PAY_PROVIDER=sandbox снять, подключить боевой провайдер + вебхук.
-Environment=SYMBIONT_PAY_PROVIDER=mock
+Environment=SYMBIONT_ENV=prod
+Environment=SYMBIONT_CORS_ORIGINS=${CORS_ORIGINS:-*}
+# Платежи по умолчанию БЕЗ фейкового подтверждения: purchase вернёт pending, пока не
+# подключён боевой провайдер (его checkoutUrl + вебхук /v1/billing/webhook). Раньше
+# здесь стоял mock — «боевой» деплой из коробки принимал покупки без денег. Чтобы
+# осознанно включить ТЕСТОВЫЙ режим (страница оплаты без списания), запусти скрипт как:
+#   PAY_MODE=mock sudo ./deploy-backend.sh …
+Environment=SYMBIONT_PAY_PROVIDER=${PAY_MODE:-sandbox}
 # ВНИМАНИЕ: один воркер — состояние в SQLite (symbiont_state.db, WAL) в $DATA.
 # Не масштабировать воркерами без вынесения in-memory-структур (см. роадмап).
 ExecStart=$VENV/bin/uvicorn server:app --host 127.0.0.1 --port $PORT --workers 1
@@ -158,4 +161,4 @@ echo "    curl -fsSL $BASE/../get.sh | sudo bash -s -- --register-to $BASE --nod
 echo "    (get.sh: см. docs/СИМБИОНТ_server_in_a_box.md)"
 echo "  Управление флотом:  GET $BASE/v1/admin/nodes  (заголовок X-Admin-Token: ${ADMIN_TOKEN:-…})"
 echo "  Обновить бэкенд:    повторить эту же команду (идемпотентно)."
-warn "Перед приёмом РЕАЛЬНЫХ денег: снять SYMBIONT_PAY_PROVIDER=mock, подключить боевой провайдер + вебхук."
+warn "Платежи: покупки возвращают pending, пока не подключён боевой провайдер (checkoutUrl + вебхук)."
