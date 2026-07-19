@@ -31,7 +31,25 @@ const String _kEngineBridgeJs = r'''
   }
   window.SYM_ENGINE = {
     onEvent: function (fn) { cb = fn; },
-    connect: function (node) { return Promise.resolve(callHost({ cmd: 'connect', node: node || null })); },
+    connect: function (node) {
+      // Оболочка держит в списке ОБЛЕГЧЁННЫЙ узел (без секретов). Движку нужны
+      // host/port/transport из подписанного манифеста — иначе VPN не поднимется
+      // (уйдёт в DPI-обход). Обогащаем узел из window.SYM_DATA.manifest по id/code.
+      var payload = node || null;
+      try {
+        var man = (window.SYM_DATA && window.SYM_DATA.manifest) || null;
+        if (man && man.nodes && node) {
+          for (var i = 0; i < man.nodes.length; i++) {
+            var mn = man.nodes[i];
+            if ((node.id && mn.id === node.id) || (!node.id && node.code && mn.code === node.code)) {
+              payload = { id: mn.id, code: mn.code, country: mn.country, host: mn.host, port: mn.port, load: mn.loadPct, transport: mn.transport };
+              break;
+            }
+          }
+        }
+      } catch (e) {}
+      return Promise.resolve(callHost({ cmd: 'connect', node: payload }));
+    },
     disconnect: function () { callHost({ cmd: 'disconnect' }); },
     status: function () { return Promise.resolve(callHost({ cmd: 'status' })); },
     _emit: function (ev) { try { if (cb) cb(ev); } catch (e) {} }

@@ -171,14 +171,19 @@
       if (roles.indexOf('relay') !== -1 && roles.length === 1) return;
       out.push({
         code: (n.code || '').toUpperCase(),
-        host: (n.id || n.code || 'node') + '.symbiont.net',
+        // РЕАЛЬНЫЙ хост из манифеста (не выдуманный *.symbiont.net) — по нему движок
+        // поднимает VPN и меряется пинг. Фолбэк только если сервер не прислал host.
+        host: n.host || ((n.id || n.code || 'node') + '.symbiont.net'),
         // ping манифест не отдаёт (меряется на клиенте) — оценка от нагрузки для показа
         ping: Math.max(18, Math.round(24 + (n.loadPct || 0) * 0.9)),
         load: n.loadPct || 0,
         fav: false,
         id: n.id,
         protocols: n.protocols || [],
-        _country_en: n.country || null
+        _country_en: n.country || null,
+        // Секреты подключения — движок берёт их при connect (см. sym_engine_channel).
+        port: n.port || 443,
+        transport: n.transport || null
       });
     });
     return out.length ? out : null;

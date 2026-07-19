@@ -41,6 +41,22 @@ class SymEngineChannel {
       switch (cmd) {
         case 'connect':
           final node = msg['node'] is Map ? Map<String, dynamic>.from(msg['node']) : null;
+          // КРИТИЧНО: отдаём движку АКТИВНЫЙ УЗЕЛ с секретами transport (host/port/
+          // reality|hysteria2|ss2022). Без него desktop-движок не находит узел и
+          // сваливается в DPI-обход вместо VPN к выбранному серверу. Оболочка (мост
+          // в web_shell_page.dart) обогащает node этими полями из манифеста.
+          if (node != null) {
+            final t = node['transport'];
+            engine.setActiveNode(NodeInfo(
+              id: '${node['id'] ?? node['host'] ?? 'node'}',
+              country: '${node['country'] ?? node['_country_en'] ?? node['code'] ?? ''}',
+              code: '${node['code'] ?? ''}',
+              loadPct: (node['load'] is num) ? (node['load'] as num).toInt() : 0,
+              host: node['host'] as String?,
+              port: (node['port'] is num) ? (node['port'] as num).toInt() : 443,
+              transport: t is Map ? Map<String, dynamic>.from(t) : null,
+            ));
+          }
           final nodeId = node?['id'] as String? ?? node?['host'] as String?;
           await engine.connect(nodeId: nodeId);
           return {'ok': true};
