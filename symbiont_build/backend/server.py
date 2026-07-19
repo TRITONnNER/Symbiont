@@ -2182,26 +2182,34 @@ def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
 
-# ── Публичные веб-страницы с того же адреса, что и API ─────────────────────────
-# Если рядом есть каталог web/ (лендинг + чекер ключа) — монтируем его в корень:
-#   http://<бэкенд>/            → лендинг index.html
-#   http://<бэкенд>/check.html  → РЕАЛЬНЫЙ чекер ключа (тем же origin зовёт
-#                                 /v1/key/check и /v1/pubkey — без CORS, без настройки).
-# API-маршруты /v1/... объявлены выше и имеют приоритет над этим монтированием.
-# Так одному серверу достаточно запустить бэкенд, чтобы сайт показывал реальные данные.
+# ── Реальные фронтенды с того же адреса, что и API ─────────────────────────────
+# nginx проксирует ВСЁ на бэкенд, поэтому монтируем настоящие фронтенды здесь и
+# одному серверу достаточно запустить бэкенд, чтобы всё показывало реальные данные:
+#   /            → сайт-витрина (site/)                 [вход: index.html → Главная]
+#   /app         → приложение (webapp/Симбионт.dc.html) [вход: index.html]
+#   /panel       → операторская панель (server/sib-console.html)
+#   /web         → простой лендинг + чекер ключа (web/) — запасной
+# Коннекторы фронтендов ходят на /v1 ТЕМ ЖЕ origin — без CORS, без настройки.
+# API-маршруты /v1/... объявлены выше и имеют приоритет; catch-all «/» монтируется ПОСЛЕДНИМ.
 try:
     from fastapi.staticfiles import StaticFiles
-    _web_dir = os.environ.get("SYMBIONT_WEB_DIR") or next(
-        (p for p in (
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "web"),
-            os.path.join(os.getcwd(), "web"),
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "web"),
-        ) if os.path.isdir(p)), None)
-    if _web_dir:
-        app.mount("/", StaticFiles(directory=_web_dir, html=True), name="web")
-        log.info("веб-страницы отдаются из %s (лендинг + чекер ключа на том же адресе)",
-                 os.path.abspath(_web_dir))
-    else:
-        log.info("каталог web/ не найден рядом — публичные страницы не отдаём (только API)")
+    _bk = os.path.dirname(os.path.abspath(__file__))          # .../symbiont_build/backend
+    _sb = os.path.abspath(os.path.join(_bk, ".."))            # .../symbiont_build
+    _repo = os.path.abspath(os.path.join(_sb, ".."))          # корень репозитория
+    # порядок ВАЖЕН: специфичные префиксы раньше catch-all «/».
+    _mounts = [
+        ("/app",   os.path.join(_repo, "webapp")),            # приложение
+        ("/panel", os.path.join(_sb, "server")),              # /panel/sib-console.html
+        ("/web",   os.path.join(_sb, "web")),                 # запасной лендинг+чекер
+        ("/",      os.path.join(_repo, "site")),              # сайт-витрина (catch-all)
+    ]
+    for _pfx, _d in _mounts:
+        _d = os.path.abspath(_d)
+        if os.path.isdir(_d):
+            app.mount(_pfx, StaticFiles(directory=_d, html=True),
+                      name="fe" + (_pfx.replace("/", "_") or "_root"))
+            log.info("фронтенд %-6s ← %s", _pfx, _d)
+        else:
+            log.info("фронтенд %-6s пропущен (нет каталога %s)", _pfx, _d)
 except Exception as e:
-    log.warning("не удалось смонтировать web/: %s", e)
+    log.warning("монтирование фронтендов не удалось: %s", e)
