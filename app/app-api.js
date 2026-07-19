@@ -67,8 +67,10 @@
     man.nodes.forEach(function (n) {
       var roles = n.roles || [];
       if (roles.indexOf('relay') !== -1 && roles.length === 1) return;   // реле — часть каскада, не выбирается
-      out.push({ code: (n.code || '').toUpperCase(), host: (n.id || n.code || 'node') + '.symbiont.net',
-                 ping: Math.max(18, Math.round(24 + (n.loadPct || 0) * 0.9)), load: n.loadPct || 0, fav: false });
+      if (!n.host) return;                                               // без реального host узел не подключить — не показываем
+      out.push({ code: (n.code || '').toUpperCase(), host: n.host,       // РЕАЛЬНЫЙ host из манифеста (не выдуманный *.symbiont.net)
+                 ping: (typeof n.ping === 'number' ? n.ping : null),     // пинг не выдумываем: null = «не измерен» → UI покажет «—»
+                 load: (typeof n.loadPct === 'number' ? n.loadPct : null), fav: false });
     });
     return out.length ? out : null;
   }

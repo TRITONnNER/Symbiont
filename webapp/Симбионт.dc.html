@@ -237,8 +237,8 @@
                 <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7C8A99; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ node.host }}</span>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px; flex:0 0 auto;">
-                <span style="{{ node.pingStyle }}">{{ node.ping }} {{ hs.ms }}</span>
-                <div style="display:flex; align-items:center; gap:8px;"><div style="width:50px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="{{ node.loadBarStyle }}"></div></div><span style="{{ node.loadPctStyle }}">{{ node.load }}%</span></div>
+                <span style="{{ node.pingStyle }}">{{ node.pingStr }}</span>
+                <div style="display:flex; align-items:center; gap:8px;"><div style="width:50px; height:4px; border-radius:2px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="{{ node.loadBarStyle }}"></div></div><span style="{{ node.loadPctStyle }}">{{ node.loadStr }}</span></div>
               </div>
               <span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#566270; flex:0 0 auto;" data-rtlflip="1">chevron_right</span>
             </div>
@@ -1619,7 +1619,7 @@ class Component extends DCLogic {
   setRouteMode(m){ this.setState({routeMode:m}); }
   toggleFav(i){ this.setState(s=>{ const f={...s.favs}; if(f[i])delete f[i]; else f[i]=true; return {favs:f}; }); }
   setNodeFilter(f){ this.setState({nodeFilter:f}); }
-  autoBest(){ const N=this._nodes(); let bi=0,bs=1e9; N.forEach((n,i)=>{const sc=n.ping+n.load*0.4; if(sc<bs){bs=sc;bi=i;}}); this.setState({node:bi}); this.toast(this._T().bestNode,'ok'); }
+  autoBest(){ const N=this._nodes(); if(!N.length) return; let bi=0,bs=1e9; N.forEach((n,i)=>{const sc=(n.ping==null?9e3:n.ping)+(n.load==null?0:n.load)*0.4; if(sc<bs){bs=sc;bi=i;}}); this.setState({node:bi}); this.toast(this._T().bestNode,'ok'); }
   randomNode(){ const N=this._nodes(); const i=Math.floor(Math.random()*N.length); this.setState({node:i}); this.toast(this._T().randNode,'ok'); }
   setLang(l){ this.setState({lang:l}); }
   pickLang(l){ this.setState({lang:l, langOpen:false, langMenuOpen:false, langQuery:''}); }
@@ -1785,14 +1785,27 @@ class Component extends DCLogic {
     const sparkArea='0,30 '+sparkPoints+' 100,30';
     const loadColor=(l)=> l<=75?'#5BE5A6': l<=90?'#F5C451':'#FF6B6B';
     const pingColor=(p)=> p<=60?'#5BE5A6': p<=100?'#F5C451':'#FF6B6B';
-    const nodeVC=(p,l)=>['#5BE5A6','#F5C451','#FF6B6B'][Math.max(p<=60?0:p<=100?1:2, l<=75?0:l<=90?1:2)];
+    // Цвет метрики узла. Пинг/нагрузка могут быть неизвестны (null) — тогда не «зелёним»
+    // ложно: неизвестная метрика не влияет на цвет (нейтральный индекс 0).
+    const nodeVC=(p,l)=>{ const pi=(p==null)?0:(p<=60?0:p<=100?1:2); const li=(l==null)?0:(l<=75?0:l<=90?1:2); return ['#5BE5A6','#F5C451','#FF6B6B'][Math.max(pi,li)]; };
+    const _lang=(this.state.lang||'ru');
+    const _ndMs=({ru:'мс',en:'ms',es:'ms',de:'ms'})[_lang]||'ms';
     const NODES=this._nodes();
-    const nd=NODES[S.node]||NODES[0];
-    const node={ ...nd, country: nd.country+' · '+nd.city, flagStyle:{width:'34px',height:'24px',borderRadius:'5px',backgroundImage:'url(./flags/'+nd.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, loadBarStyle:{ width: nd.load+'%', height:'100%', background: nodeVC(nd.ping,nd.load), borderRadius:'2px' }, pingStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'13px', color: nodeVC(nd.ping,nd.load) }, loadPctStyle:{ fontFamily:"'JetBrains Mono',monospace", fontSize:'10.5px', fontWeight:600, color: nodeVC(nd.ping,nd.load) } };
+    // Нет узлов (сеть ещё не развёрнута / бэкенд вернул пустой список) — честная
+    // заглушка вместо выдуманного узла. Пинг/нагрузка неизвестны → «—».
+    const _noNodesLbl=({ru:'Сеть ещё не развёрнута',en:'Network not deployed yet',es:'Red aún no desplegada',de:'Netz noch nicht bereit'})[_lang]||'Network not deployed yet';
+    const _hasNodes=NODES.length>0;
+    const nd=_hasNodes?(NODES[S.node]||NODES[0]):{code:'',country:_noNodesLbl,city:'',host:'—',ping:null,load:null};
+    const node={ ...nd, country: nd.city?(nd.country+' · '+nd.city):nd.country,
+      pingStr:(nd.ping==null?'—':nd.ping+' '+_ndMs), loadStr:(nd.load==null?'—':nd.load+'%'),
+      flagStyle: nd.code?{width:'34px',height:'24px',borderRadius:'5px',backgroundImage:'url(./flags/'+nd.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}:{width:'34px',height:'24px',borderRadius:'5px',background:'rgba(255,255,255,0.06)',flex:'0 0 auto'},
+      loadBarStyle:{ width:(nd.load==null?0:nd.load)+'%', height:'100%', background: nodeVC(nd.ping,nd.load), borderRadius:'2px' }, pingStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'13px', color: nodeVC(nd.ping,nd.load) }, loadPctStyle:{ fontFamily:"'JetBrains Mono',monospace", fontSize:'10.5px', fontWeight:600, color: nodeVC(nd.ping,nd.load) } };
 
     const mPing = liveOn? String(livePing) : '—';
-    const mLoss = connected? '0.0' : '—';
-    const mProto = connected? 'reality' : '—';
+    // Потери и протокол — из реального движка. Пока движок их не сообщил — «—»,
+    // а не выдуманные «0.0» / «reality».
+    const mLoss = (L && L.loss!=null) ? String(L.loss) : '—';
+    const mProto = (connected && S.protocol) ? S.protocol : '—';
     const mProtoColor = connected? '#34E5B0' : '#7C8A99';
 
     const pad = mobile?'18px 16px 96px': tablet?'24px 26px 44px':'30px 40px 52px';
@@ -1805,7 +1818,7 @@ class Component extends DCLogic {
       de:{title:'Knoten',sub:'Server wählen — die Kaskade passt sich automatisch an dein Netz an.',count:'8 Knoten · 3 Regionen',search:'Nach Land oder Stadt suchen…',best:'Besten wählen',bestSub:'nach Ping und Last',rnd:'Zufälliger Knoten',rndSub:'Fingerabdruck ändern',allCaps:'ALLE KNOTEN',emptyT:'Nichts gefunden',emptyS:'Ändere Suche oder Filter.',ping:'PING',load:'LAST',fAll:'Alle',fFav:'Favoriten',fLow:'Niedriger Ping',fFree:'Frei',ms:'ms'}
     };
     const ns=_mrg(NSt,'nodes');
-    { const _NN=NODES||[]; if(_NN.length){ const _rg=new Set(_NN.map(x=>x&&x.code)).size; let _k=0; ns.count=String(ns.count).replace(/\d+/g,()=>{ _k++; return _k===1?_NN.length:_rg; }); } }
+    { const _NN=NODES||[]; if(_NN.length){ const _rg=new Set(_NN.map(x=>x&&x.code)).size; let _k=0; ns.count=String(ns.count).replace(/\d+/g,()=>{ _k++; return _k===1?_NN.length:_rg; }); } else { ns.count=({ru:'Сеть ещё не развёрнута',en:'Network not deployed yet',es:'Red aún no desplegada',de:'Netz noch nicht bereit'})[_lang]||'Network not deployed yet'; } }
     const HS={
       ru:{connect:'Подключиться',connectHint:'Каскад сам подберёт путь: прямой → обход → VPN → реле.',cancel:'Отмена',errTitle:'Нет связи с узлами',errBody:'Сеть недоступна или провайдер режет все каналы. Проверьте интернет или смените узел.',retry:'Повторить',switchNode:'Сменить узел',ping:'ПИНГ',loss:'ПОТЕРИ',proto:'ПРОТОКОЛ',ms:'мс',speed:'СКОРОСТЬ',mbit:'Мбит',uptime:'в сети',traffic:'трафик',cipher:'шифр',analysis:'Анализ',disconnect:'Отключиться'},
       en:{connect:'Connect',connectHint:'The cascade finds the path: direct → bypass → VPN → relay.',cancel:'Cancel',errTitle:'No connection to nodes',errBody:'The network is down or your ISP is blocking every channel. Check your internet or switch node.',retry:'Retry',switchNode:'Switch node',ping:'PING',loss:'LOSS',proto:'PROTOCOL',ms:'ms',speed:'SPEED',mbit:'Mbps',uptime:'online',traffic:'traffic',cipher:'cipher',analysis:'Analysis',disconnect:'Disconnect'},
@@ -1856,18 +1869,18 @@ class Component extends DCLogic {
       es:{pulse:'Nodos accesibles',pulseSub:'auto-reparación: los caídos salen, los recuperados vuelven',recovered:'recuperado'},
       de:{pulse:'Erreichbare Knoten',pulseSub:'Selbstheilung: tote raus, erholte zurück',recovered:'zurück'}
     })[lng]||{pulse:'Nodes reachable',pulseSub:'self-healing: dead drop out, recovered return',recovered:'recovered'};
-    const _nodeCardsAll=NODES.map((n,i)=>{ const sel=i===S.node; const vc=nodeVC(n.ping,n.load); const fv=!!favs[i]; const _rec=(i%5===2); return {
+    const _nodeCardsAll=NODES.map((n,i)=>{ const sel=i===S.node; const vc=nodeVC(n.ping,n.load); const fv=!!favs[i]; const _rec=(n.recovered===true); return {
       _ping:n.ping, _load:n.load, _fav:fv, _txt:(n.country+' '+n.city+' '+n.code).toLowerCase(),
-      code:n.code, recovered:_rec, recoveredLabel:_nodeX.recovered, flagStyle:{width:'32px',height:'23px',borderRadius:'5px',backgroundImage:'url(./flags/'+n.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, title:n.country+' · '+n.city, host:n.host, ping:n.ping, load:n.load, pingLbl:ns.ping, loadLbl:ns.load, pingStr:n.ping+' '+ns.ms,
+      code:n.code, recovered:_rec, recoveredLabel:_nodeX.recovered, flagStyle:{width:'32px',height:'23px',borderRadius:'5px',backgroundImage:'url(./flags/'+n.code.toLowerCase()+'.png)',backgroundSize:'cover',backgroundPosition:'center',flex:'0 0 auto'}, title:n.country+' · '+n.city, host:n.host, ping:n.ping, load:n.load, pingLbl:ns.ping, loadLbl:ns.load, pingStr:(n.ping==null?'—':n.ping+' '+ns.ms),
       onClick:()=>this.selectNode(i), selected:sel, starClick:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); this.toggleFav(i); },
       cardStyle:{ display:'flex', flexDirection:'column', gap:'12px', padding:'16px 16px', borderRadius:'16px', cursor:'pointer', background: sel?'rgba(52,229,176,0.07)':'rgba(255,255,255,0.025)', border:'2px solid '+(sel?'rgba(52,229,176,0.34)':'rgba(255,255,255,0.06)'), transition:'border-color .15s ease, transform .15s ease' },
-      loadBarStyle:{ width:n.load+'%', height:'100%', background:vc, borderRadius:'2px' },
+      loadBarStyle:{ width:(n.load==null?0:n.load)+'%', height:'100%', background:vc, borderRadius:'2px' },
       pingStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'15px', color: vc },
       loadPctStyle:{ fontFamily:"'JetBrains Mono',monospace", fontWeight:600, fontSize:'12px', color: vc, flex:'0 0 auto' },
       starStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings: fv?"'FILL' 1":"'FILL' 0", fontSize:'18px', color: fv?'#F5C451':'#566270', cursor:'pointer', flex:'0 0 auto' },
       selChkStyle:{ display: sel?'inline-flex':'none', fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'17px', color:'#34E5B0', flex:'0 0 auto' }
     }; });
-    const _nf=(c)=> nfilter==='fav'?c._fav : nfilter==='low'?c._ping<=45 : nfilter==='free'?c._load<=75 : true;
+    const _nf=(c)=> nfilter==='fav'?c._fav : nfilter==='low'?(c._ping!=null&&c._ping<=45) : nfilter==='free'?(c._load!=null&&c._load<=75) : true;
     const nodeCards=_nodeCardsAll.filter(c=> _nf(c) && (!nq2 || c._txt.includes(nq2))).sort((a,b)=>(b._fav?1:0)-(a._fav?1:0));
     const nodesEmpty=nodeCards.length===0;
     const nodeFilterChips=[{k:'all',l:ns.fAll},{k:'fav',l:ns.fFav},{k:'low',l:ns.fLow},{k:'free',l:ns.fFree}].map(f=>{ const on=nfilter===f.k; return { label:f.l, onClick:()=>this.setNodeFilter(f.k), style:{padding:'8px 16px',borderRadius:'8px',background:on?'rgba(52,229,176,0.10)':'rgba(255,255,255,0.03)',border:'2px solid '+(on?'rgba(52,229,176,0.28)':'rgba(255,255,255,0.08)'),color:on?'#34E5B0':'#9DABA8',fontSize:'12.4px',fontWeight:on?600:500,cursor:'pointer',whiteSpace:'nowrap'} }; });
@@ -1961,7 +1974,7 @@ class Component extends DCLogic {
     const appRouteOpts=Object.keys(ACT).map(k=>({ id:k, label:ACT[k].label, lead: k==='auto'?{kind:'glyph',icon:'auto_awesome',color:'#34E5B0',fill:true}:{kind:'dot',color:ACT[k].dot||'#9DABA8'} }));
     const _removeLbl=({ru:'Удалить из списка',en:'Remove from list',es:'Quitar de la lista',de:'Aus Liste entfernen'})[lng]||'Remove from list';
     const appRouteOptsView=_rrule?appRouteOpts.concat([{id:'__remove', label:_removeLbl, lead:{kind:'glyph',icon:'delete',color:'#FF6B6B'}}]):appRouteOpts;
-    const nodePickerOpts=NODES.map((n,i)=>({ id:String(i), lead:{kind:'flag',code:n.code}, label:n.country+' · '+n.city, sub:n.host, subMono:true, badge:n.ping+' '+(ns.ms||'ms') }));
+    const nodePickerOpts=NODES.map((n,i)=>({ id:String(i), lead:{kind:'flag',code:n.code}, label:n.country+' · '+n.city, sub:n.host, subMono:true, badge:(n.ping==null?'—':n.ping+' '+(ns.ms||'ms')) }));
     const sites=[{d:'youtube.com',a:'bypass'},{d:'discord.com',a:'tunnel'},{d:'gosuslugi.ru',a:'direct'},{d:'rutracker.org',a:'bypass'},{d:'github.com',a:'auto'}].map(s=>{ const ac=ACT[s.a]; const fv='https://www.google.com/s2/favicons?domain='+s.d+'&sz=64'; return { d:s.d, lead:{kind:'tile', img:fv, imgSize:20, imgRadius:'4px'}, title:s.d, titleMono:true, action:{kind:'pill', tone:'ghost', label:ac.label, color:ac.color, dot:ac.dot, chevron:'expand_more'} }; });
     const summary=[{label:rl.auto,count:312,dot:null,star:true},{label:rl.direct,count:24,dot:'#5BE5A6'},{label:rl.vpn,count:8,dot:'#34E5B0'},{label:rl.dpi,count:5,dot:'#F5C451'},{label:rl.boost,count:2,dot:'#A78BFA'},{label:rl.block,count:3,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
     const routingTab=S.routingTab;
@@ -2283,9 +2296,11 @@ class Component extends DCLogic {
       {code:'US', host:'nyc-07.symbiont.net', ping:118, load:39, fav:false},
       {code:'JP', host:'tyo-01.symbiont.net', ping:142, load:93, fav:false}
     ];
-    // «Живые» узлы из манифеста бэкенда (мост), иначе демо-набор:
-    const _live=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.nodes);
-    const B=(_live&&_live.length)?_live:_demo;
+    // «Живые» узлы из манифеста бэкенда (мост). Если бэкенд ОТВЕТИЛ (SYM_DATA есть) —
+    // показываем ровно его список, даже пустой (честно: «сеть ещё не развёрнута»), а не
+    // демо. Демо-набор — только когда бэкенда нет вовсе (офлайн-превью без данных).
+    const _answered=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.nodes));
+    const B=_answered?window.SYM_DATA.nodes:_demo;
     return B.map(n=>({ ...n, country:L(C[n.code],n.code,'countries',n._country_en), city:L(T[n.code],n.code,'cities',n._country_en) }));
   }
 }

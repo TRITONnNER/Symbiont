@@ -172,14 +172,17 @@
       // Реле-узлы (role=relay) — часть каскада, не выбираются вручную: пропускаем в списке.
       var roles = n.roles || [];
       if (roles.indexOf('relay') !== -1 && roles.length === 1) return;
+      // РЕАЛЬНЫЙ хост из манифеста. Без host узел не подключить — не показываем его
+      // (раньше подставляли выдуманный *.symbiont.net, по которому движок пытался
+      // поднять VPN). Так в списке — только настоящие узлы.
+      if (!n.host) return;
       out.push({
         code: (n.code || '').toUpperCase(),
-        // РЕАЛЬНЫЙ хост из манифеста (не выдуманный *.symbiont.net) — по нему движок
-        // поднимает VPN и меряется пинг. Фолбэк только если сервер не прислал host.
-        host: n.host || ((n.id || n.code || 'node') + '.symbiont.net'),
-        // ping манифест не отдаёт (меряется на клиенте) — оценка от нагрузки для показа
-        ping: Math.max(18, Math.round(24 + (n.loadPct || 0) * 0.9)),
-        load: n.loadPct || 0,
+        host: n.host,
+        // Пинг манифест не отдаёт (меряется клиентом при подключении). Не выдумываем:
+        // null = «ещё не измерен», оболочка покажет «—». Нагрузка — реальная, из heartbeat.
+        ping: (typeof n.ping === 'number' ? n.ping : null),
+        load: (typeof n.loadPct === 'number' ? n.loadPct : null),
         fav: false,
         id: n.id,
         protocols: n.protocols || [],

@@ -33,7 +33,8 @@ function renderStatus() {
 function renderNodes() {
   var box = $('nodes');
   box.innerHTML = '';
-  var top = state.nodes.slice().sort(function (a, b) { return a.ping - b.ping; }).slice(0, 4);
+  var _pk = function (x) { return x.ping == null ? 9e9 : x.ping; };   // неизмеренный пинг — в конец сортировки
+  var top = state.nodes.slice().sort(function (a, b) { return _pk(a) - _pk(b); }).slice(0, 4);
   top.forEach(function (n) {
     var idx = state.nodes.indexOf(n);
     var el = document.createElement('div');
@@ -41,7 +42,7 @@ function renderNodes() {
     el.innerHTML =
       '<span class="flag" style="background-image:url(' + flagUrl(n.code) + ')"></span>' +
       '<span class="nm">' + n.country + '</span>' +
-      '<span class="png">' + n.ping + ' мс</span>';
+      '<span class="png">' + (n.ping == null ? '—' : n.ping + ' мс') + '</span>';
     el.onclick = function () { state.sel = idx; renderNodes(); renderStatus(); };
     box.appendChild(el);
   });
@@ -56,11 +57,12 @@ async function loadNodes() {
     var man = await API.manifest();
     state.nodes = (man.nodes || [])
       .filter(function (n) { var r = n.roles || []; return !(r.length === 1 && r[0] === 'relay'); })
+      .filter(function (n) { return !!n.host; })   // только реальные узлы (без host не подключить)
       .map(function (n) {
         return { code: (n.code || '').toUpperCase(),
                  country: CC[(n.code || '').toUpperCase()] || n.country || n.code,
-                 host: (n.id || n.code) + '.symbiont.net',
-                 ping: Math.max(18, Math.round(24 + (n.loadPct || 0) * 0.9)) };
+                 host: n.host,                                  // РЕАЛЬНЫЙ host из манифеста
+                 ping: (typeof n.ping === 'number' ? n.ping : null) };  // не выдумываем пинг
       });
     renderNodes();
   } catch (e) {
