@@ -151,7 +151,10 @@
 
     // поддержка
     supportThread: function () { return req('GET', '/v1/support/thread'); },
-    supportSend: function (text) { return req('POST', '/v1/support/message', { text: text }); }
+    supportSend: function (text) { return req('POST', '/v1/support/message', { text: text }); },
+
+    // «свой мост»: разбор пользовательской ссылки vless/ss/hysteria2 в узел каскада (stateless).
+    parseBridge: function (uri) { return req('POST', '/v1/config/parse-bridge', { uri: uri }); }
   };
 
   // ── Движок VPN: в браузере/веб-портале его нет; нативные обёртки внедряют свой. ──
