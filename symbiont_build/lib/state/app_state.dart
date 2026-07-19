@@ -492,8 +492,10 @@ class AppState extends ChangeNotifier {
           final applied = Store.appliedManifestVersion;
           final bucket = _canaryBucket(Store.token ?? api.token ?? 'anon');
           manifestRollout = m.rollout;
-          if (m.version > applied && bucket < m.rollout) {
-            // версия НОВЕЕ применённой И клиент попал в волну canary → применяем.
+          if ((m.version > applied || (m.version == applied && nodes.isEmpty)) && bucket < m.rollout) {
+            // версия НОВЕЕ применённой (или РАВНА ей, но узлы ещё не загружены — напр.
+            // после перезапуска: applied на диске, а nodes в памяти пусты) И клиент в
+            // волне canary → применяем. Строго СТАРУЮ версию по-прежнему отвергаем (откат).
             Store.appliedManifestVersion = m.version;
             nodes = _applyFavorites(m.nodes);
             relays = m.relays;
