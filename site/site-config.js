@@ -57,7 +57,12 @@
       crypto_discount_enabled: true,
       wheel_enabled: true,
       referrals_enabled: true,
-      live_payment_provider: false           // false = sandbox (см. PRICING.md)
+      live_payment_provider: false,          // false = sandbox (см. PRICING.md)
+      // Правовое: у сервиса пока НЕТ реальной подписанной «канарейки». Дефолт
+      // бэкенда — canary:false → блок warrant canary на странице скрыт, чтобы
+      // не показывать фабрикованную подпись/дату. Включится, когда появится
+      // настоящая подписанная канарейка от владельца.
+      legal: { canary: false }
     },
 
     /* ── GET /v1/config/discounts ── скидки и бонус-механики ───────────── */
@@ -98,7 +103,7 @@
         windows: { version: '0.1.0', size_mb: 68,  requirements: 'Win 10 / 11 · x64',       url: '' },
         macos:   { version: '0.1.0', size_mb: 72,  requirements: 'macOS 12+',               url: '' },
         linux:   { version: '0.1.0', size_mb: 58,  requirements: 'glibc 2.31+ · x64/arm64', url: '' },
-        ext:     { version: '2.1.0', size_mb: 2.4, requirements: 'Chrome · FF · Edge',      url: '' }
+        ext:     { version: '0.1.0', size_mb: 2.4, requirements: 'Chrome · FF · Edge',      url: '' }
       }
     }
   };

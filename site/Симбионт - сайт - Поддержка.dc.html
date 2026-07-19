@@ -69,24 +69,19 @@
           </sc-if>
         </sc-if>
         <div style="display:flex; flex-direction:column; gap:9px; margin-top:auto;">
-          <div style="display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:11px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); cursor:pointer;" style-hover="border-color:rgba(255,255,255,0.14);"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#F5C451;">report</span><div style="flex:1;"><div style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ reportBlock }}</div><div style="font-size:11.5px; color:#7C8A99;">{{ reportSub }}</div></div><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">chevron_right</span></div>
+          <a href="https://t.me/symbiont_support_bot" target="_blank" rel="noopener" style="display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:11px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); cursor:pointer; text-decoration:none;" style-hover="border-color:rgba(255,255,255,0.14);"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#F5C451;">report</span><div style="flex:1;"><div style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ reportBlock }}</div><div style="font-size:11.5px; color:#7C8A99;">{{ reportSub }}</div></div><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270;">chevron_right</span></a>
         </div>
       </div>
 
-      <!-- engineer chat -->
-      <div style="padding:0; border-radius:20px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; overflow:hidden;">
-        <div style="padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px;">
-          <span style="position:relative; width:38px; height:38px; border-radius:11px; background:rgba(91,155,255,0.14); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:21px; color:#5B9BFF;">support_agent</span></span>
-          <div style="flex:1;"><div style="font-weight:700; font-size:15px; color:#EAF1EF;">{{ engOnline }}</div><div style="display:flex; align-items:center; gap:6px;"><span style="position:relative; width:7px; height:7px;"><span style="position:absolute; inset:0; border-radius:50%; background:#34E5B0;"></span><span style="position:absolute; inset:0; border-radius:50%; border:1.5px solid rgba(52,229,176,.6); animation:sym-ping2 1.8s ease-out infinite;"></span></span><span style="font-size:11.5px; color:#34E5B0;">{{ engStatus }}</span></div></div>
+      <!-- honest support CTA (no fake live chat) -->
+      <div style="padding:28px; border-radius:20px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; align-items:center; gap:13px;">
+          <span style="width:50px; height:50px; border-radius:14px; background:rgba(91,155,255,0.14); border:1px solid rgba(91,155,255,0.3); display:flex; align-items:center; justify-content:center; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:26px; color:#5B9BFF;">forum</span></span>
+          <div style="display:flex; flex-direction:column; gap:2px;"><span style="font-weight:800; font-size:19px; color:#EAF1EF;">{{ supportTitle }}</span><span style="font-size:13px; color:#7C8A99; line-height:1.4;">{{ supportSub }}</span></div>
         </div>
-        <div style="flex:1; padding:18px 20px; display:flex; flex-direction:column; gap:12px; min-height:230px;">
-          <div style="max-width:82%; align-self:flex-start; padding:11px 14px; border-radius:14px 14px 14px 4px; background:rgba(255,255,255,0.05); font-size:13.5px; line-height:1.5; color:#C2CCCA;">{{ chat1 }}</div>
-          <div style="max-width:82%; align-self:flex-end; padding:11px 14px; border-radius:14px 14px 4px 14px; background:rgba(52,229,176,0.12); border:1px solid rgba(52,229,176,0.22); font-size:13.5px; line-height:1.5; color:#EAF1EF;">{{ chat2 }}</div>
-          <div style="max-width:82%; align-self:flex-start; padding:11px 14px; border-radius:14px 14px 14px 4px; background:rgba(255,255,255,0.05); font-size:13.5px; line-height:1.5; color:#C2CCCA;">{{ chat3 }}</div>
-        </div>
-        <div style="padding:14px 16px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px;">
-          <div style="flex:1; padding:11px 14px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.09); font-size:13px; color:#566270;">{{ chatPh }}</div>
-          <div style="width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#06231A;">send</span></div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:auto;">
+          <a href="https://t.me/symbiont_support_bot" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:14px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; text-decoration:none;" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">send</span>{{ tgBtn }}</a>
+          <a href="mailto:support@symbiont.app" style="display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:14px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:14.5px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.09);"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#34E5B0;">mail</span>support@symbiont.app</a>
         </div>
       </div>
     </div>
@@ -99,25 +94,13 @@
         <div style="display:flex; flex-direction:column; gap:10px;">
           <span style="font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:0.08em; color:#34E5B0;">{{ statusLabel }}</span>
           <h2 style="margin:0; font-size:32px; font-weight:800; letter-spacing:-0.02em;">{{ statusTitle }}</h2>
-          <p style="margin:0; font-size:14.5px; color:#7C8A99; max-width:520px; line-height:1.5;">{{ statusSub }}</p>
         </div>
-        <div style="display:inline-flex; align-items:center; gap:10px; padding:11px 16px; border-radius:12px; background:rgba(52,229,176,0.08); border:1px solid rgba(52,229,176,0.22);">
-          <span style="position:relative; width:9px; height:9px;"><span style="position:absolute; inset:0; border-radius:50%; background:#34E5B0;"></span><span style="position:absolute; inset:0; border-radius:50%; border:1.5px solid rgba(52,229,176,.6); animation:sym-ping2 1.8s ease-out infinite;"></span></span>
-          <span style="font-weight:700; font-size:14px; color:#34E5B0;">{{ allNormal }}</span>
+        <div style="display:inline-flex; align-items:center; gap:10px; padding:11px 16px; border-radius:12px; background:rgba(245,196,81,0.08); border:1px solid rgba(245,196,81,0.22);">
+          <span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#F5C451;">schedule</span>
+          <span style="font-weight:700; font-size:14px; color:#F5C451;">{{ preLaunch }}</span>
         </div>
       </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:12px;">
-        <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="8">
-          <div style="display:flex; align-items:center; gap:13px; padding:15px 17px; border-radius:14px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07);">
-            <span style="width:30px; height:22px; border-radius:5px; overflow:hidden; background:{{ n.flag }}; flex:0 0 auto;"></span>
-            <div style="flex:1; min-width:0;"><div style="font-size:14px; font-weight:600; color:#EAF1EF;">{{ n.city }}</div><div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7C8A99;">{{ n.meta }}</div></div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
-              <span style="font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:{{ n.pingColor }};">{{ n.ping }}</span>
-              <span style="{{ n.statusStyle }}">{{ n.status }}</span>
-            </div>
-          </div>
-        </sc-for>
-      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:20px 22px; border-radius:16px; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); font-size:14px; line-height:1.5; color:#9DABA8;"><span style="font-family:'Material Symbols Rounded'; font-size:21px; color:#5B9BFF; flex:0 0 auto;">dns</span>{{ nodesPending }}</div>
     </div>
   </section>
 
@@ -176,7 +159,7 @@
       </div>
       <div style="display:flex; gap:12px; flex-wrap:wrap;">
         <a href="https://t.me/symbiont_support_bot" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:9px; padding:14px 22px; border-radius:13px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; text-decoration:none;" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">send</span>{{ tgBtn }}</a>
-        <a href="mailto:help@symbiont.app" style="display:inline-flex; align-items:center; gap:9px; padding:14px 20px; border-radius:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:15px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.09);"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">mail</span>help@symbiont.app</a>
+        <a href="mailto:support@symbiont.app" style="display:inline-flex; align-items:center; gap:9px; padding:14px 20px; border-radius:13px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:15px; text-decoration:none;" style-hover="background:rgba(255,255,255,0.09);"><span style="font-family:'Material Symbols Rounded'; font-size:20px; color:#34E5B0;">mail</span>support@symbiont.app</a>
       </div>
     </div>
   </section>
@@ -216,7 +199,7 @@ class Component extends DCLogic {
     // AUTO FIX
     const fs = this.state.fixStep;
     const stepLabels = T('s_fixSteps')||[];
-    const stepMeta = ['reality','1.1.1.1','8/8'];
+    const stepMeta = ['reality','1.1.1.1','—'];
     const fixSteps = stepLabels.map((lab,i)=>{
       const done = fs>i, active = fs===i;
       return { label:lab, meta: done? '✓' : stepMeta[i],
@@ -225,33 +208,8 @@ class Component extends DCLogic {
         iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings: done?"'FILL' 1":"'FILL' 0", fontSize:'20px', color: done?'#34E5B0':active?'#34E5B0':'#566270', animation: active?'sym-spin 0.9s linear infinite':'none' } };
     });
 
-    // NODES
-    const flags = {
-      nl:'linear-gradient(180deg,#AE1C28 33%,#F4F4F4 33% 66%,#21468B 66%)',
-      de:'linear-gradient(180deg,#000 33%,#DD0000 33% 66%,#FFCE00 66%)',
-      fi:'linear-gradient(#003580,#003580) 8px 0/5px 100% no-repeat, linear-gradient(#003580,#003580) 0 8px/100% 6px no-repeat, #fff',
-      fr:'linear-gradient(90deg,#0055A4 33%,#fff 33% 66%,#EF4135 66%)',
-      us:'linear-gradient(#3C3B6E,#3C3B6E) 0 0/12px 11px no-repeat, repeating-linear-gradient(180deg,#B22234 0 3.1px,#fff 3.1px 6.2px)',
-      pl:'linear-gradient(180deg,#fff 50%,#DC143C 50%)',
-      tr:'radial-gradient(circle at 19px 11px,#fff 0 1.6px,transparent 2px), radial-gradient(circle at 14.5px 11px,#E30A17 0 4px,transparent 4.3px), radial-gradient(circle at 12px 11px,#fff 0 5px,transparent 5.3px), #E30A17',
-      jp:'radial-gradient(circle at 50% 50%, #BC002D 0 24%, #fff 24%)'
-    };
-    const cityNames = T('s_nodes')||[];
-    const stMap = { ok:[T('s_stNorm'),'#34E5B0'], warn:[T('s_stWarn'),'#F5C451'], back:[T('s_stBack'),'#5BE5A6'] };
-    const loadWord = T('s_load'), msU = T('s_ms');
-    const nodeMeta = [
-      {code:'ams-03',ping:38,load:34,flag:'nl',status:'ok'},
-      {code:'fra-01',ping:44,load:51,flag:'de',status:'ok'},
-      {code:'hel-02',ping:52,load:28,flag:'fi',status:'ok'},
-      {code:'par-01',ping:49,load:63,flag:'fr',status:'warn'},
-      {code:'nyc-05',ping:96,load:41,flag:'us',status:'ok'},
-      {code:'waw-02',ping:57,load:22,flag:'pl',status:'back'},
-      {code:'ist-01',ping:71,load:58,flag:'tr',status:'ok'},
-      {code:'nrt-04',ping:112,load:37,flag:'jp',status:'ok'}
-    ];
-    const nodes = nodeMeta.map((n,i)=>{ const st=stMap[n.status]; const pc=n.ping<=45?'#5BE5A6':n.ping<=90?'#34E5B0':'#F5C451';
-      return { city:cityNames[i]||'', code:n.code, meta:n.code+' · '+loadWord+' '+n.load+'%', ping:n.ping+' '+msU, flag:flags[n.flag], pingColor:pc, status:st[0],
-        statusStyle:{ fontSize:'10.5px', fontWeight:700, color:st[1], background:st[1]+'18', padding:'2px 8px', borderRadius:'6px' } }; });
+    // NODES — честное состояние: сеть ещё не развёрнута (nodes:[]).
+    // Не показываем выдуманный список узлов с пингами/нагрузкой.
 
     // FAQ
     const catDefs = T('s_faqCats')||[];
@@ -281,13 +239,13 @@ class Component extends DCLogic {
       badge:T('s_badge'), title1:T('s_title1'), title2:T('s_title2'), heroSub:T('s_heroSubA')+brand+T('s_heroSubB'),
       autoTitle:T('s_autoTitle'), autoSub:T('s_autoSub'), runDiag:T('s_runDiag'), fixDoneLabel:T('s_fixDone'), againLabel:T('s_again'),
       reportBlock:T('s_reportBlock'), reportSub:T('s_reportSub'),
-      engOnline:T('s_engOnline'), engStatus:T('s_engStatus'), chat1:T('s_chat1'), chat2:T('s_chat2'), chat3:T('s_chat3'), chatPh:T('s_chatPh'),
-      statusLabel:T('s_statusLabel'), statusTitle:T('s_statusTitle'), statusSub:T('s_statusSub'), allNormal:T('s_allNormal'),
+      supportTitle:T('s_supportTitle'), supportSub:T('s_supportSub'),
+      statusLabel:T('s_statusLabel'), statusTitle:T('s_statusTitle'), preLaunch:T('s_preLaunch'), nodesPending:T('s_nodesPending'),
       faqLabel:T('s_faqLabel'), faqTitle:T('s_faqTitle'),
       glossLabel:T('s_glossLabel'), glossTitle:T('s_glossTitle'), glossSub:T('s_glossSub'),
       contactTitle:T('s_contactTitle'), contactSub:T('s_contactSub'), tgBtn:T('s_tg'),
       fixIdle:fs<0, fixActive:fs>=0, fixDone:fs>=3, fixSteps, runFix:()=>this.runFix(), resetFix:()=>this.setState({fixStep:-1}),
-      nodes, faqCats, faqs, terms };
+      faqCats, faqs, terms };
   }
 }
 </script>

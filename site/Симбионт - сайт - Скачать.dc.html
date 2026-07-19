@@ -64,7 +64,12 @@
         </div>
 
         <div style="display:flex; flex-wrap:wrap; gap:10px;">
-          <div onClick="{{ d_download }}" style="display:inline-flex; align-items:center; gap:9px; padding:14px 22px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 12px 30px -12px rgba(31,166,125,0.55);" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">{{ d_btnIcon }}</span>{{ d_btn }}</div>
+          <sc-if value="{{ d_available }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ d_download }}" style="display:inline-flex; align-items:center; gap:9px; padding:14px 22px; border-radius:12px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); color:#06231A; font-weight:700; font-size:15px; cursor:pointer; box-shadow:0 12px 30px -12px rgba(31,166,125,0.55);" style-hover="filter:brightness(1.06);"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">{{ d_btnIcon }}</span>{{ d_btn }}</div>
+          </sc-if>
+          <sc-if value="{{ d_notReady }}" hint-placeholder-val="{{ true }}">
+            <div style="display:inline-flex; align-items:center; gap:9px; padding:14px 22px; border-radius:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); color:#7C8A99; font-weight:700; font-size:15px; cursor:not-allowed;"><span style="font-family:'Material Symbols Rounded'; font-size:20px;">schedule</span>{{ soonBtn }}</div>
+          </sc-if>
           <sc-if value="{{ d_hasAlt }}" hint-placeholder-val="{{ false }}">
             <div style="display:inline-flex; align-items:center; gap:8px; padding:14px 18px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.11); color:#C2CCCA; font-weight:600; font-size:14px; cursor:pointer;" style-hover="background:rgba(255,255,255,0.08); color:#EAF1EF;"><span style="font-family:'Material Symbols Rounded'; font-size:18px;">{{ d_altIcon }}</span>{{ d_alt }}</div>
           </sc-if>
@@ -275,7 +280,7 @@ class Component extends DCLogic {
       windows:{icon:'desktop_windows',screen:'analysis',btnIcon:'download',altIcon:'inventory_2',v:'0.1.0',size:'68',req:'Win 10 / 11 · x64'},
       macos:{icon:'laptop_mac',screen:'home',btnIcon:'download',altIcon:'terminal',v:'0.1.0',size:'72',req:'macOS 12+'},
       linux:{icon:'terminal',screen:'nodes',btnIcon:'download',altIcon:'apps',v:'0.1.0',size:'58',req:'glibc 2.31+ · x64/arm64'},
-      ext:{icon:'extension',screen:'home',btnIcon:'shop',altIcon:'public',v:'2.1.0',size:'2.4',req:'Chrome · FF · Edge'} };
+      ext:{icon:'extension',screen:'home',btnIcon:'shop',altIcon:'public',v:'0.1.0',size:'2.4',req:'Chrome · FF · Edge'} };
     const DP=T('d_P')||{};
     const PLAT=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.platforms) || null;
     if(PLAT && PLAT.items){ Object.keys(SPECS).forEach(function(k){ var it=PLAT.items[k]; if(!it) return; if(it.version!=null)SPECS[k].v=it.version; if(it.size_mb!=null)SPECS[k].size=String(it.size_mb); if(it.requirements!=null)SPECS[k].req=it.requirements; SPECS[k].url=it.url||''; }); }
@@ -287,7 +292,8 @@ class Component extends DCLogic {
     const cur=(order.indexOf(this.state.platform)>=0?this.state.platform:order[0]); const sp=SPECS[cur]||SPECS.windows; const dp=DP[cur]||{feats:[]};
     const importStatusText=(function(s){ if(!s) return ''; if(s==='empty') return 'Вставьте ссылку vless:// / ss:// / hysteria2://'; if(s==='checking') return 'Проверяем…'; if(s==='need_backend') return 'Импорт доступен при подключённом бэкенде'; if(s==='ok') return '✓ Мост распознан — добавим резервным узлом каскада'; if(s.indexOf('ok_warn:')===0) return '⚠ Распознан, но: '+s.slice(8); if(s.indexOf('err:')===0) return '✗ Не подошло: '+s.slice(4); return s; })(this.state.importStatus);
     const mb=T('d_mb');
-    const specsOf=(k)=>{ const S=SPECS[k]; return [[T('d_specVersion'),S.v],[T('d_specSize'),S.size+' '+mb],[T('d_specReq'),S.req]]; };
+    // Реальных сборок пока нет (url пустой) → размер честно скрываем («—»).
+    const specsOf=(k)=>{ const S=SPECS[k]; return [[T('d_specVersion'),S.v],[T('d_specSize'),S.url?(S.size+' '+mb):'—'],[T('d_specReq'),S.req]]; };
     const tabs=order.map(k=>{ const on=k===cur; const nm=(((DP[k]||{}).name)||'').split(' · ')[0];
       return { label:nm, icon:SPECS[k].icon, onClick:()=>this.setState({platform:k}),
         style:{ display:'flex', alignItems:'center', gap:'9px', padding:'11px 16px', borderRadius:'12px', cursor:'pointer',
@@ -298,7 +304,8 @@ class Component extends DCLogic {
     const detNames={ios:'iOS',android:'Android',windows:'Windows',macos:'macOS',linux:'Linux',ext:T('d_detBrowser')};
     const detBadge=T('d_detBadgePre')+detNames[cur];
     const heroBtn=cur==='ext'?T('d_installExt'):(T('d_downloadFor')+detNames[cur]);
-    const heroMeta='v'+sp.v+' · '+sp.size+' '+mb+' · '+T('d_updatedPre')+T('d_updatedDate');
+    // Сборок ещё нет — не показываем выдуманный размер/дату «обновления».
+    const heroMeta='v'+sp.v+' · '+T('d_comingSoon');
     const stepIcons=['download','vpn_key','gpp_good'];
     const extraIcons=['alt_route','monitoring','redeem','language'];
     return {
@@ -313,7 +320,7 @@ class Component extends DCLogic {
       d_name:dp.name, d_note:dp.note, d_iconName:sp.icon,
       d_iconWrap:{ width:'58px', height:'58px', borderRadius:'16px', background:'rgba(52,229,176,0.10)', border:'1px solid rgba(52,229,176,0.28)', display:'flex', alignItems:'center', justifyContent:'center', flex:'0 0 auto' },
       d_icon:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'30px', color:'#34E5B0' },
-      d_btn:dp.btn, d_btnIcon:sp.btnIcon, d_download:()=>{ try{ var u=sp&&sp.url; if(u) window.location.href=u; }catch(e){} }, d_hasAlt:!!dp.alt, d_alt:dp.alt, d_altIcon:sp.altIcon||'download',
+      d_btn:dp.btn, d_btnIcon:sp.btnIcon, d_download:()=>{ try{ var u=sp&&sp.url; if(u) window.location.href=u; }catch(e){} }, d_available:!!sp.url, d_notReady:!sp.url, soonBtn:T('d_comingSoon'), d_hasAlt:(!!dp.alt && !!sp.url), d_alt:dp.alt, d_altIcon:sp.altIcon||'download',
       d_specs:specsOf(cur).map(s=>({k:s[0],v:s[1]})), d_feats:dp.feats||[],
       isIOS:cur==='ios', isAndroid:cur==='android', isMac:cur==='macos', isWin:cur==='windows', isLinux:cur==='linux', isExt:cur==='ext', prevOs:(cur==='ext'?'':cur), prevScreen:sp.screen,
       steps:(T('d_steps')||[]).map((s,i)=>({ n:String(i+1), icon:stepIcons[i]||'download', title:s.title, body:s.body })),

@@ -60,7 +60,7 @@
             <span style="font-family:'Material Symbols Rounded'; font-size:19px;">extension</span>
           </div>
           <span style="width:1px; height:18px; background:rgba(255,255,255,0.12);"></span>
-          <span style="font-size:13px; color:#7C8A99;"><span style="color:#EAF1EF; font-weight:600;">{{ platforms }}</span> · {{ nodesRegions }}</span>
+          <span style="font-size:13px; color:#7C8A99;"><span style="color:#EAF1EF; font-weight:600;">{{ platforms }}</span></span>
           <span style="width:1px; height:18px; background:rgba(255,255,255,0.12);"></span>
           <span style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#7C8A99;"><span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#34E5B0;">visibility_off</span>{{ noLogs }}</span>
         </div>
@@ -328,7 +328,8 @@ class Component extends DCLogic {
       iconWrap:{ width:'48px', height:'48px', borderRadius:'13px', background:FC[i]+'1a', border:'1px solid '+FC[i]+'33', display:'flex', alignItems:'center', justifyContent:'center' },
       iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings:"'FILL' 1", fontSize:'25px', color:FC[i] } }));
 
-    const metrics = Array.isArray(T('h_metrics')) ? T('h_metrics') : [];
+    // Честные метрики: без выдуманных «8 узлов / 38 мс / 99.9% аптайм».
+    const metrics = Array.isArray(T('h_metricsHonest')) ? T('h_metricsHonest') : [];
 
     const planArr = Array.isArray(T('h_plans')) ? T('h_plans') : [];
     const cur = lang==='ru' ? 'rub' : 'usd';

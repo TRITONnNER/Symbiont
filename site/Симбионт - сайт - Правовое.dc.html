@@ -112,23 +112,7 @@
         <span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#5B9BFF;">dns</span>
         <span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ nodeTitle }}</span>
       </div>
-      <div style="border-radius:18px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02);">
-        <div style="display:grid; grid-template-columns:1.2fr 1.3fr 1.1fr 0.9fr; padding:14px 22px; border-bottom:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02);">
-          <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ thRegion }}</span>
-          <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ thGear }}</span>
-          <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ thJuris }}</span>
-          <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99; text-align:right;">{{ thLogs }}</span>
-        </div>
-        <sc-for list="{{ nodeRows }}" as="n" hint-placeholder-count="4">
-          <div style="{{ n.rowStyle }}">
-            <span style="font-size:13.5px; font-weight:600; color:#EAF1EF;">{{ n.region }}</span>
-            <span style="font-size:13px; color:#C2CCCA;">{{ n.gear }}</span>
-            <span style="font-size:13px; color:#9DABA8;">{{ n.juris }}</span>
-            <span style="font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:600; color:#34E5B0; text-align:right;">{{ n.logs }}</span>
-          </div>
-        </sc-for>
-      </div>
-      <div style="margin-top:10px; display:flex; align-items:center; gap:8px; font-size:12.5px; color:#7C8A99;"><span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#34E5B0;">memory</span>{{ ramNote }}</div>
+      <div style="padding:20px 22px; border-radius:18px; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02); display:flex; align-items:center; gap:11px; font-size:13.5px; line-height:1.5; color:#9DABA8;"><span style="font-family:'Material Symbols Rounded'; font-size:19px; color:#5B9BFF; flex:0 0 auto;">dns</span>{{ nodePending }}</div>
     </div>
 
     <!-- Gov requests -->
@@ -266,7 +250,7 @@
   <dc-import name="SiteFooter" style="display:block; width:100%;" hint-size="100%,420px"></dc-import>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;canaryOk&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Прозрачность&quot;},&quot;orgRequests&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:3,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Прозрачность&quot;},&quot;revocationCount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:128,&quot;min&quot;:0,&quot;max&quot;:9999,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Отзыв ключей&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;canaryOk&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Прозрачность&quot;},&quot;orgRequests&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:99,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Прозрачность&quot;},&quot;revocationCount&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:9999,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Отзыв ключей&quot;}}">
 class Component extends DCLogic {
   state = { activeSec:'transparency', lang:'ru' };
   componentDidMount(){
@@ -303,8 +287,8 @@ class Component extends DCLogic {
 
   renderVals(){
     const canaryOk = this.props.canaryOk ?? true;
-    const orgRequests = this.props.orgRequests ?? 3;
-    const revocationCount = this.props.revocationCount ?? 128;
+    const orgRequests = this.props.orgRequests ?? 0;
+    const revocationCount = this.props.revocationCount ?? 0;
 
     // ---- sticky sub-nav ----
     const lang=this.state.lang||'ru';
@@ -327,7 +311,7 @@ class Component extends DCLogic {
           textDecoration:'none', whiteSpace:'nowrap', flex:'0 0 auto', transition:'all .15s' },
         iconStyle:{ fontFamily:"'Material Symbols Rounded'", fontVariationSettings: on?"'FILL' 1":"'FILL' 0", fontSize:'17px', color: on?'#06231A':'#7E8B92' } };
     });
-    const updatedLabel = T('l_updated');
+    const updatedLabel = T('l_draftLabel');
 
     // ---- warrant canary ----
     // Гейтинг флагами: flags.legal.canary=false (дефолт бэкенда) → блок скрыт, пока
@@ -358,8 +342,9 @@ class Component extends DCLogic {
     const nr = (region,gear,juris,logs,i,last)=>({ region, gear, juris, logs,
       rowStyle:{ display:'grid', gridTemplateColumns:'1.2fr 1.3fr 1.1fr 0.9fr', alignItems:'center', padding:'15px 22px',
         borderBottom: last?'none':'1px solid rgba(255,255,255,0.05)', background: i%2?'rgba(255,255,255,0.012)':'transparent' } });
-    const nrData = T('l_nodeRows')||[];
-    const nodeRows = nrData.map((n,i)=> nr(n.region,n.gear,n.juris,n.logs,i,i===nrData.length-1));
+    // Честное состояние: реальных узлов пока нет (nodes:[]). Не показываем
+    // фабрикованную таблицу владения узлами — вместо неё честная заметка.
+    const nodeRows = [];
 
     // ---- gov requests ----
     const rtData = T('l_reqTiles')||[];
@@ -367,10 +352,9 @@ class Component extends DCLogic {
     const reqTiles = reqMeta.map((m,i)=>({ v:m.v, u:(rtData[i]||{}).u, label:(rtData[i]||{}).label, color:m.color, tint:m.tint, icon:m.icon }));
     const reqOutcome = T('l_reqOutcome');
     const rl = (date,type,region,i,last)=>({ date, type, region, outcome:reqOutcome, divider: last?'none':'1px solid rgba(255,255,255,0.05)' });
-    const rlData = T('l_reqLog')||[];
-    const _iso=(days)=>{ const t=new Date(Date.now()-days*86400000); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); };
-    const rlDates = [_iso(65), _iso(165), _iso(240)];   // относительные, не протухают
-    const reqLog = rlData.map((r,i)=> rl(rlDates[i], r.type, r.region, i, i===rlData.length-1));
+    // Честное состояние: сервис ещё не запущен — журнал запросов пуст,
+    // никаких выдуманных записей/дат.
+    const reqLog = [];
 
     // ---- privacy clauses ----
     const pc = (n,color,icon,title,body)=>({ n, title, body, icon,
@@ -392,7 +376,7 @@ class Component extends DCLogic {
     const rsData = T('l_revStats')||[];
     const revStats = [
       { v:String(revocationCount), label:(rsData[0]||{}).label, color:'#EAF1EF' },
-      { v:(rsData[1]||{}).v, label:(rsData[1]||{}).label, color:'#EAF1EF' },
+      { v:'0', label:(rsData[1]||{}).label, color:'#EAF1EF' },
       { v:(rsData[2]||{}).v, label:(rsData[2]||{}).label, color:'#34E5B0' }
     ];
     const reasons = T('l_revReasons')||{};
@@ -403,9 +387,9 @@ class Component extends DCLogic {
         rowStyle:{ display:'grid', gridTemplateColumns:'1.3fr 1.1fr 0.9fr 0.8fr', alignItems:'center', padding:'14px 22px',
           borderBottom: last?'none':'1px solid rgba(255,255,255,0.05)', background: i%2?'rgba(255,255,255,0.012)':'transparent' } }; };
     const cp = lang==='ru' ? 'СИМБ' : 'SYMB';
-    const rrCodes = [cp+'-BLK9…RVKD',cp+'-3H2P…LK41',cp+'-9QW2…8ZZX',cp+'-KK20…1A0X',cp+'-77FF…QW77'];
-    const rrData = T('l_revRows')||[];
-    const revRows = rrData.map((r,i)=> rr(rrCodes[i], r.reason, r.date, r.source, i, i===rrData.length-1));
+    // Честное состояние: ключи ещё не выпускались — журнал отзыва пуст,
+    // никаких выдуманных хешей ключей/дат/причин.
+    const revRows = [];
 
     return {
       dir: rtl?'rtl':'ltr',
@@ -417,13 +401,13 @@ class Component extends DCLogic {
       canaryTitle:T('l_canaryTitle'),
       seeTitle:T('l_seeTitle'), seeSub:T('l_seeSub'), noseeTitle:T('l_noseeTitle'), noseeSub:T('l_noseeSub'),
       nodeTitle:T('l_nodeTitle'), thRegion:T('l_thRegion'), thGear:T('l_thGear'), thJuris:T('l_thJuris'), thLogs:T('l_thLogs'), ramNote:T('l_ramNote'),
-      reqLogTitle:T('l_reqLogTitle'), reqNote:T('l_reqNote'),
-      checkKey:T('l_checkKey'), thKeyHash:T('l_thKeyHash'), thReason:T('l_thReason'), thDate:T('l_thDate'), thSource:T('l_thSource'), revNote:T('l_revNote'),
+      reqLogTitle:T('l_reqLogTitle'), reqNote:T('l_reqEmpty'), nodePending:T('l_nodePending'),
+      checkKey:T('l_checkKey'), thKeyHash:T('l_thKeyHash'), thReason:T('l_thReason'), thDate:T('l_thDate'), thSource:T('l_thSource'), revNote:T('l_revEmpty'),
       closeTitle:T('l_closeTitle'), closeSub:T('l_closeSub'), writeSupport:T('l_writeSupport'), glossary:T('l_glossary'),
       secs, updatedLabel,
       canaryAccent, canaryStatement, canaryWrapStyle, canaryGlow, canaryIconWrap, canaryIcon,
       canaryIconName: canaryOk?'verified_user':'gpp_maybe', canaryStatus: canaryOk?T('l_canaryOk'):T('l_canaryWarn'),
-      canaryBadgeStyle, canarySig:'ed25519 · 9c2f 7k2q 9xr4 mt8v · a91f 3d0b 77ff qw12', canaryNext:('обновляется каждые 14 дней · следующая подпись ≤ '+_nextSig),
+      canaryBadgeStyle, canarySig:'', canaryNext:'',
       seeItems, noseeItems, nodeRows, reqTiles, reqLog, privClauses, termClauses, revStats, revRows
     };
   }
