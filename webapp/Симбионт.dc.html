@@ -1534,7 +1534,7 @@ class Component extends DCLogic {
     vw: (typeof window!=='undefined'? window.innerWidth : 1280),
     vh: (typeof window!=='undefined'? window.innerHeight : 800),
     conn:'connected', stage:'tunnel', node:0, busy:false,
-    authed:true, offline:false, toasts:[], overlay:null,
+    authed:!(typeof window!=='undefined'&&window.SYM_API&&window.SYM_API.isLive()&&!window.SYM_API.hasToken()), offline:false, toasts:[], overlay:null,
     nodeQuery:'', routingQuery:'', msgInput:'', keyInput:'', chatExtra:[], userRules:[],
     addType:'app', addInput:'', addAction:'tunnel', billing:'month', payMethod:'sbp',
     actInput:'', kcOpen:false, kcPhase:null, kcStatus:null, kcCode:'', pay:null,
@@ -1566,9 +1566,9 @@ class Component extends DCLogic {
   toggleConn(){ const c=this.state.conn; if(c==='connected'||c==='blocking') this.disconnect(); else if(c==='measuring'||c==='connecting') this.cancelConn(); else this.connect(); }
   async simulateCurtain(){ const c=this.state.conn; if(c!=='connected'&&c!=='blocking'){ this.toast(this._T().connectFirst,'muted'); return; } const seq=++this._seq; this.setState({conn:'blocking'}); this.toast(this._T().dpiAt,'warn'); await this._wait(1600); if(this._seq!==seq) return; this.setState({conn:'connected', stage:'relay'}); this.toast(this._T().toRelay,'ok'); }
   toggleOffline(){ this.setState(s=>{ const off=!s.offline; this.toast(off?this._T().offOn:this._T().offOff,'muted'); return { offline:off, conn: off?'error':'idle', stage:'tunnel' }; }); }
-  login(){ this.setState({obStep:'recovery'}); }
+  async login(){ const S=this.state, api=(typeof window!=='undefined'&&window.SYM_API)||null, br=(typeof window!=='undefined'&&window.SYM_BRIDGE)||null; if(!api||!(api.isLive&&api.isLive())){ this.setState({obStep:'recovery'}); return; } const key=(S.keyInput||'').trim(); this.setState({busy:true}); try{ if(key){ if(/^sb_/.test(key)||key.length>=24){ api.setToken(key); await api.billingStatus(); } else { await api.recover({recovery_code:key}); } if(br) await br.refreshAccount(); this.setState({busy:false, authed:true, obStep:'auth', keyInput:'', conn:'idle'}); this._seq++; setTimeout(()=>this.connect(),350); } else { const res=await api.register({device:{name:'Симбионт (Windows)', platform:'windows'}}); if(br){ br.setRecovery(res&&res.recovery_code); await br.refreshAccount(); } this.setState({busy:false, obStep:'recovery'}); } }catch(e){ this.setState({busy:false}); this.toast((e&&e.message)||'Ошибка входа','error'); } }
   finishOnboarding(){ this.setState({authed:true, obStep:'auth', conn:'idle'}); this._seq++; setTimeout(()=>this.connect(),350); }
-  logout(){ this._seq++; this.setState({authed:false, conn:'idle', screen:'home', overlay:null}); }
+  logout(){ this._seq++; try{ if(typeof window!=='undefined'&&window.SYM_API&&window.SYM_API.logout) window.SYM_API.logout(); }catch(e){} try{ if(typeof window!=='undefined'&&window.SYM_DATA){ window.SYM_DATA.account=null; window.SYM_DATA.ledger=null; window.SYM_DATA.devices=null; window.SYM_DATA.referral=null; window.SYM_DATA.balance=null; } }catch(e){} this.setState({authed:false, conn:'idle', screen:'home', overlay:null, keyInput:''}); }
   setOverlay(o){ this.setState({overlay:o}); }
   buyPlan(tier){ const S=this.state; clearTimeout(this._payT); this.setState({pay:'pending'});
     const period=(S.billing==='year')?'year':'month';
@@ -1794,6 +1794,7 @@ class Component extends DCLogic {
       de:{title:'Knoten',sub:'Server wählen — die Kaskade passt sich automatisch an dein Netz an.',count:'8 Knoten · 3 Regionen',search:'Nach Land oder Stadt suchen…',best:'Besten wählen',bestSub:'nach Ping und Last',rnd:'Zufälliger Knoten',rndSub:'Fingerabdruck ändern',allCaps:'ALLE KNOTEN',emptyT:'Nichts gefunden',emptyS:'Ändere Suche oder Filter.',ping:'PING',load:'LAST',fAll:'Alle',fFav:'Favoriten',fLow:'Niedriger Ping',fFree:'Frei',ms:'ms'}
     };
     const ns=_mrg(NSt,'nodes');
+    { const _NN=NODES||[]; if(_NN.length){ const _rg=new Set(_NN.map(x=>x&&x.code)).size; let _k=0; ns.count=String(ns.count).replace(/\d+/g,()=>{ _k++; return _k===1?_NN.length:_rg; }); } }
     const HS={
       ru:{connect:'Подключиться',connectHint:'Каскад сам подберёт путь: прямой → обход → VPN → реле.',cancel:'Отмена',errTitle:'Нет связи с узлами',errBody:'Сеть недоступна или провайдер режет все каналы. Проверьте интернет или смените узел.',retry:'Повторить',switchNode:'Сменить узел',ping:'ПИНГ',loss:'ПОТЕРИ',proto:'ПРОТОКОЛ',ms:'мс',speed:'СКОРОСТЬ',mbit:'Мбит',uptime:'в сети',traffic:'трафик',cipher:'шифр',analysis:'Анализ',disconnect:'Отключиться'},
       en:{connect:'Connect',connectHint:'The cascade finds the path: direct → bypass → VPN → relay.',cancel:'Cancel',errTitle:'No connection to nodes',errBody:'The network is down or your ISP is blocking every channel. Check your internet or switch node.',retry:'Retry',switchNode:'Switch node',ping:'PING',loss:'LOSS',proto:'PROTOCOL',ms:'ms',speed:'SPEED',mbit:'Mbps',uptime:'online',traffic:'traffic',cipher:'cipher',analysis:'Analysis',disconnect:'Disconnect'},
@@ -1836,6 +1837,7 @@ class Component extends DCLogic {
       de:{title:'Konto',sub:'Profil, Abo und Zugang.',plan:'Symbiont Standard',active:'AKTIV',expiry:'aktiv bis 14. Apr. 2026',unlimited:'unbegrenzter Traffic',manage:'Verwalten →',tokenLabel:'ZUGANGSTOKEN',copied:'Kopiert',copy:'Kopieren',device:'GERÄTE-LABEL',deviceName:'Arbeits-PC',activate:'SCHLÜSSEL AKTIVIEREN',ok:'OK',inviteT:'Freund einladen',inviteS:'+30 Tage Standard für euch beide'}
     };
     const acs=_mrg(ACSt,'acs');
+    { const _lacs=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||{}; if(_lacs.plan) acs.plan=_lacs.plan; if(_lacs.expiry) acs.expiry=_lacs.expiry; }
     const favs=S.favs||{}; const nfilter=S.nodeFilter||'all'; const nq2=(S.nodeQuery||'').toLowerCase().trim();
     const _nodeX=_ext.nodeX||({
       ru:{pulse:'Узлы на связи',pulseSub:'само-починка: мёртвые выпадают, ожившие возвращаются',recovered:'вернулся'},
@@ -1953,7 +1955,8 @@ class Component extends DCLogic {
     const summary=[{label:rl.auto,count:312,dot:null,star:true},{label:rl.direct,count:24,dot:'#5BE5A6'},{label:rl.vpn,count:8,dot:'#34E5B0'},{label:rl.dpi,count:5,dot:'#F5C451'},{label:rl.boost,count:2,dot:'#A78BFA'},{label:rl.block,count:3,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
     const routingTab=S.routingTab;
 
-    const account={ token:'sb_live_7K2Q9xR4mT8vB1nW6pL3', plan:'Pro', expiry:acs.expiry, invite:'СИМБ-7K2Q', copied:S.copied, notCopied:!S.copied };
+    const _la=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||{};
+    const account={ token:_la.token||'sb_live_7K2Q9xR4mT8vB1nW6pL3', plan:_la.plan||'Pro', expiry:_la.expiry||acs.expiry, invite:_la.invite||'СИМБ-7K2Q', copied:S.copied, notCopied:!S.copied };
     const chat=[
       {from:'bot',text:ui.ch1,time:'10:02'},
       {from:'user',text:ui.ch2,time:'10:03'},
@@ -2038,9 +2041,10 @@ class Component extends DCLogic {
       de:{title:'Guthaben-Verlauf',sub:'Bewegungen der aktiven Zeit',balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',u:{d:'T',h:'Std',m:'Min',rub:'₽'},k:{purchase:'Abo-Kauf',grant:'Einladungs-Gutschrift',wheel:'Glücksrad',ref_earn:'Empfehlung verbunden',ref_payout:'Empfehlungs-Auszahlung',debit:'Aktive Zeit',keyact:'Schlüssel-Aktivierung'}}
     })[lng]||null;
     const _LX=_ledX||{title:'Balance history',sub:'Movements',balLabel:'ACTIVE TIME',balSub:'spent only while connected',u:{d:'d',h:'h',m:'m',rub:'₽'},k:{}};
-    const _ledData=[{kind:'keyact',val:'+30',unit:'d',date:'14.04.2026'},{kind:'wheel',val:'+2',unit:'h',date:'14.04.2026'},{kind:'debit',val:'−80',unit:'m',date:'13.04.2026'},{kind:'ref_earn',val:'+7',unit:'d',date:'12.04.2026'},{kind:'purchase',val:'+30',unit:'d',date:'14.03.2026'},{kind:'grant',val:'+3',unit:'d',date:'10.03.2026'},{kind:'ref_payout',val:'−120',unit:'rub',date:'05.03.2026'},{kind:'debit',val:'−250',unit:'m',date:'04.03.2026'}];
+    const _ledData=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.ledger&&window.SYM_DATA.ledger.length)?window.SYM_DATA.ledger:[{kind:'keyact',val:'+30',unit:'d',date:'14.04.2026'},{kind:'wheel',val:'+2',unit:'h',date:'14.04.2026'},{kind:'debit',val:'−80',unit:'m',date:'13.04.2026'},{kind:'ref_earn',val:'+7',unit:'d',date:'12.04.2026'},{kind:'purchase',val:'+30',unit:'d',date:'14.03.2026'},{kind:'grant',val:'+3',unit:'d',date:'10.03.2026'},{kind:'ref_payout',val:'−120',unit:'rub',date:'05.03.2026'},{kind:'debit',val:'−250',unit:'m',date:'04.03.2026'}];
     const ledgerRows=_ledData.map(e=>{ const m=_ledMeta[e.kind]||_ledMeta.debit; const pos=e.val.charAt(0)==='+'; return { label:(_LX.k[e.kind]||e.kind), date:e.date, amount:e.val+' '+(_LX.u[e.unit]||''), icon:m.icon, tileStyle:{width:'38px',height:'38px',borderRadius:'11px',background:m.color+'22',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}, iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'19px',color:m.color}, amountStyle:{fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:'14px',color:pos?'#34E5B0':'#9DABA8',flex:'0 0 auto'} }; });
-    const ledBalValue='412 '+_LX.u.h+' 30 '+_LX.u.m;
+    const _lbal=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.balance)||null;
+    const ledBalValue=(_lbal?_lbal.h:412)+' '+_LX.u.h+' '+(_lbal?_lbal.m:30)+' '+_LX.u.m;
     const _trMeta={direct:{color:'#5BE5A6'},proxy:{color:'#34E5B0'},reject:{color:'#FF6B7A'}};
     const _TRL=_ext.traffic||({
       ru:{title:'Карта трафика',sub:'Куда и каким путём идут соединения прямо сейчас',direct:'Напрямую',proxy:'Через обход',reject:'Заблокировано',needT:'Нужно подключиться',needS:'Подключитесь, чтобы видеть живые соединения',privacy:'Виден только путь и скорость — не содержимое',mbps:'Мбит/с',connect:'Подключиться'},
@@ -2091,9 +2095,10 @@ class Component extends DCLogic {
       es:{title:'Referidos',sub:'Invita a amigos — gana días y pagos.',code:'TU CÓDIGO',copy:'Copiar',levelL:'Nivel de reputación',invited:'Invitados',converted:'De pago',payouts:'Pagos',howto:'Cómo funciona',share:'Compartir código',unlimited:'Comparte sin límites',levels:['Nuevo','Verificado','Establecido','Embajador'],steps:['Envía tu código a un amigo','Se conecta y se suscribe','Ambos ganáis días, y tú también pagos']},
       de:{title:'Empfehlungen',sub:'Lade Freunde ein — verdiene Tage und Auszahlungen.',code:'DEIN CODE',copy:'Kopieren',levelL:'Reputationsstufe',invited:'Eingeladen',converted:'Zahlend',payouts:'Auszahlungen',howto:'So funktioniert es',share:'Code teilen',unlimited:'Ohne Limit teilen',levels:['Neu','Verifiziert','Etabliert','Botschafter'],steps:['Sende deinen Code an einen Freund','Er verbindet sich und abonniert','Beide erhalten Tage, du auch Auszahlungen']}
     })[lng]||{title:'Referrals',sub:'',code:'YOUR CODE',copy:'Copy',levelL:'Reputation level',invited:'Invited',converted:'Paying',payouts:'Payouts',howto:'How it works',share:'Share code',unlimited:'Share without limits',levels:['New','Verified','Established','Ambassador'],steps:['Send your code','They subscribe','Both earn days']};
-    const _refLvl=1;
+    const _lref=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.referral)||{};
+    const _refLvl=(_lref.reputation&&typeof _lref.reputation.level==='number')?_lref.reputation.level:1;
     const refLevels=_refX.levels.map((l,i)=>({ label:l, on:i===_refLvl, done:i<_refLvl, style:{flex:'1',textAlign:'center',padding:'7px 4px',borderRadius:'8px',fontSize:'11.5px',fontWeight:i===_refLvl?700:500,color:i===_refLvl?'#06231A':(i<_refLvl?'#34E5B0':'#7C8A99'),background:i===_refLvl?'#34E5B0':(i<_refLvl?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.03)'),whiteSpace:'nowrap'} }));
-    const refStats=[{label:_refX.invited,value:'12',icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:'5',icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:'1 240 ₽',icon:'savings',color:'#F4B740'}];
+    const refStats=[{label:_refX.invited,value:String(_lref.invited!=null?_lref.invited:12),icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:String(_lref.converted!=null?_lref.converted:5),icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:(_lref.earned_days!=null?(_lref.earned_days+' '+_LX.u.d):'1 240 ₽'),icon:'savings',color:'#F4B740'}];
     const refSteps=_refX.steps.map((s,i)=>({ n:String(i+1), text:s }));
     const _devX=_ext.devX||({
       ru:{title:'Устройства',sub:'Где выполнен вход в ваш аккаунт.',current:'Это устройство',owner:'ВЛАДЕЛЕЦ',last:'был(а)',promote:'Сделать владельцем',revoke:'Отозвать',unlimited:'Безлимит устройств на платном тарифе'},
@@ -2101,7 +2106,7 @@ class Component extends DCLogic {
       es:{title:'Dispositivos',sub:'Dónde tienes la sesión iniciada.',current:'Este dispositivo',owner:'PROPIETARIO',last:'visto',promote:'Hacer propietario',revoke:'Revocar',unlimited:'Dispositivos ilimitados en plan de pago'},
       de:{title:'Geräte',sub:'Wo dein Konto angemeldet ist.',current:'Dieses Gerät',owner:'BESITZER',last:'zuletzt',promote:'Zum Besitzer machen',revoke:'Entfernen',unlimited:'Unbegrenzte Geräte im bezahlten Tarif'}
     })[lng]||{title:'Devices',sub:'',current:'This device',owner:'OWNER',last:'seen',promote:'Make owner',revoke:'Revoke',unlimited:'Unlimited devices on a paid plan'};
-    const _devRaw=[{name:'Рабочий ПК',icon:'desktop_windows',last:'сейчас',owner:true,current:true},{name:'iPhone 15 Pro',icon:'smartphone',last:'2 ч назад',owner:false,current:false},{name:'MacBook Air',icon:'laptop_mac',last:'вчера',owner:false,current:false}];
+    const _devRaw=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.devices&&window.SYM_DATA.devices.length)?window.SYM_DATA.devices:[{name:'Рабочий ПК',icon:'desktop_windows',last:'сейчас',owner:true,current:true},{name:'iPhone 15 Pro',icon:'smartphone',last:'2 ч назад',owner:false,current:false},{name:'MacBook Air',icon:'laptop_mac',last:'вчера',owner:false,current:false}];
     const deviceList=_devRaw.map((d,i)=>({ name:d.name, icon:d.icon, last:_devX.last+' '+d.last, owner:d.owner, current:d.current, canRevoke:!d.current, onRevoke:()=>this.toast(_devX.revoke+': '+d.name,'ok'), iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'21px',color:d.current?'#34E5B0':'#8E9A9F',flex:'0 0 auto'} }));
     const _recX=_ext.recX||({
       ru:{title:'Код восстановления',sub:'Единственный ключ к аккаунту без личных данных.',warn:'Запишите его и храните офлайн. Без него восстановить доступ нельзя — мы не храним ваши данные.',reveal:'Показать код',hidden:'Скрыто для безопасности',copy:'Копировать код',saved:'Я сохранил код',toast:'Храните код в надёжном месте'},
@@ -2190,8 +2195,8 @@ class Component extends DCLogic {
       isTraffic:screen==='traffic', trafficActive, trafficOff:!trafficActive, trafficRows, trTitle:_TR.title, trSub:_TR.sub, trPrivacy:_TR.privacy, trNeedT:_TR.needT, trNeedS:_TR.needS, trConnect:_TR.connect, trMbps:_TR.mbps, goTraffic:()=>this.go('traffic'),
       isWheel:screen==='wheel', goWheel:()=>this.go('wheel'),
       isAdmin:(screen==='admin')&&_isAdmin, showAdmin:_isAdmin, goAdmin:()=>this.go('admin'), adminBatches, admTariffChips, issueBatch:()=>this.issueBatch(), admT:_admX,
-      isRecovery:screen==='recovery', goRecovery:()=>this.go('recovery'), recoveryRevealed:S.recoveryRevealed, recoveryHidden:!S.recoveryRevealed, revealRecovery:()=>this.setField('recoveryRevealed',true), confirmRecovery:()=>this.toast(_recX.toast,'ok'), recoveryCode:'SYMB-R7K2-9X4M-T8VB', recTitle:_recX.title, recSub:_recX.sub, recWarn:_recX.warn, recReveal:_recX.reveal, recHidden:_recX.hidden, recCopy:_recX.copy, recSaved:_recX.saved,
-      isReferral:screen==='referral', goReferral:()=>this.go('referral'), refTitle:_refX.title, refSub:_refX.sub, refCodeL:_refX.code, refLevelL:_refX.levelL, refLevels, refStats, refSteps, refHowto:_refX.howto, refShare:_refX.share, refUnlimited:_refX.unlimited, refCode:'СИМБ-7K2Q-X4M',
+      isRecovery:screen==='recovery', goRecovery:()=>this.go('recovery'), recoveryRevealed:S.recoveryRevealed, recoveryHidden:!S.recoveryRevealed, revealRecovery:()=>this.setField('recoveryRevealed',true), confirmRecovery:()=>this.toast(_recX.toast,'ok'), recoveryCode:(_la.recovery||'SYMB-R7K2-9X4M-T8VB'), recTitle:_recX.title, recSub:_recX.sub, recWarn:_recX.warn, recReveal:_recX.reveal, recHidden:_recX.hidden, recCopy:_recX.copy, recSaved:_recX.saved,
+      isReferral:screen==='referral', goReferral:()=>this.go('referral'), refTitle:_refX.title, refSub:_refX.sub, refCodeL:_refX.code, refLevelL:_refX.levelL, refLevels, refStats, refSteps, refHowto:_refX.howto, refShare:_refX.share, refUnlimited:_refX.unlimited, refCode:(_lref.invite_code||'СИМБ-7K2Q-X4M'),
       isDevices:screen==='devices', goDevices:()=>this.go('devices'), devTitle:_devX.title, devSub:_devX.sub, deviceList, devOwner:_devX.owner, devCurrent:_devX.current, devRevoke:_devX.revoke, devUnlimited:_devX.unlimited,
       acRewardsHdr:({ru:'Награды и доступ',en:'Rewards & access',es:'Recompensas y acceso',de:'Belohnungen & Zugang'})[lng]||'Rewards & access', wheelStyle, wheelLegend, wheelSegLabels, wheelRimStyle, wheelDots, wheelDividers, wheelWonShort, wheelSvg, wheelRotStyle, wheelLabels2, wheelLegendV2, wheelCountdown, streakCount, streakCells, streakToMega, streakPity, whStX:_whStX, whFz:_whFz, freezeStreak:()=>this.toast(({ru:'Серия заморожена на 1 день',en:'Streak frozen for 1 day',es:'Racha congelada 1 día',de:'Serie 1 Tag eingefroren'})[lng]||'Streak frozen','ok'), whNext:_whU.next, whSpinShort:_whU.spin, whDaily:_whU.daily, whCredited:_whU.credited, refProgressStyle, refProgressHint, wheelSpinning:S.wheelPhase==='spinning', wheelDone:S.wheelPhase==='done', wheelCanSpin:!S.wheelPhase, wheelResult:_whX.prizes[_whWin], spinWheel:()=>this.spinWheel(), whTitle:_whX.title, whSub:_whX.sub, whSpin:_whX.spin, whSpinning:_whX.spinning, whWon:_whX.won, whComeback:_whX.comeback, whFair:_whX.fair, whLegend:_whX.legend,
       nodeQuery:S.nodeQuery, routingQuery:S.routingQuery, msgInput:S.msgInput, addInput:S.addInput, keyInput:S.keyInput,

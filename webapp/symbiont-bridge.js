@@ -189,6 +189,58 @@
     return out.length ? out : null;
   }
 
+  // ── Адаптеры: ответы бэкенда → формы, которые ждёт оболочка (инлайн-компоненты) ──
+  function _pad(n) { return (n < 10 ? '0' : '') + n; }
+  function _planLabel(tier) {
+    var t = String(tier || 'free').toLowerCase();
+    return t === 'ultimate' ? 'Ultimate' : t === 'premium' ? 'Premium' : 'Free';
+  }
+  function _dmy(ms) { var d = new Date(ms); return _pad(d.getDate()) + '.' + _pad(d.getMonth() + 1) + '.' + d.getFullYear(); }
+  function _fmtEpoch(epoch) { return epoch ? _dmy(epoch * 1000) : ''; }
+  // GET /v1/billing/status → { token, plan, expiry?, invite? } для инлайн-объекта account (шелл).
+  function _accountFrom(status, ref) {
+    var sub = (status && status.subscription) || {};
+    var acc = { token: TOKEN || '', plan: _planLabel(sub.tier) };
+    if (sub.days_left && sub.days_left > 0) acc.expiry = _dmy(Date.now() + sub.days_left * 86400000);
+    if (ref && ref.invite_code) acc.invite = ref.invite_code;
+    return acc;
+  }
+  function _balanceFrom(status) {
+    var sub = (status && status.subscription) || {};
+    var mins = sub.active_minutes_left || 0;
+    return { h: Math.floor(mins / 60), m: mins % 60 };
+  }
+  // GET /v1/billing/ledger.entries (at/kind/days/minutes) → [{kind,val,unit,date}] как ждёт шелл.
+  function _ledgerFrom(led) {
+    return ((led && led.entries) || []).map(function (e) {
+      var val = '', unit = 'm';
+      if (e.days != null) { val = (e.days >= 0 ? '+' : '') + e.days; unit = 'd'; }
+      else if (e.minutes != null) { val = (e.minutes >= 0 ? '+' : '') + e.minutes; unit = 'm'; }
+      return { kind: e.kind || 'grant', val: val, unit: unit, date: _fmtEpoch(e.at) };
+    });
+  }
+  function _iconFor(platform) {
+    var p = String(platform || '').toLowerCase();
+    if (p.indexOf('ios') !== -1 || p.indexOf('android') !== -1 || p.indexOf('phone') !== -1) return 'smartphone';
+    if (p.indexOf('mac') !== -1) return 'laptop_mac';
+    return 'desktop_windows';
+  }
+  function _rel(epoch) {
+    if (!epoch) return '';
+    var s = Math.max(0, Math.floor(Date.now() / 1000 - epoch));
+    if (s < 90) return 'сейчас';
+    if (s < 3600) return Math.floor(s / 60) + ' мин назад';
+    if (s < 86400) return Math.floor(s / 3600) + ' ч назад';
+    return Math.floor(s / 86400) + ' дн назад';
+  }
+  // GET /v1/account/devices.devices → [{name,icon,last,owner,current,id}] как ждёт шелл (демо _devRaw).
+  function _devicesFrom(dv) {
+    return ((dv && dv.devices) || []).filter(function (d) { return !d.revoked; }).map(function (d) {
+      return { name: d.name || 'Устройство', icon: _iconFor(d.platform), last: _rel(d.lastSeen),
+               owner: d.role === 'owner', current: !!d.current, id: d.id };
+    });
+  }
+
   // ── Загрузка: определить бэкенд, подтянуть данные, разбудить оболочку ───────────
   var _comps = [];            // все смонтированные экземпляры оболочки
   var _bootPromise = null;    // single-flight: сколько бы экземпляров ни звало boot()
@@ -231,10 +283,34 @@
         }
         try { window.SYM_DATA.economy = await API.economy(); } catch (e) {}
         try { window.SYM_DATA.flags = await API.flags(); } catch (e) {}   // видимость блоков (сайт+приложение)
+        try { await self.refreshAccount(); } catch (e) {}                 // живые данные аккаунта (если есть токен)
         self.ready = true;
         self._wake();
       })();
       return _bootPromise;
+    },
+
+    // Живые данные аккаунта: тариф/срок/инвайт, баланс, история, рефералы, устройства.
+    // Только при наличии токена (иначе аккаунта ещё нет — оболочка покажет онбординг).
+    refreshAccount: async function () {
+      if (!LIVE || !API.hasToken()) return;
+      var status = null, ref = null;
+      try { status = await API.billingStatus(); } catch (e) {}
+      try { ref = await API.referral(); } catch (e) {}
+      window.SYM_DATA.account = _accountFrom(status, ref);
+      window.SYM_DATA.balance = _balanceFrom(status);
+      if (ref) window.SYM_DATA.referral = ref;
+      try { window.SYM_DATA.ledger = _ledgerFrom(await API.billingLedger()); } catch (e) {}
+      try { window.SYM_DATA.devices = _devicesFrom(await API.devices()); } catch (e) {}
+      try { window.SYM_DATA.wheel = await API.wheel(); } catch (e) {}
+      this._wake();
+    },
+
+    // После register: реальный код восстановления показывается ОДИН раз на экране онбординга.
+    setRecovery: function (code) {
+      window.SYM_DATA.account = window.SYM_DATA.account || {};
+      window.SYM_DATA.account.recovery = code || '';
+      this._wake();
     }
   };
 
