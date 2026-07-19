@@ -68,7 +68,12 @@ class SymWebServer {
       final ext = path.contains('.') ? path.split('.').last.toLowerCase() : '';
       req.response.headers.contentType =
           ContentType.parse(_types[ext] ?? 'application/octet-stream');
-      req.response.add(data.buffer.asUint8List());
+      // ВАЖНО: отдаём ТОЧНЫЙ срез ассета, а не весь backing-буфер. В release
+      // rootBundle может вернуть ByteData как подвью общего буфера (offset>0 или
+      // length<buffer): asUint8List() без границ вернул бы ЛИШНИЕ байты → контент
+      // «с хвостом». Для файлов с SRI (react/react-dom) это ломает проверку
+      // integrity → браузер отвергает скрипт, и оболочка не грузит React.
+      req.response.add(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
     } catch (_) {
       req.response.statusCode = HttpStatus.notFound;
     }
