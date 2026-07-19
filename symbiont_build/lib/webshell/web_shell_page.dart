@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import '../engine/engine.dart';
+import '../log.dart';
 import 'sym_web_server.dart';
 import 'sym_engine_channel.dart';
 
@@ -95,12 +96,24 @@ class _WebShellPageState extends State<WebShellPage> {
           initialUrlRequest: URLRequest(url: WebUri(_url!)),
           initialUserScripts: _userScripts(),
           initialSettings: InAppWebViewSettings(
-            transparentBackground: true,
+            // ВНИМАНИЕ: на Windows/WebView2 transparentBackground:true рендерит
+            // страницу в ЧЁРНОЕ (движок не композитит прозрачный слой). Фон и так
+            // тёмный у самой оболочки — прозрачность не нужна. Держим false.
+            transparentBackground: false,
             supportZoom: false,
             disableContextMenu: true,
             javaScriptCanOpenWindowsAutomatically: false,
           ),
           onWebViewCreated: _channel.attach,
+          // Диагностика загрузки оболочки (видно в symbiont.log): старт/финиш,
+          // сетевые/HTTP-ошибки ресурса и сообщения JS-консоли (ошибки рантайма).
+          onLoadStop: (controller, url) => Log.w('webshell', 'страница загружена: $url'),
+          onReceivedError: (controller, request, error) =>
+              Log.w('webshell', 'ошибка загрузки ${request.url}: ${error.type} ${error.description}'),
+          onReceivedHttpError: (controller, request, errorResponse) =>
+              Log.w('webshell', 'HTTP ${errorResponse.statusCode} для ${request.url}'),
+          onConsoleMessage: (controller, consoleMessage) =>
+              Log.w('webshell', 'js: ${consoleMessage.message}'),
         ),
       ),
     );
