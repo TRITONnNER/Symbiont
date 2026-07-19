@@ -240,6 +240,33 @@
                owner: d.role === 'owner', current: !!d.current, id: d.id };
     });
   }
+  // SYM_ENGINE.traffic().conns (TrafficConn {host,rule,up,down}) → [{host,path,d,u}] (шелл: _trData).
+  function _mbps(bytes) {
+    if (!bytes || bytes <= 0) return '0';
+    var mb = bytes / 1048576;
+    return mb >= 10 ? String(Math.round(mb)) : (mb >= 0.1 ? mb.toFixed(1) : mb.toFixed(2));
+  }
+  function _trafficFrom(conns) {
+    return (conns || []).map(function (c) {
+      var rej = c.rule === 'reject' || c.rule === 'block';
+      return { host: c.host, path: c.rule === 'direct' ? 'direct' : (rej ? 'reject' : 'proxy'),
+               d: rej ? '—' : _mbps(c.down), u: rej ? '—' : _mbps(c.up) };
+    });
+  }
+  // SYM_ENGINE.scanApps().apps (InstalledApp {name,exe,path}) → [{id,name,exe,cat,logo}] (шелл: DEVICE_APPS).
+  function _catFor(exe, name) {
+    var s = ((exe || '') + ' ' + (name || '')).toLowerCase();
+    if (/chrome|firefox|edge|opera|yandex|browser|safari|tor /.test(s)) return 'browser';
+    if (/telegram|whatsapp|discord|viber|signal|slack|skype/.test(s)) return 'messenger';
+    if (/steam|epicgames|riot|battle|minecraft|roblox|game|dota|valorant/.test(s)) return 'game';
+    if (/vlc|spotify|youtube|kmplayer|potplayer|netflix|media|player/.test(s)) return 'media';
+    return 'dev';
+  }
+  function _appsFrom(apps) {
+    return (apps || []).map(function (a) {
+      return { id: a.exe || a.name, name: a.name, exe: a.exe || '', cat: _catFor(a.exe, a.name), logo: '' };
+    });
+  }
 
   // ── Загрузка: определить бэкенд, подтянуть данные, разбудить оболочку ───────────
   var _comps = [];            // все смонтированные экземпляры оболочки
@@ -284,11 +311,35 @@
         try { window.SYM_DATA.economy = await API.economy(); } catch (e) {}
         try { window.SYM_DATA.flags = await API.flags(); } catch (e) {}   // видимость блоков (сайт+приложение)
         try { await self.refreshAccount(); } catch (e) {}                 // живые данные аккаунта (если есть токен)
+        try { self.startTraffic(); } catch (e) {}                         // живая карта трафика (когда движок подключён)
         self.ready = true;
         self._wake();
       })();
       return _bootPromise;
     },
+
+    // Живой трафик: пока движок подключён, тянем соединения каждые ~2.5с → SYM_DATA.traffic.
+    startTraffic: function () {
+      if (this._trafInt || typeof window === 'undefined' || !window.SYM_ENGINE || !window.SYM_ENGINE.traffic) return;
+      var self = this;
+      var tick = function () {
+        try { Promise.resolve(window.SYM_ENGINE.traffic()).then(function (r) {
+          if (r && r.ok && r.conns) { window.SYM_DATA.traffic = _trafficFrom(r.conns); self._wake(); }
+        }).catch(function () {}); } catch (e) {}
+      };
+      this._trafInt = setInterval(tick, 2500); tick();
+    },
+    // Реальные установленные приложения (для сканера «Маршрутизации») — по запросу.
+    refreshApps: function () {
+      if (typeof window === 'undefined' || !window.SYM_ENGINE || !window.SYM_ENGINE.scanApps) return Promise.resolve();
+      var self = this;
+      return Promise.resolve(window.SYM_ENGINE.scanApps()).then(function (r) {
+        if (r && r.ok && r.apps) { window.SYM_DATA.installedApps = _appsFrom(r.apps); self._wake(); }
+      }).catch(function () {});
+    },
+    // Применить правила маршрутизации / настройки защиты к нативному движку.
+    applyRules: function (rules) { try { if (window.SYM_ENGINE && window.SYM_ENGINE.applyRules) window.SYM_ENGINE.applyRules(rules || []); } catch (e) {} },
+    setProtection: function (p) { try { if (window.SYM_ENGINE && window.SYM_ENGINE.setProtection) window.SYM_ENGINE.setProtection(p || {}); } catch (e) {} },
 
     // Живые данные аккаунта: тариф/срок/инвайт, баланс, история, рефералы, устройства.
     // Только при наличии токена (иначе аккаунта ещё нет — оболочка покажет онбординг).
