@@ -10,6 +10,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/services.dart' show rootBundle;
+import '../log.dart';
 
 class SymWebServer {
   final String backendBase; // куда проксировать /v1 ('' → прокси выключен)
@@ -63,19 +64,27 @@ class SymWebServer {
     var path = Uri.decodeComponent(req.uri.path);
     if (path == '/' || path.isEmpty) path = '/Симбионт.dc.html';
     final asset = '$_root$path';
+    // Оболочка грузит react/react-dom как crossorigin="anonymous" c SRI. Такому
+    // ресурсу WebView2 требует разрешающий CORS-заголовок — иначе может отвергнуть
+    // его ещё ДО проверки целостности, и React не поднимется (пустая оболочка).
+    req.response.headers.set('Access-Control-Allow-Origin', '*');
+    req.response.headers.set('Cross-Origin-Resource-Policy', 'cross-origin');
     try {
       final data = await rootBundle.load(asset);
       final ext = path.contains('.') ? path.split('.').last.toLowerCase() : '';
+      // ТОЧНЫЙ срез ассета (offset/length): в release rootBundle может вернуть
+      // подвью общего буфера — asUint8List() без границ дал бы «хвост» лишних байт
+      // и сломал бы SRI. Явный Content-Length (не chunked-передача) — тоже ради
+      // строгой проверки целостности в WebView2.
+      final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       req.response.headers.contentType =
           ContentType.parse(_types[ext] ?? 'application/octet-stream');
-      // ВАЖНО: отдаём ТОЧНЫЙ срез ассета, а не весь backing-буфер. В release
-      // rootBundle может вернуть ByteData как подвью общего буфера (offset>0 или
-      // length<buffer): asUint8List() без границ вернул бы ЛИШНИЕ байты → контент
-      // «с хвостом». Для файлов с SRI (react/react-dom) это ломает проверку
-      // integrity → браузер отвергает скрипт, и оболочка не грузит React.
-      req.response.add(data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
-    } catch (_) {
+      req.response.headers.contentLength = bytes.length;
+      req.response.add(bytes);
+      Log.w('websrv', 'отдал $path — ${bytes.length} байт');
+    } catch (e) {
       req.response.statusCode = HttpStatus.notFound;
+      Log.w('websrv', '404/ошибка $path — $e');
     }
     await req.response.close();
   }
