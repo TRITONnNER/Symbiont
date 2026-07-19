@@ -65,6 +65,30 @@ class SymEngineChannel {
           return {'ok': true};
         case 'status':
           return {'ok': true};
+        case 'scanApps':
+          final apps = await engine.scanApps();
+          return {'ok': true, 'apps': apps.map((a) => {'name': a.name, 'exe': a.exe, 'path': a.path}).toList()};
+        case 'traffic':
+          final cs = await engine.trafficConnections();
+          return {'ok': true, 'conns': cs.map((c) => {'host': c.host, 'rule': c.rule, 'network': c.network, 'up': c.up, 'down': c.down}).toList()};
+        case 'applyRules':
+          final list = ((msg['rules'] as List?) ?? const [])
+              .whereType<Map>()
+              .map((r) => RoutingRule.fromJson(Map<String, dynamic>.from(r)))
+              .toList();
+          await engine.applyRules(list);
+          return {'ok': true};
+        case 'setProtection':
+          final p = (msg['protection'] is Map) ? Map<String, dynamic>.from(msg['protection'] as Map) : <String, dynamic>{};
+          await engine.setProtection(Protection(
+            ads: p['ads'] == true, trackers: p['trackers'] == true, phishing: p['phishing'] == true,
+            killSwitch: p['killSwitch'] == true, dns: (p['dns'] as String?) ?? 'DoH'));
+          return {'ok': true};
+        case 'analysis':
+          final items = await engine.runAnalysis();
+          return {'ok': true, 'items': items.map((s) => {
+            'id': s.id, 'name': s.name, 'kind': s.kind,
+            'recommended': s.recommended.name, 'reasonCode': s.reasonCode, 'override': s.override.name}).toList()};
         default:
           return {'ok': false, 'error': 'unknown_cmd'};
       }

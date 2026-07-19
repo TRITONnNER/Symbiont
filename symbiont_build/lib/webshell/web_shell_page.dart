@@ -52,6 +52,12 @@ const String _kEngineBridgeJs = r'''
     },
     disconnect: function () { callHost({ cmd: 'disconnect' }); },
     status: function () { return Promise.resolve(callHost({ cmd: 'status' })); },
+    // Живые данные/действия «Маршрутизации», «Анализа» и «Защиты» (нативный движок).
+    scanApps: function () { return Promise.resolve(callHost({ cmd: 'scanApps' })); },
+    traffic: function () { return Promise.resolve(callHost({ cmd: 'traffic' })); },
+    applyRules: function (rules) { return Promise.resolve(callHost({ cmd: 'applyRules', rules: rules || [] })); },
+    setProtection: function (p) { return Promise.resolve(callHost({ cmd: 'setProtection', protection: p || {} })); },
+    analysis: function () { return Promise.resolve(callHost({ cmd: 'analysis' })); },
     _emit: function (ev) { try { if (cb) cb(ev); } catch (e) {} }
   };
 })();
