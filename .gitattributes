@@ -1,0 +1,27 @@
+# Line-ending policy — CRITICAL for the web-shell (assets/webapp).
+#
+# assets/webapp/* is served byte-for-byte into a WebView. react/react-dom are
+# loaded with Subresource Integrity (SRI), which verifies the EXACT bytes. On
+# Windows, git's core.autocrlf rewrites LF->CRLF on checkout, changing the bytes
+# and breaking the integrity hash -> React never boots and the shell stays blank.
+# Force LF for these text assets so the checked-out bytes always match the
+# committed SRI hashes, regardless of the developer's platform / git config.
+
+# Any minified vendor bundle (react/react-dom and friends) must stay byte-exact.
+*.min.js text eol=lf
+
+# Web-shell design assets (both the bundled copy and the sources it syncs from).
+symbiont_build/assets/webapp/*.js   text eol=lf
+symbiont_build/assets/webapp/*.css  text eol=lf
+symbiont_build/assets/webapp/*.svg  text eol=lf
+symbiont_build/assets/webapp/*.html text eol=lf
+
+webapp/*.js   text eol=lf
+webapp/*.css  text eol=lf
+webapp/*.svg  text eol=lf
+webapp/*.html text eol=lf
+
+app/*.js   text eol=lf
+app/*.css  text eol=lf
+app/*.svg  text eol=lf
+app/*.html text eol=lf
