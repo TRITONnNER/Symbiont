@@ -2180,3 +2180,28 @@ def admin_db_backup(_: None = Depends(admin)):
 
 def _now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+# ── Публичные веб-страницы с того же адреса, что и API ─────────────────────────
+# Если рядом есть каталог web/ (лендинг + чекер ключа) — монтируем его в корень:
+#   http://<бэкенд>/            → лендинг index.html
+#   http://<бэкенд>/check.html  → РЕАЛЬНЫЙ чекер ключа (тем же origin зовёт
+#                                 /v1/key/check и /v1/pubkey — без CORS, без настройки).
+# API-маршруты /v1/... объявлены выше и имеют приоритет над этим монтированием.
+# Так одному серверу достаточно запустить бэкенд, чтобы сайт показывал реальные данные.
+try:
+    from fastapi.staticfiles import StaticFiles
+    _web_dir = os.environ.get("SYMBIONT_WEB_DIR") or next(
+        (p for p in (
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "web"),
+            os.path.join(os.getcwd(), "web"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "web"),
+        ) if os.path.isdir(p)), None)
+    if _web_dir:
+        app.mount("/", StaticFiles(directory=_web_dir, html=True), name="web")
+        log.info("веб-страницы отдаются из %s (лендинг + чекер ключа на том же адресе)",
+                 os.path.abspath(_web_dir))
+    else:
+        log.info("каталог web/ не найден рядом — публичные страницы не отдаём (только API)")
+except Exception as e:
+    log.warning("не удалось смонтировать web/: %s", e)
