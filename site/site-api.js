@@ -225,6 +225,7 @@
     ledger: function () { return this._get('/v1/billing/ledger'); },
     referral: function () { return this._get('/v1/referral'); },
     devices: function () { return this._get('/v1/account/devices'); },
+    manifest: function () { return this._get('/v1/manifest'); },   // реальные узлы (для витрины)
 
     /* Удобный старт: задать origin, поднять токен из localStorage, подтянуть конфиги. */
     connect: function (base) { if (base != null) this.base = base; this.loadToken(); return this.bootstrap(); },
@@ -244,7 +245,12 @@
       var jobs = [
         this.getEconomy().then(into('economy')).catch(ignore),
         this.getFlags().then(into('flags')).catch(ignore),
-        this.getDiscounts().then(into('discounts')).catch(ignore)
+        this.getDiscounts().then(into('discounts')).catch(ignore),
+        // реальные узлы для витрины (hero-виджет, счётчики) — вместо выдуманных
+        this.manifest().then(function (m) {
+          var nodes = (m && Array.isArray(m.nodes)) ? m.nodes : [];
+          into('nodes')(nodes);
+        }).catch(ignore)
       ];
       return Promise.all(jobs).then(function () {
         try { window.dispatchEvent(new CustomEvent('sym-config', { detail: window.SYM_CONFIG })); } catch (e) {}
@@ -254,4 +260,7 @@
   };
 
   window.SYM_API = SYM_API;
+  // Автостарт: тем же origin подтягиваем реальные конфиги (экономика/флаги/УЗЛЫ) с
+  // бэкенда. Без этого сайт жил на фолбэках site-config.js и не видел реальных данных.
+  try { SYM_API.connect(); } catch (e) {}
 })();

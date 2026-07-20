@@ -46,7 +46,7 @@
   </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:360,&quot;height&quot;:420},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;connected&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;measuring&quot;,&quot;connecting&quot;,&quot;connected&quot;,&quot;blocking&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;stage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;tunnel&quot;,&quot;options&quot;:[&quot;direct&quot;,&quot;bypass&quot;,&quot;tunnel&quot;,&quot;relay&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:320,&quot;tsType&quot;:&quot;number&quot;},&quot;ping&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:38,&quot;tsType&quot;:&quot;number&quot;},&quot;protocol&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;reality&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showStepper&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:360,&quot;height&quot;:420},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;connected&quot;,&quot;options&quot;:[&quot;idle&quot;,&quot;measuring&quot;,&quot;connecting&quot;,&quot;connected&quot;,&quot;blocking&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;stage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;tunnel&quot;,&quot;options&quot;:[&quot;direct&quot;,&quot;bypass&quot;,&quot;tunnel&quot;,&quot;relay&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:320,&quot;tsType&quot;:&quot;number&quot;},&quot;ping&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;},&quot;protocol&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;reality&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showStepper&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
   renderVals() {
     const p = this.props;
@@ -140,7 +140,7 @@ class Component extends DCLogic {
     };
     const _md = Object.assign({}, MDA.en, MDA[L]||{}, __CC_GEN.MDA[L]||{});
     let monoDetail;
-    if (connected) monoDetail = SL[stage].toUpperCase() + ' · ' + (p.ping||38) + ' ' + _md.ms;
+    if (connected) monoDetail = SL[stage].toUpperCase() + (p.ping ? (' · ' + p.ping + ' ' + _md.ms) : '');
     else if (state==='connecting') monoDetail = _md.connecting;
     else if (state==='measuring') monoDetail = _md.measuring;
     else if (blocking) monoDetail = _md.blocking;
