@@ -305,7 +305,9 @@
         try {
           var man = await API.manifest();
           var nodes = nodesFromManifest(man);
-          if (nodes) window.SYM_DATA.nodes = nodes;
+          // Бэкенд ОТВЕТИЛ → всегда выставляем массив (пусть даже пустой). Так оболочка
+          // отличает «ответил, узлов нет» (честный пустой список) от «ещё не грузили».
+          window.SYM_DATA.nodes = nodes || [];
           window.SYM_DATA.manifest = man;           // ← отсюда isLive() = true
         } catch (e) {
           // Бэкенд недоступен → тихий откат в демо-режим (важно для оффлайн-показа).

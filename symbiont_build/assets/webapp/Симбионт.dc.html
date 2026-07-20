@@ -2318,21 +2318,12 @@ class Component extends DCLogic {
     };
     const G=(typeof window!=='undefined'&&window.SYM_I18N&&window.SYM_I18N[lng]&&window.SYM_I18N[lng].geo)||{};
     const L=(o,code,kind,fb)=>(G[kind]&&G[kind][code])||(o&&(o[lng]||o.en))||fb||code;
-    const _demo=[
-      {code:'NL', host:'ams-03.symbiont.net', ping:38, load:34, fav:true},
-      {code:'DE', host:'fra-01.symbiont.net', ping:46, load:58, fav:true},
-      {code:'FI', host:'hel-02.symbiont.net', ping:31, load:22, fav:false},
-      {code:'SE', host:'sto-01.symbiont.net', ping:41, load:67, fav:false},
-      {code:'FR', host:'par-04.symbiont.net', ping:52, load:81, fav:false},
-      {code:'TR', host:'ist-02.symbiont.net', ping:69, load:44, fav:false},
-      {code:'US', host:'nyc-07.symbiont.net', ping:118, load:39, fav:false},
-      {code:'JP', host:'tyo-01.symbiont.net', ping:142, load:93, fav:false}
-    ];
-    // «Живые» узлы из манифеста бэкенда (мост). Если бэкенд ОТВЕТИЛ (SYM_DATA есть) —
-    // показываем ровно его список, даже пустой (честно: «сеть ещё не развёрнута»), а не
-    // демо. Демо-набор — только когда бэкенда нет вовсе (офлайн-превью без данных).
-    const _answered=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.nodes));
-    const B=_answered?window.SYM_DATA.nodes:_demo;
+    // Только РЕАЛЬНЫЕ узлы из манифеста бэкенда (мост кладёт их в SYM_DATA.nodes).
+    // Никаких выдуманных *.symbiont.net: если узлов нет (бэкенд ответил пустым списком,
+    // ещё не ответил или в манифесте нет узлов с host) — список пуст, оболочка честно
+    // покажет «сеть ещё не развёрнута».
+    const _sd=(typeof window!=='undefined')?window.SYM_DATA:null;
+    const B=(_sd&&Array.isArray(_sd.nodes))?_sd.nodes:[];
     return B.map(n=>({ ...n, country:L(C[n.code],n.code,'countries',n._country_en), city:L(T[n.code],n.code,'cities',n._country_en) }));
   }
 }
