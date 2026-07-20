@@ -1889,7 +1889,14 @@ class Component extends DCLogic {
       de:{title:'Konto',sub:'Profil, Abo und Zugang.',plan:'Symbiont Standard',active:'AKTIV',expiry:'aktiv bis 14. Apr. 2026',unlimited:'unbegrenzter Traffic',manage:'Verwalten →',tokenLabel:'ZUGANGSTOKEN',copied:'Kopiert',copy:'Kopieren',device:'GERÄTE-LABEL',deviceName:'Arbeits-PC',activate:'SCHLÜSSEL AKTIVIEREN',ok:'OK',inviteT:'Freund einladen',inviteS:'+30 Tage Standard für euch beide'}
     };
     const acs=_mrg(ACSt,'acs');
-    { const _lacs=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||{}; if(_lacs.plan) acs.plan=_lacs.plan; if(_lacs.expiry) acs.expiry=_lacs.expiry; }
+    { const _lacs=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||null;
+      if(_lacs&&_lacs.plan) acs.plan=_lacs.plan;
+      // Срок подписки — ТОЛЬКО реальный из бэкенда (days_left → дата). Нет срока
+      // (бесплатный/бессрочный доступ) → честная подпись «бессрочно», а НЕ выдуманная
+      // «активна до 14 апр 2026».
+      acs.expiry=(_lacs&&_lacs.expiry)||({ru:'бессрочно',en:'no expiry',es:'sin caducidad',de:'unbefristet'})[lng]||'no expiry';
+      // Метка устройства — имя текущего устройства из реального списка, а не заглушка.
+      try{ const _dv=(window.SYM_DATA&&window.SYM_DATA.devices)||[]; const _cur=_dv.find&&_dv.find(d=>d&&d.current); if(_cur&&_cur.name) acs.deviceName=_cur.name; }catch(e){} }
     const favs=S.favs||{}; const nfilter=S.nodeFilter||'all'; const nq2=(S.nodeQuery||'').toLowerCase().trim();
     const _nodeX=_ext.nodeX||({
       ru:{pulse:'Узлы на связи',pulseSub:'само-починка: мёртвые выпадают, ожившие возвращаются',recovered:'вернулся'},
@@ -2003,8 +2010,14 @@ class Component extends DCLogic {
     const _removeLbl=({ru:'Удалить из списка',en:'Remove from list',es:'Quitar de la lista',de:'Aus Liste entfernen'})[lng]||'Remove from list';
     const appRouteOptsView=_rrule?appRouteOpts.concat([{id:'__remove', label:_removeLbl, lead:{kind:'glyph',icon:'delete',color:'#FF6B6B'}}]):appRouteOpts;
     const nodePickerOpts=NODES.map((n,i)=>({ id:String(i), lead:{kind:'flag',code:n.code}, label:n.country+' · '+n.city, sub:n.host, subMono:true, badge:(n.ping==null?'—':n.ping+' '+(ns.ms||'ms')) }));
-    const sites=[{d:'youtube.com',a:'bypass'},{d:'discord.com',a:'tunnel'},{d:'gosuslugi.ru',a:'direct'},{d:'rutracker.org',a:'bypass'},{d:'github.com',a:'auto'}].map(s=>{ const ac=ACT[s.a]; const fv='data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%237C8A99%22%20stroke-width=%221.6%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Cpath%20d=%22M3%2012h18M12%203c3%203%203%2015%200%2018M12%203c-3%203-3%2015%200%2018%22/%3E%3C/svg%3E#'+s.d+'&sz=64'; return { d:s.d, lead:{kind:'tile', img:fv, imgSize:20, imgRadius:'4px'}, title:s.d, titleMono:true, action:{kind:'pill', tone:'ghost', label:ac.label, color:ac.color, dot:ac.dot, chevron:'expand_more'} }; });
-    const summary=[{label:rl.auto,count:312,dot:null,star:true},{label:rl.direct,count:24,dot:'#5BE5A6'},{label:rl.vpn,count:8,dot:'#34E5B0'},{label:rl.dpi,count:5,dot:'#F5C451'},{label:rl.boost,count:2,dot:'#A78BFA'},{label:rl.block,count:3,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
+    // Правила по сайтам — реальные, добавленные пользователем (или из движка). Нет правил
+    // → пусто (честно), без предзаданных youtube/discord/gosuslugi.
+    const _siteRules=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.siteRules))?window.SYM_DATA.siteRules:((S.userRules||[]).filter(r=>r&&r.d));
+    const sites=_siteRules.map(s=>{ const ac=ACT[s.a]||ACT.auto; const fv='data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%237C8A99%22%20stroke-width=%221.6%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Cpath%20d=%22M3%2012h18M12%203c3%203%203%2015%200%2018M12%203c-3%203-3%2015%200%2018%22/%3E%3C/svg%3E#'+s.d+'&sz=64'; return { d:s.d, lead:{kind:'tile', img:fv, imgSize:20, imgRadius:'4px'}, title:s.d, titleMono:true, action:{kind:'pill', tone:'ghost', label:ac.label, color:ac.color, dot:ac.dot, chevron:'expand_more'} }; });
+    // Сводка маршрутизации — реальная из движка (сколько приложений куда идёт). Нет
+    // движка/данных → нули (честно), без выдуманных 312/24/8/5.
+    const _rsum=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.routeSummary)||{};
+    const summary=[{label:rl.auto,count:_rsum.auto||0,dot:null,star:true},{label:rl.direct,count:_rsum.direct||0,dot:'#5BE5A6'},{label:rl.vpn,count:_rsum.vpn||0,dot:'#34E5B0'},{label:rl.dpi,count:_rsum.dpi||0,dot:'#F5C451'},{label:rl.boost,count:_rsum.boost||0,dot:'#A78BFA'},{label:rl.block,count:_rsum.block||0,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
     const routingTab=S.routingTab;
 
     const _la=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||{};
@@ -2094,10 +2107,12 @@ class Component extends DCLogic {
       de:{title:'Guthaben-Verlauf',sub:'Bewegungen der aktiven Zeit',balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',u:{d:'T',h:'Std',m:'Min',rub:'₽'},k:{purchase:'Abo-Kauf',grant:'Einladungs-Gutschrift',wheel:'Glücksrad',ref_earn:'Empfehlung verbunden',ref_payout:'Empfehlungs-Auszahlung',debit:'Aktive Zeit',keyact:'Schlüssel-Aktivierung'}}
     })[lng]||null;
     const _LX=_ledX||{title:'Balance history',sub:'Movements',balLabel:'ACTIVE TIME',balSub:'spent only while connected',u:{d:'d',h:'h',m:'m',rub:'₽'},k:{}};
-    const _ledData=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.ledger&&window.SYM_DATA.ledger.length)?window.SYM_DATA.ledger:[{kind:'keyact',val:'+30',unit:'d',date:'14.04.2026'},{kind:'wheel',val:'+2',unit:'h',date:'14.04.2026'},{kind:'debit',val:'−80',unit:'m',date:'13.04.2026'},{kind:'ref_earn',val:'+7',unit:'d',date:'12.04.2026'},{kind:'purchase',val:'+30',unit:'d',date:'14.03.2026'},{kind:'grant',val:'+3',unit:'d',date:'10.03.2026'},{kind:'ref_payout',val:'−120',unit:'rub',date:'05.03.2026'},{kind:'debit',val:'−250',unit:'m',date:'04.03.2026'}];
+    // История баланса — ТОЛЬКО реальные движения из бэкенда. Нет данных → пусто
+    // (честно), без выдуманных «+30 дн · 14.04.2026».
+    const _ledData=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.ledger))?window.SYM_DATA.ledger:[];
     const ledgerRows=_ledData.map(e=>{ const m=_ledMeta[e.kind]||_ledMeta.debit; const pos=e.val.charAt(0)==='+'; return { label:(_LX.k[e.kind]||e.kind), date:e.date, amount:e.val+' '+(_LX.u[e.unit]||''), icon:m.icon, tileStyle:{width:'38px',height:'38px',borderRadius:'11px',background:m.color+'22',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}, iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'19px',color:m.color}, amountStyle:{fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:'14px',color:pos?'#34E5B0':'#9DABA8',flex:'0 0 auto'} }; });
     const _lbal=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.balance)||null;
-    const ledBalValue=(_lbal?_lbal.h:412)+' '+_LX.u.h+' '+(_lbal?_lbal.m:30)+' '+_LX.u.m;
+    const ledBalValue=(_lbal?_lbal.h:0)+' '+_LX.u.h+' '+(_lbal?_lbal.m:0)+' '+_LX.u.m;
     const _trMeta={direct:{color:'#5BE5A6'},proxy:{color:'#34E5B0'},reject:{color:'#FF6B7A'}};
     const _TRL=_ext.traffic||({
       ru:{title:'Карта трафика',sub:'Куда и каким путём идут соединения прямо сейчас',direct:'Напрямую',proxy:'Через обход',reject:'Заблокировано',needT:'Нужно подключиться',needS:'Подключитесь, чтобы видеть живые соединения',privacy:'Виден только путь и скорость — не содержимое',mbps:'Мбит/с',connect:'Подключиться'},
@@ -2106,7 +2121,9 @@ class Component extends DCLogic {
       de:{title:'Traffic-Karte',sub:'Wohin Verbindungen gehen und wie, gerade jetzt',direct:'Direkt',proxy:'Über Umgehung',reject:'Blockiert',needT:'Verbindung nötig',needS:'Verbinde dich, um Live-Verbindungen zu sehen',privacy:'Nur Pfad und Tempo sichtbar — nie Inhalte',mbps:'Mbit/s',connect:'Verbinden'}
     })[lng]||null;
     const _TR=_TRL||{title:'Traffic map',sub:'',direct:'Direct',proxy:'Via bypass',reject:'Blocked',needT:'Connection required',needS:'Connect to see live connections',privacy:'Only path and speed are visible',mbps:'Mbps',connect:'Connect'};
-    const _trData=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.traffic&&window.SYM_DATA.traffic.length)?window.SYM_DATA.traffic:[{host:'youtube.com',path:'proxy',d:'4.2',u:'0.3'},{host:'github.com',path:'direct',d:'1.1',u:'0.2'},{host:'telegram.org',path:'proxy',d:'0.8',u:'0.4'},{host:'ads.doubleclick.net',path:'reject',d:'—',u:'—'},{host:'steampowered.com',path:'direct',d:'8.6',u:'0.1'},{host:'instagram.com',path:'proxy',d:'2.4',u:'0.6'},{host:'tracker.metrika.net',path:'reject',d:'—',u:'—'},{host:'wikipedia.org',path:'direct',d:'0.5',u:'0.1'}];
+    // Живые соединения — ТОЛЬКО реальные из движка (traffic). Нет данных → пусто; экран
+    // и так показывает «подключитесь, чтобы видеть живые соединения». Без выдуманных host'ов.
+    const _trData=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.traffic))?window.SYM_DATA.traffic:[];
     const _pathLabel={direct:_TR.direct,proxy:_TR.proxy,reject:_TR.reject};
     const trafficRows=_trData.map(e=>{ const m=_trMeta[e.path]; return { host:e.host, pathLabel:_pathLabel[e.path], down:e.d, up:e.u, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:m.color,flex:'0 0 auto'}, pathStyle:{fontSize:'11.5px',fontWeight:600,color:m.color} }; });
     const trafficActive=(S.conn==='connected'||S.conn==='blocking');
@@ -2151,7 +2168,8 @@ class Component extends DCLogic {
     const _lref=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.referral)||{};
     const _refLvl=(_lref.reputation&&typeof _lref.reputation.level==='number')?_lref.reputation.level:1;
     const refLevels=_refX.levels.map((l,i)=>({ label:l, on:i===_refLvl, done:i<_refLvl, style:{flex:'1',textAlign:'center',padding:'7px 4px',borderRadius:'8px',fontSize:'11.5px',fontWeight:i===_refLvl?700:500,color:i===_refLvl?'#06231A':(i<_refLvl?'#34E5B0':'#7C8A99'),background:i===_refLvl?'#34E5B0':(i<_refLvl?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.03)'),whiteSpace:'nowrap'} }));
-    const refStats=[{label:_refX.invited,value:String(_lref.invited!=null?_lref.invited:12),icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:String(_lref.converted!=null?_lref.converted:5),icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:(_lref.earned_days!=null?(_lref.earned_days+' '+_LX.u.d):'1 240 ₽'),icon:'savings',color:'#F4B740'}];
+    // Реферальная статистика — реальная из бэкенда, иначе честные нули (не 12/5/1240 ₽).
+    const refStats=[{label:_refX.invited,value:String(_lref.invited!=null?_lref.invited:0),icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:String(_lref.converted!=null?_lref.converted:0),icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:((_lref.earned_days!=null?_lref.earned_days:0)+' '+_LX.u.d),icon:'savings',color:'#F4B740'}];
     const refSteps=_refX.steps.map((s,i)=>({ n:String(i+1), text:s }));
     const _devX=_ext.devX||({
       ru:{title:'Устройства',sub:'Где выполнен вход в ваш аккаунт.',current:'Это устройство',owner:'ВЛАДЕЛЕЦ',last:'был(а)',promote:'Сделать владельцем',revoke:'Отозвать',unlimited:'Безлимит устройств на платном тарифе'},
@@ -2159,7 +2177,9 @@ class Component extends DCLogic {
       es:{title:'Dispositivos',sub:'Dónde tienes la sesión iniciada.',current:'Este dispositivo',owner:'PROPIETARIO',last:'visto',promote:'Hacer propietario',revoke:'Revocar',unlimited:'Dispositivos ilimitados en plan de pago'},
       de:{title:'Geräte',sub:'Wo dein Konto angemeldet ist.',current:'Dieses Gerät',owner:'BESITZER',last:'zuletzt',promote:'Zum Besitzer machen',revoke:'Entfernen',unlimited:'Unbegrenzte Geräte im bezahlten Tarif'}
     })[lng]||{title:'Devices',sub:'',current:'This device',owner:'OWNER',last:'seen',promote:'Make owner',revoke:'Revoke',unlimited:'Unlimited devices on a paid plan'};
-    const _devRaw=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.devices&&window.SYM_DATA.devices.length)?window.SYM_DATA.devices:[{name:'Рабочий ПК',icon:'desktop_windows',last:'сейчас',owner:true,current:true},{name:'iPhone 15 Pro',icon:'smartphone',last:'2 ч назад',owner:false,current:false},{name:'MacBook Air',icon:'laptop_mac',last:'вчера',owner:false,current:false}];
+    // Устройства — ТОЛЬКО реальные из бэкенда (/v1/account/devices). Нет данных → пусто,
+    // без выдуманных «iPhone 15 Pro / MacBook Air».
+    const _devRaw=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.devices))?window.SYM_DATA.devices:[];
     const deviceList=_devRaw.map((d,i)=>({ name:d.name, icon:d.icon, last:_devX.last+' '+d.last, owner:d.owner, current:d.current, canRevoke:!d.current, onRevoke:()=>{ try{ if(typeof window!=='undefined'&&window.SYM_API&&window.SYM_API.revokeDevice&&d.id){ window.SYM_API.revokeDevice(d.id).then(()=>{ try{ if(window.SYM_BRIDGE&&window.SYM_BRIDGE.refreshAccount) window.SYM_BRIDGE.refreshAccount(); }catch(_){} this.toast(_devX.revoke+': '+d.name,'ok'); }).catch(e=>this.toast((e&&e.message)||'Ошибка','error')); return; } }catch(e){} this.toast(_devX.revoke+': '+d.name,'ok'); }, iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'21px',color:d.current?'#34E5B0':'#8E9A9F',flex:'0 0 auto'} }));
     const _recX=_ext.recX||({
       ru:{title:'Код восстановления',sub:'Единственный ключ к аккаунту без личных данных.',warn:'Запишите его и храните офлайн. Без него восстановить доступ нельзя — мы не храним ваши данные.',reveal:'Показать код',hidden:'Скрыто для безопасности',copy:'Копировать код',saved:'Я сохранил код',toast:'Храните код в надёжном месте'},
