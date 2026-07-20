@@ -1186,6 +1186,25 @@
 
 <sc-if value="{{ showOnboarding }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed; inset:0; z-index:300; background:#0A0F11; display:flex; align-items:center; justify-content:center; padding:24px; font-family:'Golos Text',system-ui,sans-serif; overflow-y:auto;">
+    <div style="position:absolute; top:20px; right:20px; z-index:5;">
+      <div onClick="{{ toggleObLang }}" role="button" aria-label="Язык / Language" style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10); cursor:pointer;" style-hover="background:rgba(255,255,255,0.08)">
+        <span style="{{ obCurFlagStyle }}"></span>
+        <span style="font-size:12.5px; font-weight:600; color:#C2CCCA;">{{ obCurLangName }}</span>
+        <span style="font-family:'Material Symbols Rounded'; font-size:17px; color:#7C8A99;">{{ obLangChevron }}</span>
+      </div>
+      <sc-if value="{{ obLangOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ toggleObLang }}" style="position:fixed; inset:0; z-index:1;"></div>
+        <div style="position:absolute; top:48px; right:0; z-index:2; width:236px; max-height:min(60vh,360px); overflow-y:auto; background:rgba(14,23,20,0.98); border:1px solid rgba(255,255,255,0.10); border-radius:14px; padding:6px; box-shadow:0 24px 60px -16px rgba(0,0,0,0.7);">
+          <sc-for list="{{ langOptions }}" as="l" hint-placeholder-count="6">
+            <div onClick="{{ l.onClick }}" role="button" style="{{ l.rowStyle }}">
+              <span style="{{ l.flagStyle }}"></span>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column;"><span style="{{ l.nameStyle }}">{{ l.name }}</span></div>
+              <span style="{{ l.checkStyle }}">check</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
     <div style="width:100%; max-width:430px; display:flex; flex-direction:column; align-items:center; gap:24px;">
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg,#3DF0BB,#1FA67D); display:flex; align-items:center; justify-content:center;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1,'wght' 600; font-size:30px; color:#06231A;">all_inclusive</span></div>
@@ -1536,7 +1555,7 @@ class Component extends DCLogic {
     actInput:'', kcOpen:false, kcPhase:null, kcStatus:null, kcCode:'', pay:null,
     glTab:'gloss', glQuery:'', faqOpen:null, wheelPhase:null, wheelAngle:0, wheelWin:null, wheelNextAt:null, recoveryRevealed:false, obStep:'auth', admTariff:'Standard', topMenuOpen:false, admin:false,
     lang:(function(){try{var l=((typeof navigator!=='undefined'&&(navigator.language||navigator.userLanguage))||'').slice(0,2).toLowerCase();return ['ru','en','es','de'].indexOf(l)!==-1?l:'en';}catch(e){return 'ru';}})(), theme:'minimal', profile:'home', protocol:'reality', routeMode:'auto', nodeFilter:'all', favs:{0:true,1:true}, sysOpen:false,
-    routingTab:'apps', copied:false, expandedApp:null, routeAppIdx:null, routeRuleIdx:null, routeDefOpen:false, svcCat:'all', svcTarget:null, addFlow:null, addSub:true, scanPhase:null, appActions:{}, langOpen:false, langMenuOpen:false, langQuery:'',
+    routingTab:'apps', copied:false, expandedApp:null, routeAppIdx:null, routeRuleIdx:null, routeDefOpen:false, svcCat:'all', svcTarget:null, addFlow:null, addSub:true, scanPhase:null, appActions:{}, langOpen:false, obLangOpen:false, langMenuOpen:false, langQuery:'',
     live:{ping:38,rx:1.33,down:18.4,up:3.2,start:Date.now(),hist:[38,41,37,40,39,42,36,38,40,37,41,38,39,42,37]},
     settings:{killswitch:true, autostart:true, dns:true, reduceMotion:false, adblock:true, trackers:true, phishing:false, tray:true},
     embedChrome:true
@@ -1616,7 +1635,7 @@ class Component extends DCLogic {
   autoBest(){ const N=this._nodes(); if(!N.length) return; let bi=0,bs=1e9; N.forEach((n,i)=>{const sc=(n.ping==null?9e3:n.ping)+(n.load==null?0:n.load)*0.4; if(sc<bs){bs=sc;bi=i;}}); this.setState({node:bi}); this.toast(this._T().bestNode,'ok'); }
   randomNode(){ const N=this._nodes(); const i=Math.floor(Math.random()*N.length); this.setState({node:i}); this.toast(this._T().randNode,'ok'); }
   setLang(l){ this.setState({lang:l}); }
-  pickLang(l){ this.setState({lang:l, langOpen:false, langMenuOpen:false, langQuery:''}); }
+  pickLang(l){ this.setState({lang:l, langOpen:false, langMenuOpen:false, obLangOpen:false, langQuery:''}); }
   toggleLangPicker(){ this.setState(s=>({langOpen:!s.langOpen, langQuery:''})); }
   toggleLangMenu(){ this.setState(s=>({langMenuOpen:!s.langMenuOpen, langQuery:''})); }
   toggleTheme(){ this.setState(s=>({theme:s.theme==='vivid'?'minimal':'vivid'}), ()=>{ const v=this.state.theme==='vivid'; const L=this.state.lang; const TN={ru:['Минимал','Насыщенно'],en:['Minimal','Vivid'],es:['Mínimo','Vívido'],de:['Minimal','Lebhaft']}; const PFX={ru:'Оформление',en:'Appearance',es:'Apariencia',de:'Darstellung'}; const ext=(typeof window!=='undefined'&&window.SYM_I18N&&window.SYM_I18N[L])||null; const a=(ext&&ext.theme)||TN[L]||TN.en; const pre=(ext&&ext.ui&&ext.ui.stStyle)||PFX[L]||PFX.en; this.toast(pre+': '+(v?a[1]:a[0]),'ok'); }); }
@@ -2255,7 +2274,9 @@ class Component extends DCLogic {
       actInput:S.actInput||'', onActInput:(e)=>this.setField('actInput',e.target.value), openKeyCheck:()=>this.openKeyCheck(), closeKeyCheck:()=>this.closeKeyCheck(), activateKey:()=>this.activateKey(), kcActivate:()=>{ if(S.kcStatus&&S.kcStatus!=='valid'){ this.toast(this._kcMsg('bad'),'error'); return; } this.setState({actInput:(S.kcCode||S.actInput||'')}, ()=>this.activateKey()); },
       kcOpen:S.kcOpen, kcScanning:S.kcPhase==='scanning', kcDone:S.kcPhase==='done', kcCode:S.kcCode, kcVerdict, kcExamples,
       kcTitle:_KC.title, kcScanningLabel:_KC.scanning, kcBrowser:_KC.browser, kcGives:_KC.gives, kcSysL:_KC.sysL, kcCloseLabel:_KC.close, kcActivateLabel:_KC.activate, kcCheckBtn:_KC.checkBtn, kcActivateBtn:_KC.activateBtn, kcOfflineChk:_KC.offlineChk, kcExamplesLabel:_KC.examples,
-      lang:S.lang, setLang:(l)=>this.setLang(l), langChips, langOpen:S.langOpen, toggleLangPicker:()=>this.toggleLangPicker(), toggleLangMenu:()=>this.toggleLangMenu(), langMenuOpen:S.langMenuOpen, langMenuChevStyle, langGroups, langQuery:S.langQuery, onLangQuery:e=>this.setField('langQuery',e.target.value), langSearchPh, langOptions, soonLabel:({ru:'скоро',en:'soon',es:'pronto',de:'bald'})[lng]||'soon', langChevStyle, hs, rl, rst, sh, az, acs, ui, vivid:_vivid, minimal:!_vivid, stStyleVal, toggleTheme:()=>this.toggleTheme(),
+      lang:S.lang, setLang:(l)=>this.setLang(l), langChips, langOpen:S.langOpen, toggleLangPicker:()=>this.toggleLangPicker(), toggleLangMenu:()=>this.toggleLangMenu(), langMenuOpen:S.langMenuOpen, langMenuChevStyle, langGroups, langQuery:S.langQuery, onLangQuery:e=>this.setField('langQuery',e.target.value), langSearchPh, langOptions,
+      obLangOpen:S.obLangOpen, toggleObLang:()=>this.setState(s=>({obLangOpen:!s.obLangOpen})), obLangChevron:S.obLangOpen?'expand_less':'expand_more', obCurLangName:(_optByCode[lng]||{}).name||(lng||'en').toUpperCase(), obCurFlagStyle:(_optByCode[lng]||{}).flagStyle||{width:'20px',height:'14px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'},
+      soonLabel:({ru:'скоро',en:'soon',es:'pronto',de:'bald'})[lng]||'soon', langChevStyle, hs, rl, rst, sh, az, acs, ui, vivid:_vivid, minimal:!_vivid, stStyleVal, toggleTheme:()=>this.toggleTheme(),
       goGlossary:()=>this.go('glossary'), goLogs:()=>this.go('logs'),
       glossList, faqList, glTabGloss:_glTabGloss, glTabFaq:!_glTabGloss, glTabGlossStyle:(_glTabGloss?_segOn:_segOff), glTabFaqStyle:(!_glTabGloss?_segOn:_segOff), glTabGlossLabel:_gfX.gloss, glTabFaqLabel:_gfX.faq, glSearchPh:_gfX.searchPh, glEmpty, glEmptyText:_gfX.empty, glQuery:S.glQuery||'', onGlQuery:e=>this.setField('glQuery',e.target.value), setGlTabGloss:()=>this.setGlTab('gloss'), setGlTabFaq:()=>this.setGlTab('faq'), openFaqHelp:()=>this.openFaq(11), faqDeepLabel:({ru:'Что делать? — открыть FAQ',en:'What to do? — open FAQ',es:'¿Qué hacer? — abrir FAQ',de:'Was tun? — FAQ öffnen'})[lng]||'Open FAQ',
       nodeFilterChips, nodesEmpty, nodesT:ns, nodesReachable:String(NODES.length), nodePulse:_nodeX.pulse, nodePulseSub:_nodeX.pulseSub, autoBest:()=>this.autoBest(), randomNode:()=>this.randomNode()
