@@ -214,7 +214,8 @@ class SingboxConfig {
         return {
           'type': 'shadowsocks', 'tag': tag,
           'server': e.server, 'server_port': e.port,
-          'method': '2022-blake3-aes-128-gcm',
+          // метод берём из манифеста (сервер может сменить шифр) с безопасным дефолтом
+          'method': e.params['method'] ?? '2022-blake3-aes-128-gcm',
           'password': e.params['password'] ?? 'FROM_MANIFEST',
           if (detour != null) 'detour': detour,
         };

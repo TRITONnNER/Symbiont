@@ -1,0 +1,144 @@
+name: Release · Windows app (real client)
+
+# Собирает НАСТОЯЩЕЕ десктоп-приложение «Симбионт» под Windows и кладёт рядом с ним
+# движки (sing-box — реальный VPN-туннель к серверу; GoodbyeDPI/ByeDPI — обход DPI без
+# сервера). На выходе — самодостаточный ZIP: распаковал → запустил Симбионт.exe →
+# подключается к реальному серверу. Отдельная установка не нужна.
+#
+# Запуск: вкладка Actions → «Release · Windows app» → Run workflow (ветка),
+# либо push тега вида v1.2.3 (тогда ещё и создастся GitHub Release с ZIP).
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # чтобы создать Release при push тега
+
+jobs:
+  build-windows:
+    name: Build Windows x64 + bundle engines
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Build Symbiont (Windows release)
+        working-directory: symbiont_build
+        shell: pwsh
+        run: |
+          flutter config --enable-windows-desktop
+          # windows/ в репозитории — заглушка (только runner.exe.manifest). Досоздаём
+          # полный каркас платформы (CMakeLists/flutter/runner) поверх, не трогая lib/.
+          flutter create --platforms=windows --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build windows --release
+
+      - name: Locate build output
+        id: out
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path symbiont_build/build/windows -Recurse -Filter "symbiont.exe" |
+                 Where-Object { $_.FullName -match "Release" } | Select-Object -First 1
+          if (-not $exe) { throw "symbiont.exe not found — сборка не удалась" }
+          $rel = $exe.Directory.FullName
+          Write-Host "Release dir: $rel"
+          "reldir=$rel" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Bundle engines next to the exe (sing-box VPN + DPI bypass)
+        shell: pwsh
+        env:
+          REL: ${{ steps.out.outputs.reldir }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $ProgressPreference = "SilentlyContinue"
+          $tmp = Join-Path $env:RUNNER_TEMP ("eng_" + [guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+          function Latest($repo) { Invoke-RestMethod ("https://api.github.com/repos/$repo/releases/latest") -Headers @{ "User-Agent"="symbiont-ci"; "Authorization"="Bearer $env:GITHUB_TOKEN" } }
+
+          # 1) sing-box → <exe>\bin\sing-box.exe  (реальный VPN; движок ищет его рядом с exe)
+          Write-Host "[1/3] sing-box…"
+          $sb = Latest "SagerNet/sing-box"
+          $a  = $sb.assets | Where-Object { $_.name -match "windows-amd64.*\.zip$" } | Select-Object -First 1
+          if (-not $a) { throw "sing-box windows-amd64 asset not found" }
+          $z = Join-Path $tmp "sb.zip"; Invoke-WebRequest $a.browser_download_url -OutFile $z
+          Expand-Archive $z -DestinationPath (Join-Path $tmp "sb") -Force
+          $sbx = Get-ChildItem -Path (Join-Path $tmp "sb") -Recurse -Filter "sing-box.exe" | Select-Object -First 1
+          $bin = Join-Path $env:REL "bin"; New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          Copy-Item $sbx.FullName (Join-Path $bin "sing-box.exe") -Force
+          Write-Host "  OK sing-box $($sb.tag_name)"
+
+          # 2) GoodbyeDPI → <exe>\goodbyedpi\  (прозрачный обход DPI, нужен админ)
+          Write-Host "[2/3] GoodbyeDPI…"
+          try {
+            $gd = Latest "ValdikSS/GoodbyeDPI"
+            $ga = $gd.assets | Where-Object { $_.name -match "\.zip$" } | Select-Object -First 1
+            $gz = Join-Path $tmp "gd.zip"; Invoke-WebRequest $ga.browser_download_url -OutFile $gz
+            Expand-Archive $gz -DestinationPath (Join-Path $tmp "gd") -Force
+            $gexe = Get-ChildItem -Path (Join-Path $tmp "gd") -Recurse -Filter "goodbyedpi.exe" | Where-Object { $_.FullName -match "x86_64" } | Select-Object -First 1
+            if (-not $gexe) { $gexe = Get-ChildItem -Path (Join-Path $tmp "gd") -Recurse -Filter "goodbyedpi.exe" | Select-Object -First 1 }
+            if ($gexe) { $gdir = Join-Path $env:REL "goodbyedpi"; New-Item -ItemType Directory -Force -Path $gdir | Out-Null; Copy-Item (Join-Path $gexe.Directory.FullName "*") $gdir -Recurse -Force; Write-Host "  OK GoodbyeDPI" }
+          } catch { Write-Host "  WARN GoodbyeDPI: $($_.Exception.Message)" }
+
+          # 3) ByeDPI (ciadpi) → <exe>\byedpi\  (обход DPI без прав администратора)
+          Write-Host "[3/3] ByeDPI…"
+          try {
+            $bd = Latest "hufrea/byedpi"
+            $ba = $bd.assets | Where-Object { $_.name -match "(win|windows)" -and $_.name -match "\.zip$" } | Select-Object -First 1
+            if (-not $ba) { $ba = $bd.assets | Where-Object { $_.name -match "\.zip$" } | Select-Object -First 1 }
+            $bz = Join-Path $tmp "bd.zip"; Invoke-WebRequest $ba.browser_download_url -OutFile $bz
+            Expand-Archive $bz -DestinationPath (Join-Path $tmp "bd") -Force
+            $bexe = Get-ChildItem -Path (Join-Path $tmp "bd") -Recurse -Filter "ciadpi.exe" | Select-Object -First 1
+            if ($bexe) { $bdir = Join-Path $env:REL "byedpi"; New-Item -ItemType Directory -Force -Path $bdir | Out-Null; Copy-Item (Join-Path $bexe.Directory.FullName "*") $bdir -Recurse -Force; Write-Host "  OK ByeDPI" }
+          } catch { Write-Host "  WARN ByeDPI: $($_.Exception.Message)" }
+
+          # README рядом с приложением
+          $readme = @"
+          Симбионт — портативная сборка (Windows x64)
+
+          Запуск: Симбионт.exe (symbiont.exe). Установка не нужна.
+
+          Как это работает:
+            • VPN-туннель к серверу поднимает sing-box (bin\sing-box.exe) — уже вложен.
+            • Приложение само собирает конфиг из подписанного манифеста сервера и подключается.
+            • Для полного системного VPN (перехват всего трафика) запусти от имени
+              администратора; без админа поднимется локальный прокси (проверка туннеля).
+            • Обход DPI без сервера: GoodbyeDPI (админ) / ByeDPI (без админа) — тоже вложены.
+            • zapret/winws (сильнейший обход для РФ) при желании ставится отдельно:
+              tools\setup_windows.ps1 из репозитория.
+
+          Сервер по умолчанию: http://193.23.219.118 (можно переопределить при сборке
+          --dart-define=SYMBIONT_BASE_URL=...).
+          "@
+          Set-Content -Path (Join-Path $env:REL "ЧИТАЙ-МЕНЯ.txt") -Value $readme -Encoding UTF8
+          Write-Host "Bundle contents:"; Get-ChildItem $env:REL | Select-Object Name
+
+      - name: Zip the portable app
+        shell: pwsh
+        env:
+          REL: ${{ steps.out.outputs.reldir }}
+        run: |
+          $zip = Join-Path (Get-Location) "Symbiont-Windows-x64.zip"
+          Compress-Archive -Path (Join-Path $env:REL "*") -DestinationPath $zip -Force
+          Write-Host "Zipped: $zip ($((Get-Item $zip).Length) bytes)"
+
+      - name: Upload artifact (downloadable from the run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Symbiont-Windows-x64
+          path: Symbiont-Windows-x64.zip
+          if-no-files-found: error
+
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Symbiont-Windows-x64.zip
+          body: |
+            Портативная сборка «Симбионт» для Windows x64.
+            Скачай ZIP, распакуй, запусти **Симбионт.exe** — приложение подключается к реальному серверу через sing-box. Установка не нужна.
