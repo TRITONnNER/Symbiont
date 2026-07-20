@@ -61,6 +61,7 @@ jobs:
         shell: pwsh
         env:
           REL: ${{ steps.out.outputs.reldir }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}   # для запросов к GitHub API (иначе 401)
         run: |
           $ErrorActionPreference = "Stop"
           $ProgressPreference = "SilentlyContinue"
