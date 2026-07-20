@@ -1,0 +1,199 @@
+name: Release · all platforms
+
+# Собирает «Симбионт» на все запланированные платформы и прикрепляет к релизу.
+#   • Windows / Linux / macOS — НАСТОЯЩИЙ VPN: рядом с приложением лежит sing-box,
+#     движок поднимает его процессом и туннелирует к серверу (193.23.219.118).
+#   • Android — устанавливаемый APK: реальный UI + аккаунт/узлы/оплата с сервера;
+#     сам VPN-туннель на Android требует нативного VpnService+libbox (отдельный шаг),
+#     пока движок мобильной сборки — заглушка (Mock). Приложение ставится и работает,
+#     но туннель включится после нативной части.
+#   • iOS — сборка без подписи (для разработчика): установка на устройство требует
+#     Apple-сертификатов и нативного NetworkExtension.
+#   • Расширение браузера — обход DPI через нативный хост (Chrome/FF/Edge).
+#
+# Запуск: Actions → «Release · all platforms» → Run workflow, либо push тега vX.Y.Z.
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags: ["v*"]
+    # ВРЕМЕННО: собрать все платформы с ветки и дописать ассеты в релиз v0.1.0.
+    branches: ["claude/what-happened-fu3t6c"]
+
+permissions:
+  contents: write
+
+env:
+  # Плагин flutter_inappwebview на десктопе тянет <experimental/coroutine> — глушим hard-error MSVC.
+  REL_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v0.1.0' }}
+
+jobs:
+  # ─────────────────────────── WINDOWS (реальный VPN) ───────────────────────────
+  windows:
+    name: Windows x64 (VPN)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build
+        working-directory: symbiont_build
+        shell: pwsh
+        env:
+          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS /D_SILENCE_CXX17_DEPRECATION_WARNINGS
+        run: |
+          flutter config --enable-windows-desktop
+          flutter create --platforms=windows --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build windows --release
+      - name: Bundle sing-box + zip
+        shell: pwsh
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          $exe = Get-ChildItem symbiont_build/build/windows -Recurse -Filter symbiont.exe | Where-Object { $_.FullName -match "Release" } | Select-Object -First 1
+          $rel = $exe.Directory.FullName
+          $sb = Invoke-RestMethod "https://api.github.com/repos/SagerNet/sing-box/releases/latest" -Headers @{ "User-Agent"="ci"; "Authorization"="Bearer $env:GITHUB_TOKEN" }
+          $a = $sb.assets | Where-Object { $_.name -match "windows-amd64.*\.zip$" } | Select-Object -First 1
+          Invoke-WebRequest $a.browser_download_url -OutFile sb.zip; Expand-Archive sb.zip -DestinationPath sbx -Force
+          New-Item -ItemType Directory -Force -Path (Join-Path $rel "bin") | Out-Null
+          Copy-Item (Get-ChildItem sbx -Recurse -Filter sing-box.exe | Select-Object -First 1).FullName (Join-Path $rel "bin\sing-box.exe")
+          Compress-Archive -Path (Join-Path $rel "*") -DestinationPath Symbiont-Windows-x64.zip -Force
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-Windows-x64, path: Symbiont-Windows-x64.zip }
+      - name: Attach to release
+        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        uses: softprops/action-gh-release@v2
+        with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Windows-x64.zip }
+
+  # ─────────────────────────── LINUX (реальный VPN) ───────────────────────────
+  linux:
+    name: Linux x64 (VPN)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux desktop deps
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgtk-3-dev
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build
+        working-directory: symbiont_build
+        run: |
+          flutter config --enable-linux-desktop
+          flutter create --platforms=linux --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build linux --release
+      - name: Bundle sing-box + tar
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          set -e
+          BUND=$(dirname "$(find symbiont_build/build/linux -type f -name symbiont -path '*release*bundle*' | head -1)")
+          echo "bundle: $BUND"
+          URL=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep -o 'https://[^"]*linux-amd64\.tar\.gz' | head -1)
+          curl -sL "$URL" -o sb.tgz && mkdir sbx && tar xzf sb.tgz -C sbx
+          mkdir -p "$BUND/bin"; cp "$(find sbx -type f -name sing-box | head -1)" "$BUND/bin/sing-box"; chmod +x "$BUND/bin/sing-box"
+          cp symbiont_build/tools/setup_windows.ps1 "$BUND/" 2>/dev/null || true
+          tar czf Symbiont-Linux-x64.tar.gz -C "$BUND" .
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-Linux-x64, path: Symbiont-Linux-x64.tar.gz }
+      - name: Attach to release
+        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        uses: softprops/action-gh-release@v2
+        with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Linux-x64.tar.gz }
+
+  # ─────────────────────────── macOS (реальный VPN) ───────────────────────────
+  macos:
+    name: macOS arm64 (VPN)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build
+        working-directory: symbiont_build
+        run: |
+          flutter config --enable-macos-desktop
+          flutter create --platforms=macos --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build macos --release
+      - name: Bundle sing-box + zip
+        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          set -e
+          APP=$(find symbiont_build/build/macos -maxdepth 6 -type d -name "*.app" -path "*Release*" | head -1)
+          echo "app: $APP"
+          URL=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/SagerNet/sing-box/releases/latest | grep -o 'https://[^"]*darwin-arm64\.tar\.gz' | head -1)
+          curl -sL "$URL" -o sb.tgz && mkdir sbx && tar xzf sb.tgz -C sbx
+          mkdir -p "$APP/Contents/MacOS/bin"; cp "$(find sbx -type f -name sing-box | head -1)" "$APP/Contents/MacOS/bin/sing-box"; chmod +x "$APP/Contents/MacOS/bin/sing-box"
+          ditto -c -k --keepParent "$APP" Symbiont-macOS-arm64.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-macOS-arm64, path: Symbiont-macOS-arm64.zip }
+      - name: Attach to release
+        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        uses: softprops/action-gh-release@v2
+        with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-macOS-arm64.zip }
+
+  # ─────────────────────── ANDROID (APK: UI/аккаунт реальны) ───────────────────────
+  android:
+    name: Android APK (UI + бэкенд; туннель — нативный шаг)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build APK
+        working-directory: symbiont_build
+        run: |
+          flutter create --platforms=android --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build apk --release
+      - name: Collect APK
+        run: cp "$(find symbiont_build/build -name 'app-release.apk' | head -1)" Symbiont-Android.apk
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-Android, path: Symbiont-Android.apk }
+      - name: Attach to release
+        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        uses: softprops/action-gh-release@v2
+        with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Android.apk }
+
+  # ─────────────────────── iOS (сборка без подписи, для разработчика) ───────────────────────
+  ios:
+    name: iOS (unsigned, dev)
+    runs-on: macos-latest
+    continue-on-error: true   # без Apple-сертификатов финальная упаковка не всегда проходит — не рушим релиз
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable }
+      - name: Build (no codesign)
+        working-directory: symbiont_build
+        run: |
+          flutter create --platforms=ios --project-name symbiont --org com.symbiont .
+          flutter pub get
+          flutter build ios --release --no-codesign
+      - name: Zip unsigned .app
+        run: |
+          APP=$(find symbiont_build/build/ios -maxdepth 4 -type d -name "*.app" | head -1)
+          ditto -c -k --keepParent "$APP" Symbiont-iOS-unsigned.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-iOS-unsigned, path: Symbiont-iOS-unsigned.zip }
+
+  # ─────────────────────── РАСШИРЕНИЕ БРАУЗЕРА (обход DPI) ───────────────────────
+  extension:
+    name: Browser extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build extension bundle
+        run: |
+          cd platform/browser-extension
+          bash build.sh
+          cd "$GITHUB_WORKSPACE"
+          (cd platform/browser-extension && zip -r "$GITHUB_WORKSPACE/Symbiont-Extension.zip" . -x '*.git*')
+      - uses: actions/upload-artifact@v4
+        with: { name: Symbiont-Extension, path: Symbiont-Extension.zip }
+      - name: Attach to release
+        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        uses: softprops/action-gh-release@v2
+        with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Extension.zip }
