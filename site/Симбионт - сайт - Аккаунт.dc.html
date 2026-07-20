@@ -114,7 +114,7 @@
               <a href="Симбионт - сайт - Цены.dc.html" style="padding:10px 16px; border-radius:11px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#EAF1EF; font-weight:600; font-size:13px; text-decoration:none; white-space:nowrap;" style-hover="background:rgba(255,255,255,0.1);">{{ manageLabel }}</a>
             </div>
             <div style="margin-top:16px; display:flex; align-items:center; gap:10px;">
-              <div style="flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="width:72%; height:100%; background:linear-gradient(90deg,#3DF0BB,#34E5B0);"></div></div>
+              <div style="flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden;"><div style="{{ subBarStyle }}"></div></div>
               <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#9DABA8; white-space:nowrap;">{{ daysLeft }}</span>
             </div>
           </div>
@@ -132,7 +132,7 @@
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
               <div style="display:flex; flex-direction:column; gap:5px;">
                 <span style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#7C8A99;">{{ activeTimeLabel }}</span>
-                <div style="display:flex; align-items:baseline; gap:5px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF;">42</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF; margin-left:6px;">6</span><span style="font-size:13px; color:#7C8A99;">{{ hU }}</span></div>
+                <div style="display:flex; align-items:baseline; gap:5px;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF;">{{ actD }}</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:26px; color:#EAF1EF; margin-left:6px;">{{ actH }}</span><span style="font-size:13px; color:#7C8A99;">{{ hU }}</span></div>
               </div>
               <span style="font-size:11px; color:#566270; max-width:150px; text-align:right;">{{ spentConnected }}</span>
             </div>
@@ -167,13 +167,13 @@
             <div style="display:flex; align-items:center; gap:9px; margin-bottom:14px;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#A78BFA;">diversity_3</span><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ referralsLabel }}</span></div>
             <span style="font-size:11px; font-weight:700; letter-spacing:0.06em; color:#7C8A99;">{{ yourCodeLabel }}</span>
             <div style="display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:11px; background:rgba(255,255,255,0.04); border:1px solid rgba(167,139,250,0.28); margin:8px 0 14px;">
-              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600; color:#C7B7FF; letter-spacing:0.05em;">SYM-7K2Q9X</span>
+              <span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:600; color:#C7B7FF; letter-spacing:0.05em;">{{ refCode }}</span>
               <span onClick="{{ copyRef }}" style="font-family:'Material Symbols Rounded'; font-size:18px; color:#A78BFA; cursor:pointer;">{{ refCopyIcon }}</span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px;">
-              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">12</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ invitedLabel }}</div></div>
-              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">7</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ payingLabel }}</div></div>
-              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#34E5B0;">+120</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ daysLabel }}</div></div>
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">{{ refInvited }}</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ invitedLabel }}</div></div>
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#EAF1EF;">{{ refPaying }}</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ payingLabel }}</div></div>
+              <div style="text-align:center; padding:10px 6px; border-radius:10px; background:rgba(255,255,255,0.03);"><div style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:18px; color:#34E5B0;">{{ refDays }}</div><div style="font-size:10px; color:#7C8A99; margin-top:2px;">{{ daysLabel }}</div></div>
             </div>
             <div style="display:flex; align-items:center; gap:9px; padding:9px 12px; border-radius:10px; background:rgba(167,139,250,0.1);"><span style="font-family:'Material Symbols Rounded'; font-size:16px; color:#A78BFA;">verified</span><span style="flex:1; font-size:12.5px; color:#C2CCCA;">{{ refNote }}</span></div>
           </div>
@@ -181,7 +181,7 @@
           <div style="padding:22px 24px; border-radius:18px; background:rgba(245,196,81,0.05); border:1px solid rgba(245,196,81,0.22);">
             <div style="display:flex; align-items:center; gap:9px; margin-bottom:12px;"><span style="font-family:'Material Symbols Rounded'; font-variation-settings:'FILL' 1; font-size:19px; color:#F5C451;">redeem</span><span style="font-weight:700; font-size:16px; color:#EAF1EF;">{{ bonusDaysLabel }}</span></div>
             <div style="display:flex; align-items:center; gap:16px;">
-              <div style="display:flex; align-items:baseline; gap:4px; flex:0 0 auto;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:34px; color:#F5C451; letter-spacing:-0.02em;">+32</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span></div>
+              <div style="display:flex; align-items:baseline; gap:4px; flex:0 0 auto;"><span style="font-family:'JetBrains Mono',monospace; font-weight:600; font-size:34px; color:#F5C451; letter-spacing:-0.02em;">{{ bonusDaysVal }}</span><span style="font-size:13px; color:#7C8A99;">{{ dU }}</span></div>
               <div style="flex:1; min-width:0;"><div style="font-size:12.5px; color:#9DABA8; line-height:1.5;">{{ bonusDesc }}</div></div>
             </div>
             <a href="Симбионт - сайт - Аккаунт.dc.html#referral" style="margin-top:14px; display:flex; align-items:center; justify-content:center; gap:8px; padding:11px; border-radius:11px; background:rgba(245,196,81,0.12); border:1px solid rgba(245,196,81,0.28); color:#F5C451; font-weight:700; font-size:13.5px; text-decoration:none;" style-hover="background:rgba(245,196,81,0.18);"><span style="font-family:'Material Symbols Rounded'; font-size:18px;">diversity_3</span>{{ getMore }}</a>
@@ -228,19 +228,29 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { loggedIn:false, authTab:'login', authInput:'', authStatus:'', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru', token:null, recovery:null, billing:null };
+  state = { loggedIn:false, authTab:'login', authInput:'', authStatus:'', copied:false, refCopied:false, recShown:false, toast:'', lang:'ru', token:null, recovery:null, billing:null, refData:null, ledgerData:null, devicesData:null };
+  // Подтянуть ВСЕ реальные данные аккаунта с бэкенда (как в приложении) — без выдумок.
+  _loadAccount(){ const api=(typeof window!=='undefined')&&window.SYM_API; if(!api) return;
+    if(api.billingStatus) api.billingStatus().then(b=>this.setState({billing:(b&&b.subscription)||null})).catch(()=>{});
+    if(api.referral) api.referral().then(r=>this.setState({refData:r||null})).catch(()=>{});
+    if(api.ledger) api.ledger().then(l=>this.setState({ledgerData:(l&&(l.entries||l))||null})).catch(()=>{});
+    if(api.devices) api.devices().then(d=>this.setState({devicesData:(d&&(d.devices||d))||null})).catch(()=>{});
+  }
   showToast(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:''}),1800); }
   onAuthInput(e){ this.setState({ authInput:(e&&e.target&&e.target.value)||'', authStatus:'' }); }
   // Успешный вход: фиксируем сессию (токен от бэкенда или уже выставленный),
   // подтягиваем подписку. Общий для входа/регистрации/восстановления.
-  _enter(res){ const api=(typeof window!=='undefined')&&window.SYM_API; this.setState({loggedIn:true, authInput:'', authStatus:'', token:(res&&res.token)||(api&&api.token&&api.token())||null, recovery:(res&&res.recovery_code)||null}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} if(api&&api.billingStatus) api.billingStatus().then(b=>this.setState({billing:(b&&b.subscription)||null})).catch(()=>{}); }
+  _enter(res){ const api=(typeof window!=='undefined')&&window.SYM_API; this.setState({loggedIn:true, authInput:'', authStatus:'', token:(res&&res.token)||(api&&api.token&&api.token())||null, recovery:(res&&res.recovery_code)||null}); try{ localStorage.setItem('sym-auth','1'); }catch(e){} this._loadAccount(); }
   // Вход по recovery-коду (единственный ключ к беспарольному аккаунту).
-  _recover(v){ const api=(typeof window!=='undefined')&&window.SYM_API; const ru=this.state.lang==='ru'; const live=!!(api&&(api.base||api._ready)); if(!live){ this._enter(null); return; } api.recover({recovery_code:v}).then(res=>{ if(res&&res.token) this._enter(res); else this.setState({authStatus:ru?'Код не распознан':'Code not recognized'}); }).catch(()=>this.setState({authStatus:ru?'Неверный код восстановления':'Invalid recovery code'})); }
+  _recover(v){ const api=(typeof window!=='undefined')&&window.SYM_API; const ru=this.state.lang==='ru'; if(!api||!api.recover){ this.setState({authStatus:ru?'Сервер недоступен':'Server unavailable'}); return; } api.recover({recovery_code:v}).then(res=>{ if(res&&res.token) this._enter(res); else this.setState({authStatus:ru?'Код не распознан':'Code not recognized'}); }).catch(()=>this.setState({authStatus:ru?'Неверный код восстановления':'Invalid recovery code'})); }
   componentDidMount(){
-    try{ const l=localStorage.getItem('sym-site-lang'); if(l) this.setState({lang:l}); }catch(e){}
-    try{ const a=localStorage.getItem('sym-auth'); if(a==='1') this.setState({loggedIn:true}); }catch(e){}
-    // если бэкенд подключён и токен уже в localStorage — считаем вошедшим
-    try{ const api=window.SYM_API; if(api&&api.loadToken){ api.loadToken(); if(api.hasToken&&api.hasToken()){ this.setState({loggedIn:true}); if(api.billingStatus) api.billingStatus().then(b=>this.setState({billing:(b&&b.subscription)||null})).catch(()=>{}); } } }catch(e){}
+    // Язык по умолчанию — как на устройстве (navigator.language); сохранённый выбор важнее.
+    try{ const l=localStorage.getItem('sym-site-lang');
+      if(l){ this.setState({lang:l}); }
+      else { const d=((navigator.language||navigator.userLanguage||'').slice(0,2).toLowerCase()); if(d) this.setState({lang:d}); }
+    }catch(e){}
+    // Вошедшим считаем ТОЛЬКО при реальном токене (без него — экран входа, а не фейк-аккаунт).
+    try{ const api=window.SYM_API; if(api&&api.loadToken){ api.loadToken(); if(api.hasToken&&api.hasToken()){ this.setState({loggedIn:true}); this._loadAccount(); } } }catch(e){}
     this._onLang=(e)=>{ let l=(e&&e.detail); if(!l){ try{ l=localStorage.getItem('sym-site-lang'); }catch(_){} } if(l) this.setState({lang:l}); };
     this._onStore=(e)=>{ if(e&&e.key==='sym-site-lang'&&e.newValue) this.setState({lang:e.newValue}); };
     this._onI18n=()=>this.forceUpdate();
@@ -289,9 +299,27 @@ class Component extends DCLogic {
     // Живая подписка из бэкенда (если вошли) → тариф/дни/«активна до» вместо демо-дат.
     const B=this.state.billing;
     const _fmtA=(dt)=>{ const M=['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек']; return dt.getDate()+' '+M[dt.getMonth()]+' '+dt.getFullYear(); };
-    const tierName = (B&&B.tier) ? ({premium:T('a_premium'),ultimate:(lang==='ru'?'Максимум':'Ultimate'),free:'Free'}[B.tier]||B.tier) : T('a_premium');
+    const tierName = (B&&B.tier) ? ({premium:T('a_premium'),ultimate:(lang==='ru'?'Максимум':'Ultimate'),free:'Free'}[B.tier]||B.tier) : 'Free';
     const activeUntilReal = (B&&B.days_left>0) ? _fmtA(new Date(Date.now()+B.days_left*86400000)) : null;
     const daysLeftReal = (B&&B.days_left!=null&&B.days_left>0) ? (B.days_left+' '+(lang==='ru'?'дн':'d')) : null;
+
+    // ── РЕАЛЬНЫЕ данные аккаунта с бэкенда (без выдумок 42/3/12/32/SYM-7K2Q9X) ──
+    const _ref=this.state.refData||{}; const _led=Array.isArray(this.state.ledgerData)?this.state.ledgerData:[];
+    const _dev=Array.isArray(this.state.devicesData)?this.state.devicesData:[];
+    const _daysN=(B&&B.days_left>0)?B.days_left:0;
+    const _actMin=(B&&B.active_minutes_left)||0; const _actD=Math.floor(_actMin/1440); const _actH=Math.floor((_actMin%1440)/60);
+    const _invited=_ref.invited!=null?_ref.invited:0, _paying=_ref.converted!=null?_ref.converted:0, _earned=_ref.earned_days!=null?_ref.earned_days:0;
+    const _refCode=_ref.invite_code||'—';
+    const _statVals=[String(_daysN), String(_dev.length), String(_invited), String(_earned)];
+    // единицы в i18n содержат ПРИМЕРНЫЕ числа («дн 6 ч», «/ 7 платят», «3 из ∞») —
+    // подставляем реальные значения вместо примера (для всех языков).
+    const _rep=(s,n)=> (typeof s==='string'? s.replace(/\d+/, String(n)) : s);
+    const statTilesReal=stMeta.map((m,i)=>{ let u=(st[i]||{}).u; if(i===0)u=_rep(u,_actH); if(i===2)u=_rep(u,_paying); return {icon:m.icon,color:m.color,label:(st[i]||{}).label,v:_statVals[i],u:u}; });
+    const _fmtD=(ts)=>{ if(!ts) return ''; try{ const d=new Date(ts*1000); return _fmtA(d); }catch(e){ return ''; } };
+    const _kindT={purchase:(lang==='ru'?'Покупка':'Purchase'),grant:(lang==='ru'?'Начисление':'Grant'),wheel:(lang==='ru'?'Колесо':'Wheel'),ref_earn:(lang==='ru'?'Реферал':'Referral'),debit:(lang==='ru'?'Списание':'Debit'),keyact:(lang==='ru'?'Ключ':'Key')};
+    const ledgerReal=_led.slice(0,8).map(e=>{ const dd=(e.delta_days!=null?e.delta_days:(e.days!=null?e.days:null)); const amt=(dd!=null?((dd>0?'+':'')+dd+' '+(lang==='ru'?'дн':'d')):(e.amount!=null?String(e.amount):'')); return {icon:(lgMeta[0]||{}).icon||'workspace_premium', color:(lgMeta[0]||{}).color||'#34E5B0', tint:(lgMeta[0]||{}).tint, t:(_kindT[e.kind||e.type]||e.kind||e.type||''), d:_fmtD(e.at||e.ts||e.created_at), amt:amt, amtColor:(dd!=null&&dd<0)?'#9DABA8':'#34E5B0'}; });
+    const devicesReal=_dev.map((d,i)=>({icon:(d.platform==='ios'||d.platform==='android')?'phone_iphone':(d.platform==='web'?'public':'desktop_windows'), name:(d.name||d.label||('#'+(i+1))), meta:(d.platform||'')+(d.lastSeen?(' · '+_fmtD(d.lastSeen)):''), current:!!d.current, revocable:!d.current&&d.role!=='owner', divider: i<_dev.length-1?'1px solid rgba(255,255,255,0.05)':'none'}));
+    const _ownerName=(_dev.find(d=>d.current)||_dev[0]||{}).name||'';
 
     return {
       dir: rtl?'rtl':'ltr', brand,
@@ -312,7 +340,7 @@ class Component extends DCLogic {
           // ВХОД: сессионный токен (sb_live_…) — ставим и проверяем; иначе recovery-код.
           const v=(this.state.authInput||'').trim();
           if(!v){ this.setState({authStatus:ru?'Введите ключ или код восстановления':'Enter a key or recovery code'}); return; }
-          if(!live){ this._enter(null); return; }   // демо без бэкенда
+          if(!api){ this.setState({authStatus:ru?'Сервер недоступен':'Server unavailable'}); return; }
           if(/^sb_live_/i.test(v)){
             if(api.setToken) api.setToken(v);
             api.billingStatus().then(()=>this._enter({})).catch(()=>{ if(api.logout) api.logout(); this.setState({authStatus:ru?'Токен недействителен':'Invalid token'}); });
@@ -321,7 +349,7 @@ class Component extends DCLogic {
           }
         } else {
           // СОЗДАНИЕ нового анонимного аккаунта (ввод — необязательный ник).
-          if(!live){ this._enter(null); return; }
+          if(!api){ this.setState({authStatus:ru?'Сервер недоступен':'Server unavailable'}); return; }
           const nick=(this.state.authInput||'').trim();
           api.register(nick?{nick:nick}:{}).then(r=>this._enter(r)).catch(()=>this.setState({authStatus:ru?'Не удалось создать аккаунт':'Could not create account'}));
         }
@@ -333,14 +361,18 @@ class Component extends DCLogic {
         this._recover(v);
       },
       signOut:()=>{ const api=window.SYM_API; if(api&&api.logout) api.logout(); this.setState({loggedIn:false, recShown:false, token:null, recovery:null}); try{ localStorage.setItem('sym-auth','0'); }catch(e){} },
-      headerName:(dv[0]||{}).name||'', ownerLabel:T('a_owner'), headerSub:brand+' '+tierName+' · '+(activeUntilReal? ((lang==='ru'?'активна до ':'active until ')+activeUntilReal) : T('a_activeUntil')), logoutLabel:T('a_logout'),
-      statTiles, subscriptionLabel:T('a_subscription'), activeLabel:T('a_active'), planName:brand+' '+tierName, planFeats:T('a_planFeats'), manageLabel:T('a_manage'), daysLeft:(daysLeftReal||T('a_daysLeft')),
-      tokenLabel:T('a_tokenLabel'), token:(this.state.token || 'sb_live_9c2f·7K2Q9XR4·MT8V·a91f'), tokenNote:T('a_tokenNote'),
+      headerName:(_ownerName||T('a_owner')), ownerLabel:T('a_owner'), headerSub:brand+' '+tierName+(activeUntilReal? (' · '+(lang==='ru'?'активна до ':'active until ')+activeUntilReal) : ''), logoutLabel:T('a_logout'),
+      statTiles:statTilesReal, subscriptionLabel:T('a_subscription'), activeLabel:T('a_active'), planName:brand+' '+tierName, planFeats:T('a_planFeats'), manageLabel:T('a_manage'), daysLeft:(daysLeftReal||('0 '+(lang==='ru'?'дн':'d'))),
+      actD:String(_actD||_daysN||0), actH:String(_actH||0), refCode:_refCode,
+      tokenLabel:T('a_tokenLabel'), token:(this.state.token || '—'), tokenNote:T('a_tokenNote'),
       copyIcon:this.state.copied?'check':'content_copy', copyLabel:this.state.copied?T('a_copied'):T('a_copy'),
       copyToken:()=>{ this.setState({copied:true}); this.showToast(T('a_toastToken')); clearTimeout(this._ct); this._ct=setTimeout(()=>this.setState({copied:false}),1600); },
-      activeTimeLabel:T('a_activeTime'), dU:T('a_dU'), hU:T('a_hU'), spentConnected:T('a_spentConnected'), ledger,
-      devicesLabel:T('a_devicesLabel'), thisDevice:T('a_thisDevice'), revokeLabel:T('a_revoke'), devices,
+      activeTimeLabel:T('a_activeTime'), dU:T('a_dU'), hU:T('a_hU'), spentConnected:T('a_spentConnected'), ledger:ledgerReal,
+      devicesLabel:_rep(T('a_devicesLabel'), _dev.length), thisDevice:T('a_thisDevice'), revokeLabel:T('a_revoke'), devices:devicesReal,
       referralsLabel:T('a_referrals'), yourCodeLabel:T('a_yourCode'), invitedLabel:T('a_invited'), payingLabel:T('a_paying'), daysLabel:T('a_days'), refNote:T('a_refNote'),
+      refInvited:String(_invited), refPaying:String(_paying), refDays:((_earned>0?'+':'')+_earned),
+      subBarStyle:{width:(_daysN>0?Math.min(100,Math.round(_daysN/365*100)):0)+'%', height:'100%', background:'linear-gradient(90deg,#3DF0BB,#34E5B0)'},
+      bonusDaysVal:((_earned>0?'+':'')+_earned),
       refCopyIcon:this.state.refCopied?'check':'content_copy',
       copyRef:()=>{ this.setState({refCopied:true}); this.showToast(T('a_toastCode')); clearTimeout(this._rt); this._rt=setTimeout(()=>this.setState({refCopied:false}),1600); },
       bonusDaysLabel:T('a_bonusDays'), bonusDesc:T('a_bonusDesc'), getMore:T('a_getMore'),

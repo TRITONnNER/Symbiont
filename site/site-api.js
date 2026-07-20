@@ -221,6 +221,10 @@
     logout: function () { this.setToken(null); },
     billingStatus: function () { return this._get('/v1/billing/status'); },
     keyCheck: function (code) { return this._post('/v1/key/check', { code: code }); },
+    // Реальные данные аккаунта (как в приложении) — для страницы «Аккаунт» без выдумок.
+    ledger: function () { return this._get('/v1/billing/ledger'); },
+    referral: function () { return this._get('/v1/referral'); },
+    devices: function () { return this._get('/v1/account/devices'); },
 
     /* Удобный старт: задать origin, поднять токен из localStorage, подтянуть конфиги. */
     connect: function (base) { if (base != null) this.base = base; this.loadToken(); return this.bootstrap(); },
