@@ -119,7 +119,7 @@ class Component extends DCLogic {
           background: selected?C.activeBg:(hover?C.rowHover:'transparent'),
           border:'1px solid '+(selected?C.activeBd:'transparent'), transition:'background .12s ease' };
         const flagStyle = { width:'26px', height:'18px', borderRadius:'4px', flex:'0 0 auto',
-          backgroundImage:'url(https://flagcdn.com/w40/'+norm(lead.code)+'.png)', backgroundSize:'cover', backgroundPosition:'center' };
+          backgroundImage:'url(./flags/'+norm(lead.code)+'.png)', backgroundSize:'cover', backgroundPosition:'center' };
         const dotStyle = { width:'9px', height:'9px', borderRadius:'50%', background:lc, flex:'0 0 auto',
           marginInline:'8px 9px', boxShadow: selected?('0 0 8px -1px '+lc):'none' };
         const glyphStyle = { fontFamily:MS, fontSize:'21px', color:lead.color||C.sub, width:'26px', textAlign:'center', flex:'0 0 auto',

@@ -8,11 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-25..0&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./fonts.css">
 </helmet>
 <div onClick="{{ onRowClick }}" onMouseEnter="{{ onEnter }}" onMouseLeave="{{ onLeave }}" role="{{ role }}" tabIndex="{{ tabIndex }}" dir="{{ dir }}" style="{{ rootStyle }}">
 
@@ -127,7 +123,7 @@ class Component extends DCLogic {
       backgroundImage:'url('+(lead.img||'')+')', backgroundSize:'contain', backgroundRepeat:'no-repeat',
       backgroundPosition:'center', borderRadius:(lead.imgRadius!=null?lead.imgRadius:'4px') };
     const leadFlagStyle = { width:(lead.w||34)+'px', height:(lead.h||24)+'px', borderRadius:'5px',
-      backgroundImage:'url(https://flagcdn.com/w40/'+(lead.code||'').toLowerCase()+'.png)',
+      backgroundImage:'url(./flags/'+(lead.code||'').toLowerCase()+'.png)',
       backgroundSize:'cover', backgroundPosition:'center', flex:'0 0 auto' };
     const leadDotStyle = { width:(lead.size||8)+'px', height:(lead.size||8)+'px', borderRadius:'50%',
       background: lead.color||C.sub, flex:'0 0 auto' };
