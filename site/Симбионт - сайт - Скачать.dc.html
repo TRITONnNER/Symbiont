@@ -273,11 +273,11 @@ class Component extends DCLogic {
     const rtl=(typeof window!=='undefined' && window.symSiteRTL) ? window.symSiteRTL(lang) : false;
     const brand=(typeof window!=='undefined' && window.symSiteBrand) ? window.symSiteBrand(lang) : 'Симбионт';
     const SPECS={ ios:{icon:'phone_iphone',screen:'home',btnIcon:'apple',altIcon:'',v:'0.1.0',size:'24',req:'iOS 15+'},
-      android:{icon:'android',screen:'routing',btnIcon:'shop',altIcon:'android',v:'0.1.0',size:'19',req:'Android 8+'},
-      windows:{icon:'desktop_windows',screen:'analysis',btnIcon:'download',altIcon:'inventory_2',v:'0.1.0',size:'68',req:'Win 10 / 11 · x64',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-Windows-x64.zip'},
-      macos:{icon:'laptop_mac',screen:'home',btnIcon:'download',altIcon:'terminal',v:'0.1.0',size:'72',req:'macOS 12+'},
-      linux:{icon:'terminal',screen:'nodes',btnIcon:'download',altIcon:'apps',v:'0.1.0',size:'58',req:'glibc 2.31+ · x64/arm64'},
-      ext:{icon:'extension',screen:'home',btnIcon:'shop',altIcon:'public',v:'0.1.0',size:'2.4',req:'Chrome · FF · Edge'} };
+      android:{icon:'android',screen:'routing',btnIcon:'download',altIcon:'android',v:'0.1.0',size:'62',req:'Android 8+',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-Android.apk'},
+      windows:{icon:'desktop_windows',screen:'analysis',btnIcon:'download',altIcon:'inventory_2',v:'0.1.0',size:'40',req:'Win 10 / 11 · x64',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-Windows-x64.zip'},
+      macos:{icon:'laptop_mac',screen:'home',btnIcon:'download',altIcon:'terminal',v:'0.1.0',size:'48',req:'macOS 10.15+ · Apple Silicon',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-macOS-arm64.zip'},
+      linux:{icon:'terminal',screen:'nodes',btnIcon:'download',altIcon:'apps',v:'0.1.0',size:'41',req:'glibc 2.31+ · x64',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-Linux-x64.tar.gz'},
+      ext:{icon:'extension',screen:'home',btnIcon:'download',altIcon:'public',v:'0.1.0',size:'0.2',req:'Chrome · FF · Edge',url:'https://github.com/TRITONnNER/Symbiont/releases/latest/download/Symbiont-Extension.zip'} };
     const DP=T('d_P')||{};
     const PLAT=(typeof window!=='undefined' && window.SYM_CONFIG && SYM_CONFIG.platforms) || null;
     if(PLAT && PLAT.items){ Object.keys(SPECS).forEach(function(k){ var it=PLAT.items[k]; if(!it) return; if(it.version!=null)SPECS[k].v=it.version; if(it.size_mb!=null)SPECS[k].size=String(it.size_mb); if(it.requirements!=null)SPECS[k].req=it.requirements; if(it.url)SPECS[k].url=it.url; }); }

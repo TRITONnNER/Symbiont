@@ -17,14 +17,14 @@ on:
   workflow_dispatch: {}
   push:
     tags: ["v*"]
-    # ВРЕМЕННО: собрать все платформы с ветки и дописать ассеты в релиз v0.1.0.
-    branches: ["claude/what-happened-fu3t6c"]
 
 permissions:
   contents: write
 
 env:
-  # Плагин flutter_inappwebview на десктопе тянет <experimental/coroutine> — глушим hard-error MSVC.
+  # Тег релиза: на push тега vX.Y.Z — сам тег; на ручном запуске (workflow_dispatch)
+  # ассеты дописываются в v0.1.0. Прямой push тега из CI-окружения не проходит через
+  # прокси, поэтому ручной запуск целится в фиксированный v0.1.0.
   REL_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v0.1.0' }}
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: Symbiont-Windows-x64, path: Symbiont-Windows-x64.zip }
       - name: Attach to release
-        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        if: startsWith(github.ref,'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Windows-x64.zip }
 
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: Symbiont-Linux-x64, path: Symbiont-Linux-x64.tar.gz }
       - name: Attach to release
-        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        if: startsWith(github.ref,'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Linux-x64.tar.gz }
 
@@ -149,7 +149,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: Symbiont-macOS-arm64, path: Symbiont-macOS-arm64.zip }
       - name: Attach to release
-        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        if: startsWith(github.ref,'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-macOS-arm64.zip }
 
@@ -180,7 +180,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: Symbiont-Android, path: Symbiont-Android.apk }
       - name: Attach to release
-        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        if: startsWith(github.ref,'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Android.apk }
 
@@ -221,6 +221,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: Symbiont-Extension, path: Symbiont-Extension.zip }
       - name: Attach to release
-        if: startsWith(github.ref,'refs/tags/v') || github.ref=='refs/heads/claude/what-happened-fu3t6c'
+        if: startsWith(github.ref,'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with: { tag_name: "${{ env.REL_TAG }}", name: "Симбионт ${{ env.REL_TAG }}", files: Symbiont-Extension.zip }
