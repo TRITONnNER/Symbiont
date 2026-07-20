@@ -637,10 +637,12 @@
           <div onClick="{{ openKeyCheck }}" role="button" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:11px; background:rgba(34,211,238,0.10); border:1px solid rgba(34,211,238,0.32); cursor:pointer;" style-hover="background:rgba(34,211,238,0.16)"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#22D3EE;">fingerprint</span><span style="font-weight:700; font-size:13.5px; color:#22D3EE;">{{ kcCheckBtn }}</span></div>
           <div onClick="{{ activateKey }}" role="button" style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px; padding:13px; border-radius:11px; background:#34E5B0; cursor:pointer;" style-hover="filter:brightness(1.06)"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#06231A;">bolt</span><span style="font-weight:700; font-size:13.5px; color:#06231A;">{{ kcActivateBtn }}</span></div>
         </div>
+        <sc-if value="{{ hasKcExamples }}" hint-placeholder-val="{{ false }}">
         <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
           <span style="font-size:11px; color:#6E7B8A; margin-inline-end:2px;">{{ kcExamplesLabel }}:</span>
           <sc-for list="{{ kcExamples }}" as="e" hint-placeholder-count="4"><span onClick="{{ e.onClick }}" role="button" style="{{ e.chipStyle }}">{{ e.label }}</span></sc-for>
         </div>
+        </sc-if>
       </div>
     </div>
 
@@ -1617,7 +1619,7 @@ class Component extends DCLogic {
   setField(k,v){ this.setState({[k]:v}); }
   _resolveKey(code){ const c=(code||'').toUpperCase().trim(); const demo={'SYMB-7K2Q-9XR4.MT8V':'valid','SYMB-3F8D-2WQ7.KP1X':'redeemed','SYMB-9N4R-6YT2.BV5L':'expired','SYMB-0X1C-8ZM3.QH7D':'revoked'}; if(demo[c]) return demo[c]; if(!/^SYMB-[A-Z0-9]{4}-[A-Z0-9]{4}\.[A-Z0-9]{4}$/.test(c)) return 'invalid'; let h=0; for(let i=0;i<c.length;i++){ h=(h*31+c.charCodeAt(i))>>>0; } return ['valid','redeemed','expired','not_found'][h%4]; }
   _kcRun(code){ const done=(st)=>this.setState({kcPhase:'done', kcStatus:st}); clearTimeout(this._kcT); const live=(typeof window!=='undefined'&&window.SYM_LIVE&&window.SYM_LIVE()); if(live){ const t0=Date.now(); window.SYM_API.keyCheck(code).then(r=>{ const st=(r&&r.status)||'invalid'; const wait=Math.max(0,700-(Date.now()-t0)); this._kcT=setTimeout(()=>done(st),wait); }).catch(()=>{ this._kcT=setTimeout(()=>done(this._resolveKey(code)),700); }); } else { this._kcT=setTimeout(()=>done(this._resolveKey(code)),1500); } }
-  openKeyCheck(){ const code=((this.state.actInput||'').trim()||'SYMB-7K2Q-9XR4.MT8V').toUpperCase(); this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcRun(code); }
+  openKeyCheck(){ const code=(this.state.actInput||'').trim().toUpperCase(); if(!code){ this.toast(this._T().ruleNeed||'Введите ключ','muted'); return; } this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcRun(code); }
   tryKey(code){ this.setState({actInput:code, kcOpen:true, kcPhase:'scanning', kcStatus:null, kcCode:code}); this._kcRun(code); }
   closeKeyCheck(){ clearTimeout(this._kcT); this.setState({kcOpen:false, kcPhase:null, kcStatus:null}); }
   _kcMsg(k){ const M={ru:{empty:'Введите ключ',ok:'Ключ активирован',bad:'Этот ключ нельзя активировать'},en:{empty:'Enter a key',ok:'Key activated',bad:'This key can’t be activated'},es:{empty:'Introduce una clave',ok:'Clave activada',bad:'No se puede activar'},de:{empty:'Schlüssel eingeben',ok:'Schlüssel aktiviert',bad:'Nicht aktivierbar'}}; return (M[this.state.lang]||M.en)[k]; }
@@ -1930,14 +1932,9 @@ class Component extends DCLogic {
       boost:{label:rl.boost,color:'#A78BFA',bg:'rgba(167,139,250,0.12)',border:'rgba(167,139,250,0.30)',dot:'#A78BFA'},
       block:{label:rl.block,color:'#FF6B6B',bg:'rgba(255,107,107,0.10)',border:'rgba(255,107,107,0.28)',dot:'#FF6B6B'}
     };
-    const appsRaw=[
-      {name:'Google Chrome',exe:'chrome.exe',c:'#6BA4FF',act:'auto',logo:'./icons/googlechrome.svg'},
-      {name:'Telegram',exe:'Telegram.exe',c:'#58B7F5',act:'bypass',logo:'./icons/telegram.svg'},
-      {name:'Discord',exe:'Discord.exe',c:'#8C9EFF',act:'tunnel',logo:'./icons/discord.svg'},
-      {name:'VALORANT',exe:'VALORANT.exe',tag:'game',c:'#FF6B6B',act:'boost',logo:'./icons/valorant.svg'},
-      {name:'Steam',exe:'steam.exe',c:'#9FB2C4',act:'direct',logo:'./icons/steam.svg'},
-      {name:'Spotify',exe:'Spotify.exe',c:'#5BE5A6',act:'direct',logo:'./icons/spotify.svg'}
-    ];
+    // Только реально просканированные приложения (движок). Без выдуманного набора
+    // Chrome/Telegram/Discord/VALORANT/Steam/Spotify с готовыми решениями.
+    const appsRaw=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.installedApps))?window.SYM_DATA.installedApps:[];
     const _gameWord={ru:'игра',en:'game',es:'juego',de:'Spiel'}[lng]||'игра';
     const apps=appsRaw.map((a,i)=>{ const actKey=(S.appActions&&S.appActions[i])||a.act; const ac=ACT[actKey]; return {
       name:a.name, exe:a.exe,
@@ -2097,7 +2094,8 @@ class Component extends DCLogic {
     let kcVerdict=null;
     if(_kcSt){ const m=_kcMeta[_kcSt]||_kcMeta.invalid; const s=(_KC.st&&_KC.st[_kcSt])||{t:_kcSt,d:''}; const chips=_kcChips[_kcSt]||[]; kcVerdict={ status:_kcSt, color:m.c, icon:m.icon, title:s.t, desc:s.d, sys:(_KC.sys&&_KC.sys[_kcSt])||'—', expiry:(_KC.expiry&&_KC.expiry[_kcSt])||null, chips, hasChips:chips.length>0, canActivate:_kcSt==='valid', outerStyle:{position:'relative',width:'92px',height:'92px',display:'flex',alignItems:'center',justifyContent:'center',clipPath:_HEX,background:m.ring,animation:m.glow?'sym-sealglow 2.6s ease-in-out infinite':'none'}, innerStyle:{position:'absolute',inset:'3px',clipPath:_HEX,background:'#0C1311'}, iconStyle:{position:'relative',zIndex:1,fontFamily:"'Material Symbols Rounded'",fontVariationSettings:"'FILL' 1",fontSize:'38px',color:m.c} }; }
     const _kcExColors={valid:'#34E5B0',redeemed:'#F4B740',expired:'#F4B740',revoked:'#FF6B7A'};
-    const kcExamples=[{k:'valid',code:'SYMB-7K2Q-9XR4.MT8V'},{k:'redeemed',code:'SYMB-3F8D-2WQ7.KP1X'},{k:'expired',code:'SYMB-9N4R-6YT2.BV5L'},{k:'revoked',code:'SYMB-0X1C-8ZM3.QH7D'}].map(e=>{ const col=_kcExColors[e.k]; const lab=(_KC.st&&_KC.st[e.k]&&_KC.st[e.k].t)||e.k; return { label:lab, onClick:()=>this.tryKey(e.code), chipStyle:{display:'inline-flex',alignItems:'center',padding:'4px 10px',borderRadius:'999px',background:'rgba(255,255,255,0.04)',border:'1px solid '+col+'44',color:col,fontSize:'11px',fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'} }; });
+    // Без выдуманных «примеров ключей» (SYMB-7K2Q…): проверка работает по реальному ключу.
+    const kcExamples=[];
     const _ledMeta={purchase:{icon:'shopping_cart',color:'#34E5B0'},grant:{icon:'redeem',color:'#34E5B0'},wheel:{icon:'casino',color:'#A78BFA'},ref_earn:{icon:'group_add',color:'#5B9BFF'},ref_payout:{icon:'payments',color:'#F4B740'},debit:{icon:'schedule',color:'#6E7B8A'},keyact:{icon:'vpn_key',color:'#34E5B0'}};
     const _ledX=_ext.led||({
       ru:{title:'История начислений',sub:'Движения баланса активного времени',balLabel:'АКТИВНОЕ ВРЕМЯ',balSub:'списывается только под подключением',u:{d:'дн',h:'ч',m:'мин',rub:'₽'},k:{purchase:'Покупка подписки',grant:'Грант за приглашение',wheel:'Колесо удачи',ref_earn:'Реферал подключился',ref_payout:'Выплата по рефералам',debit:'Активное время',keyact:'Активация ключа'}},
@@ -2192,7 +2190,9 @@ class Component extends DCLogic {
       es:{title:'Consola de vales',sub:'Emite y gestiona lotes de claves.',issue:'Emitir un lote',tariff:'Plan',days:'Días',count:'Cantidad',label:'Etiqueta del lote',labelPh:'p. ej. promo-julio',issueBtn:'Emitir lote',batches:'Lotes activos',total:'total',used:'usados',left:'quedan',revoke:'Revocar'},
       de:{title:'Gutschein-Konsole',sub:'Schlüssel-Chargen ausgeben und verwalten.',issue:'Charge ausgeben',tariff:'Tarif',days:'Tage',count:'Anzahl',label:'Chargen-Label',labelPh:'z. B. promo-juli',issueBtn:'Charge ausgeben',batches:'Aktive Chargen',total:'gesamt',used:'genutzt',left:'übrig',revoke:'Widerrufen'}
     })[lng]||{title:'Voucher console',sub:'',issue:'Issue a batch',tariff:'Plan',days:'Days',count:'Count',label:'Batch label',labelPh:'e.g. promo',issueBtn:'Issue batch',batches:'Active batches',total:'total',used:'used',left:'left',revoke:'Revoke'};
-    const _admBatches=[{label:'promo-июнь',tariff:'Standard',total:100,used:73,date:'01.06.2026',c:'#34E5B0'},{label:'partners-q2',tariff:'Pro',total:50,used:12,date:'15.05.2026',c:'#A78BFA'},{label:'trial-bulk',tariff:'Trial',total:500,used:341,date:'20.04.2026',c:'#5B9BFF'}];
+    // Партии ваучеров — реальные из админ-API бэкенда. Нет данных → пусто, без выдуманных
+    // promo-июнь 73/100 · partners-q2 · trial-bulk.
+    const _admBatches=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.adminBatches))?window.SYM_DATA.adminBatches:[];
     const adminBatches=_admBatches.map(b=>{ const pct=Math.round(b.used/b.total*100); return { label:b.label, tariff:b.tariff, total:b.total, used:b.used, left:b.total-b.used, date:b.date, barStyle:{width:pct+'%',height:'100%',background:b.c,borderRadius:'3px'}, tagStyle:{fontSize:'10.5px',fontWeight:700,color:b.c,background:b.c+'22',padding:'2px 8px',borderRadius:'5px',flex:'0 0 auto'}, onRevoke:()=>this.toast(_admX.revoke+': '+b.label,'warn') }; });
     const admTariffChips=['Standard','Pro'].map(t=>{ const on=(S.admTariff||'Standard')===t; return { label:t, onClick:()=>this.setField('admTariff',t), style:{flex:'1',textAlign:'center',padding:'10px',borderRadius:'9px',fontSize:'13px',fontWeight:on?700:500,color:on?'#06231A':'#9DABA8',background:on?'#34E5B0':'rgba(255,255,255,0.03)',border:'1px solid '+(on?'#34E5B0':'rgba(255,255,255,0.08)'),cursor:'pointer'} }; });
     const _whWin=(S.wheelWin!=null?S.wheelWin:0);
@@ -2306,7 +2306,7 @@ class Component extends DCLogic {
       profile:S.profile, setProfile:(p)=>this.setProfile(p), protocol:S.protocol, setProtocol:(p)=>this.setProtocol(p),
       sysOpen:S.sysOpen, sysChevron:S.sysOpen?'expand_less':'expand_more', toggleSys:()=>this.toggleSys(), copyInvite:()=>this.copyInvite(),
       actInput:S.actInput||'', onActInput:(e)=>this.setField('actInput',e.target.value), openKeyCheck:()=>this.openKeyCheck(), closeKeyCheck:()=>this.closeKeyCheck(), activateKey:()=>this.activateKey(), kcActivate:()=>{ if(S.kcStatus&&S.kcStatus!=='valid'){ this.toast(this._kcMsg('bad'),'error'); return; } this.setState({actInput:(S.kcCode||S.actInput||'')}, ()=>this.activateKey()); },
-      kcOpen:S.kcOpen, kcScanning:S.kcPhase==='scanning', kcDone:S.kcPhase==='done', kcCode:S.kcCode, kcVerdict, kcExamples,
+      kcOpen:S.kcOpen, kcScanning:S.kcPhase==='scanning', kcDone:S.kcPhase==='done', kcCode:S.kcCode, kcVerdict, kcExamples, hasKcExamples:kcExamples.length>0,
       kcTitle:_KC.title, kcScanningLabel:_KC.scanning, kcBrowser:_KC.browser, kcGives:_KC.gives, kcSysL:_KC.sysL, kcCloseLabel:_KC.close, kcActivateLabel:_KC.activate, kcCheckBtn:_KC.checkBtn, kcActivateBtn:_KC.activateBtn, kcOfflineChk:_KC.offlineChk, kcExamplesLabel:_KC.examples,
       lang:S.lang, setLang:(l)=>this.setLang(l), langChips, langOpen:S.langOpen, toggleLangPicker:()=>this.toggleLangPicker(), toggleLangMenu:()=>this.toggleLangMenu(), langMenuOpen:S.langMenuOpen, langMenuChevStyle, langGroups, langQuery:S.langQuery, onLangQuery:e=>this.setField('langQuery',e.target.value), langSearchPh, langOptions,
       obLangOpen:S.obLangOpen, toggleObLang:()=>this.setState(s=>({obLangOpen:!s.obLangOpen})), obLangChevron:S.obLangOpen?'expand_less':'expand_more', obCurLangName:(_optByCode[lng]||{}).name||(lng||'en').toUpperCase(), obCurFlagStyle:(_optByCode[lng]||{}).flagStyle||{width:'20px',height:'14px',borderRadius:'3px',background:'rgba(255,255,255,0.07)',flex:'0 0 auto'},
