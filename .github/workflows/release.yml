@@ -108,8 +108,14 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      # Flutter 3.44.x падает на AOT macOS-релиза: gen_snapshot ломается на
+      # _Rect из нового framework-файла _window_macos.dart (мульти-окно):
+      #   "Unexpected object (Class with illegal cid, full-aot) ... exit code -6".
+      # 3.32.x — последний stable ДО этого файла; собирает macOS-релиз штатно.
       - uses: subosito/flutter-action@v2
-        with: { channel: stable }
+        with:
+          channel: stable
+          flutter-version: "3.32.0"
       - name: Build
         working-directory: symbiont_build
         run: |
@@ -150,6 +156,12 @@ jobs:
         run: |
           flutter create --platforms=android --project-name symbiont --org com.symbiont .
           flutter pub get
+          # flutter_inappwebview_android 1.1.3 хардкодит getDefaultProguardFile('proguard-android.txt'),
+          # который новый Android Gradle Plugin отвергает (внутри -dontoptimize → блокирует R8).
+          # Патчим кэш плагина на рекомендованный optimize-файл (ровно то, что советует сам AGP).
+          for bg in "$HOME"/.pub-cache/hosted/pub.dev/flutter_inappwebview_android-*/android/build.gradle; do
+            [ -f "$bg" ] && sed -i "s/proguard-android\.txt/proguard-android-optimize.txt/g" "$bg" && echo "patched $bg"
+          done
           flutter build apk --release
       - name: Collect APK
         run: cp "$(find symbiont_build/build -name 'app-release.apk' | head -1)" Symbiont-Android.apk
