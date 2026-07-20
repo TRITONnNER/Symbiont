@@ -2022,10 +2022,10 @@ class Component extends DCLogic {
 
     const _la=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.account)||{};
     const account={ token:_la.token||'sb_live_7K2Q9xR4mT8vB1nW6pL3', plan:_la.plan||'Pro', expiry:_la.expiry||acs.expiry, invite:_la.invite||'СИМБ-7K2Q', copied:S.copied, notCopied:!S.copied };
+    // Только приветствие поддержки (приглашение к диалогу). Без выдуманной переписки
+    // «YouTube тормозит… → перевёл youtube.com на VPN» с фейковыми таймкодами 10:03/10:04.
     const _supSeed=[
-      {from:'bot',text:ui.ch1,time:'10:02'},
-      {from:'user',text:ui.ch2,time:'10:03'},
-      {from:'bot',text:ui.ch3,time:'10:04'}
+      {from:'bot',text:ui.ch1,time:''}
     ];
     const _supLive=(typeof window!=='undefined'&&window.SYM_LIVE&&window.SYM_LIVE()&&Array.isArray(S.supportMsgs));
     const chat=[...(_supLive?S.supportMsgs:_supSeed), ...S.chatExtra].map(c=>({ from:c.from, text:c.text, time:c.time, rowStyle:{display:'flex', justifyContent: c.from==='user'?'flex-end':'flex-start'}, bubbleStyle:{ maxWidth:'76%', padding:'12px 16px', borderRadius: c.from==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px', background: c.from==='user'?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.04)', border:'2px solid '+(c.from==='user'?'rgba(52,229,176,0.22)':'rgba(255,255,255,0.07)') }, timeStyle:{fontSize:'10px',color:'#566270',marginTop:'6px', textAlign:c.from==='user'?'right':'left'} }));
@@ -2128,10 +2128,10 @@ class Component extends DCLogic {
     const trafficRows=_trData.map(e=>{ const m=_trMeta[e.path]; return { host:e.host, pathLabel:_pathLabel[e.path], down:e.d, up:e.u, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:m.color,flex:'0 0 auto'}, pathStyle:{fontSize:'11.5px',fontWeight:600,color:m.color} }; });
     const trafficActive=(S.conn==='connected'||S.conn==='blocking');
     const _payX=_ext.pay||({
-      ru:{balLabel:'АКТИВНОЕ ВРЕМЯ',balSub:'списывается только под подключением',processing:'Платёж обрабатывается',processingSub:'Подтверждаем оплату у провайдера…',doneT:'Оплачено',doneSub:'Подписка продлена · активна до 14 мая 2026',methods:'СБП · МИР · Visa · крипто',closeT:'Готово'},
-      en:{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment with the provider…',doneT:'Paid',doneSub:'Subscription extended · active until 14 May 2026',methods:'SBP · MIR · Visa · crypto',closeT:'Done'},
-      es:{balLabel:'TIEMPO ACTIVO',balSub:'se gasta solo conectado',processing:'Procesando el pago',processingSub:'Confirmando el pago con el proveedor…',doneT:'Pagado',doneSub:'Suscripción ampliada · activa hasta 14 may 2026',methods:'SBP · MIR · Visa · cripto',closeT:'Listo'},
-      de:{balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',processing:'Zahlung wird verarbeitet',processingSub:'Zahlung wird beim Anbieter bestätigt…',doneT:'Bezahlt',doneSub:'Abo verlängert · aktiv bis 14. Mai 2026',methods:'SBP · MIR · Visa · Krypto',closeT:'Fertig'}
+      ru:{balLabel:'АКТИВНОЕ ВРЕМЯ',balSub:'списывается только под подключением',processing:'Платёж обрабатывается',processingSub:'Подтверждаем оплату у провайдера…',doneT:'Оплачено',doneSub:'Подписка продлена · баланс обновлён',methods:'СБП · МИР · Visa · крипто',closeT:'Готово'},
+      en:{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment with the provider…',doneT:'Paid',doneSub:'Subscription extended · balance updated',methods:'SBP · MIR · Visa · crypto',closeT:'Done'},
+      es:{balLabel:'TIEMPO ACTIVO',balSub:'se gasta solo conectado',processing:'Procesando el pago',processingSub:'Confirmando el pago con el proveedor…',doneT:'Pagado',doneSub:'Suscripción ampliada · saldo actualizado',methods:'SBP · MIR · Visa · cripto',closeT:'Listo'},
+      de:{balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',processing:'Zahlung wird verarbeitet',processingSub:'Zahlung wird beim Anbieter bestätigt…',doneT:'Bezahlt',doneSub:'Abo verlängert · Guthaben aktualisiert',methods:'SBP · MIR · Visa · Krypto',closeT:'Fertig'}
     })[lng]||{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment…',doneT:'Paid',doneSub:'Subscription extended',methods:'SBP · MIR · Visa · crypto',closeT:'Done'};
     const _glC=['#34E5B0','#5BE5A6','#34E5B0','#F4B740','#A78BFA','#FF6B7A','#5B9BFF','#34E5B0','#22D3EE','#22D3EE','#22D3EE','#22D3EE','#34E5B0','#5B9BFF','#22D3EE','#FF6B7A','#5B9BFF','#A78BFA','#34E5B0','#22D3EE','#5B9BFF','#F4B740'];
     const _glossData={

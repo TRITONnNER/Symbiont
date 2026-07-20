@@ -1850,6 +1850,9 @@ class Component extends DCLogic {
       de:{title:'Konto',sub:'Profil, Abo und Zugang.',plan:'Symbiont Standard',active:'AKTIV',expiry:'aktiv bis 14. Apr. 2026',unlimited:'unbegrenzter Traffic',manage:'Verwalten →',tokenLabel:'ZUGANGSTOKEN',copied:'Kopiert',copy:'Kopieren',device:'GERÄTE-LABEL',deviceName:'Arbeits-PC',activate:'SCHLÜSSEL AKTIVIEREN',ok:'OK',inviteT:'Freund einladen',inviteS:'+30 Tage Standard für euch beide'}
     };
     const acs=_mrg(ACSt,'acs');
+    // Превью без входа: без выдуманной даты «активна до 14 апр 2026» и метки «Рабочий ПК».
+    acs.expiry=({ru:'бессрочно',en:'no expiry',es:'sin caducidad',de:'unbefristet'})[this.state.lang]||'no expiry';
+    acs.deviceName='—';
     const favs=S.favs||{}; const nfilter=S.nodeFilter||'all'; const nq2=(S.nodeQuery||'').toLowerCase().trim();
     const _nodeX=_ext.nodeX||({
       ru:{pulse:'Узлы на связи',pulseSub:'само-починка: мёртвые выпадают, ожившие возвращаются',recovered:'вернулся'},
@@ -1963,15 +1966,16 @@ class Component extends DCLogic {
     const _removeLbl=({ru:'Удалить из списка',en:'Remove from list',es:'Quitar de la lista',de:'Aus Liste entfernen'})[lng]||'Remove from list';
     const appRouteOptsView=_rrule?appRouteOpts.concat([{id:'__remove', label:_removeLbl, lead:{kind:'glyph',icon:'delete',color:'#FF6B6B'}}]):appRouteOpts;
     const nodePickerOpts=NODES.map((n,i)=>({ id:String(i), lead:{kind:'flag',code:n.code}, label:n.country+' · '+n.city, sub:n.host, subMono:true, badge:n.ping+' '+(ns.ms||'ms') }));
-    const sites=[{d:'youtube.com',a:'bypass'},{d:'discord.com',a:'tunnel'},{d:'gosuslugi.ru',a:'direct'},{d:'rutracker.org',a:'bypass'},{d:'github.com',a:'auto'}].map(s=>{ const ac=ACT[s.a]; const fv='data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%237C8A99%22%20stroke-width=%221.6%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Cpath%20d=%22M3%2012h18M12%203c3%203%203%2015%200%2018M12%203c-3%203-3%2015%200%2018%22/%3E%3C/svg%3E#'+s.d+'&sz=64'; return { d:s.d, lead:{kind:'tile', img:fv, imgSize:20, imgRadius:'4px'}, title:s.d, titleMono:true, action:{kind:'pill', tone:'ghost', label:ac.label, color:ac.color, dot:ac.dot, chevron:'expand_more'} }; });
-    const summary=[{label:rl.auto,count:312,dot:null,star:true},{label:rl.direct,count:24,dot:'#5BE5A6'},{label:rl.vpn,count:8,dot:'#34E5B0'},{label:rl.dpi,count:5,dot:'#F5C451'},{label:rl.boost,count:2,dot:'#A78BFA'},{label:rl.block,count:3,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
+    // Превью без движка: без предзаданных правил youtube/discord и выдуманной сводки 312/24/8.
+    const sites=((S.userRules||[]).filter(r=>r&&r.d)).map(s=>{ const ac=ACT[s.a]||ACT.auto; const fv='data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2024%2024%22%20fill=%22none%22%20stroke=%22%237C8A99%22%20stroke-width=%221.6%22%3E%3Ccircle%20cx=%2212%22%20cy=%2212%22%20r=%229%22/%3E%3Cpath%20d=%22M3%2012h18M12%203c3%203%203%2015%200%2018M12%203c-3%203-3%2015%200%2018%22/%3E%3C/svg%3E#'+s.d+'&sz=64'; return { d:s.d, lead:{kind:'tile', img:fv, imgSize:20, imgRadius:'4px'}, title:s.d, titleMono:true, action:{kind:'pill', tone:'ghost', label:ac.label, color:ac.color, dot:ac.dot, chevron:'expand_more'} }; });
+    const summary=[{label:rl.auto,count:0,dot:null,star:true},{label:rl.direct,count:0,dot:'#5BE5A6'},{label:rl.vpn,count:0,dot:'#34E5B0'},{label:rl.dpi,count:0,dot:'#F5C451'},{label:rl.boost,count:0,dot:'#A78BFA'},{label:rl.block,count:0,dot:'#FF6B6B'}].map(x=>({ label:x.label, count:x.count, star:!!x.star, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:x.dot||'transparent',display:x.dot?'block':'none',flex:'0 0 auto'} }));
     const routingTab=S.routingTab;
 
-    const account={ token:'sb_live_7K2Q9xR4mT8vB1nW6pL3', plan:'Pro', expiry:acs.expiry, invite:'СИМБ-7K2Q', copied:S.copied, notCopied:!S.copied };
+    // Превью без входа: реальный токен/инвайт появляются после создания аккаунта.
+    const account={ token:'—', plan:acs.plan, expiry:acs.expiry, invite:'—', copied:S.copied, notCopied:!S.copied };
+    // Только приветствие поддержки — без выдуманной переписки с фейковыми таймкодами.
     const chat=[
-      {from:'bot',text:ui.ch1,time:'10:02'},
-      {from:'user',text:ui.ch2,time:'10:03'},
-      {from:'bot',text:ui.ch3,time:'10:04'},
+      {from:'bot',text:ui.ch1,time:''},
       ...S.chatExtra
     ].map(c=>({ from:c.from, text:c.text, time:c.time, rowStyle:{display:'flex', justifyContent: c.from==='user'?'flex-end':'flex-start'}, bubbleStyle:{ maxWidth:'76%', padding:'12px 16px', borderRadius: c.from==='user'?'16px 16px 4px 16px':'16px 16px 16px 4px', background: c.from==='user'?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.04)', border:'2px solid '+(c.from==='user'?'rgba(52,229,176,0.22)':'rgba(255,255,255,0.07)') }, timeStyle:{fontSize:'10px',color:'#566270',marginTop:'6px', textAlign:c.from==='user'?'right':'left'} }));
 
@@ -2052,7 +2056,7 @@ class Component extends DCLogic {
       de:{title:'Guthaben-Verlauf',sub:'Bewegungen der aktiven Zeit',balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',u:{d:'T',h:'Std',m:'Min',rub:'₽'},k:{purchase:'Abo-Kauf',grant:'Einladungs-Gutschrift',wheel:'Glücksrad',ref_earn:'Empfehlung verbunden',ref_payout:'Empfehlungs-Auszahlung',debit:'Aktive Zeit',keyact:'Schlüssel-Aktivierung'}}
     })[lng]||null;
     const _LX=_ledX||{title:'Balance history',sub:'Movements',balLabel:'ACTIVE TIME',balSub:'spent only while connected',u:{d:'d',h:'h',m:'m',rub:'₽'},k:{}};
-    const _ledData=[{kind:'keyact',val:'+30',unit:'d',date:'14.04.2026'},{kind:'wheel',val:'+2',unit:'h',date:'14.04.2026'},{kind:'debit',val:'−80',unit:'m',date:'13.04.2026'},{kind:'ref_earn',val:'+7',unit:'d',date:'12.04.2026'},{kind:'purchase',val:'+30',unit:'d',date:'14.03.2026'},{kind:'grant',val:'+3',unit:'d',date:'10.03.2026'},{kind:'ref_payout',val:'−120',unit:'rub',date:'05.03.2026'},{kind:'debit',val:'−250',unit:'m',date:'04.03.2026'}];
+    const _ledData=[];  // превью без входа: без выдуманной истории баланса
     const ledgerRows=_ledData.map(e=>{ const m=_ledMeta[e.kind]||_ledMeta.debit; const pos=e.val.charAt(0)==='+'; return { label:(_LX.k[e.kind]||e.kind), date:e.date, amount:e.val+' '+(_LX.u[e.unit]||''), icon:m.icon, tileStyle:{width:'38px',height:'38px',borderRadius:'11px',background:m.color+'22',display:'flex',alignItems:'center',justifyContent:'center',flex:'0 0 auto'}, iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'19px',color:m.color}, amountStyle:{fontFamily:"'JetBrains Mono',monospace",fontWeight:700,fontSize:'14px',color:pos?'#34E5B0':'#9DABA8',flex:'0 0 auto'} }; });
     const ledBalValue='412 '+_LX.u.h+' 30 '+_LX.u.m;
     const _trMeta={direct:{color:'#5BE5A6'},proxy:{color:'#34E5B0'},reject:{color:'#FF6B7A'}};
@@ -2068,10 +2072,10 @@ class Component extends DCLogic {
     const trafficRows=_trData.map(e=>{ const m=_trMeta[e.path]; return { host:e.host, pathLabel:_pathLabel[e.path], down:e.d, up:e.u, dotStyle:{width:'8px',height:'8px',borderRadius:'50%',background:m.color,flex:'0 0 auto'}, pathStyle:{fontSize:'11.5px',fontWeight:600,color:m.color} }; });
     const trafficActive=(S.conn==='connected'||S.conn==='blocking');
     const _payX=_ext.pay||({
-      ru:{balLabel:'АКТИВНОЕ ВРЕМЯ',balSub:'списывается только под подключением',processing:'Платёж обрабатывается',processingSub:'Подтверждаем оплату у провайдера…',doneT:'Оплачено',doneSub:'Подписка продлена · активна до 14 мая 2026',methods:'СБП · МИР · Visa · крипто',closeT:'Готово'},
-      en:{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment with the provider…',doneT:'Paid',doneSub:'Subscription extended · active until 14 May 2026',methods:'SBP · MIR · Visa · crypto',closeT:'Done'},
-      es:{balLabel:'TIEMPO ACTIVO',balSub:'se gasta solo conectado',processing:'Procesando el pago',processingSub:'Confirmando el pago con el proveedor…',doneT:'Pagado',doneSub:'Suscripción ampliada · activa hasta 14 may 2026',methods:'SBP · MIR · Visa · cripto',closeT:'Listo'},
-      de:{balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',processing:'Zahlung wird verarbeitet',processingSub:'Zahlung wird beim Anbieter bestätigt…',doneT:'Bezahlt',doneSub:'Abo verlängert · aktiv bis 14. Mai 2026',methods:'SBP · MIR · Visa · Krypto',closeT:'Fertig'}
+      ru:{balLabel:'АКТИВНОЕ ВРЕМЯ',balSub:'списывается только под подключением',processing:'Платёж обрабатывается',processingSub:'Подтверждаем оплату у провайдера…',doneT:'Оплачено',doneSub:'Подписка продлена · баланс обновлён',methods:'СБП · МИР · Visa · крипто',closeT:'Готово'},
+      en:{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment with the provider…',doneT:'Paid',doneSub:'Subscription extended · balance updated',methods:'SBP · MIR · Visa · crypto',closeT:'Done'},
+      es:{balLabel:'TIEMPO ACTIVO',balSub:'se gasta solo conectado',processing:'Procesando el pago',processingSub:'Confirmando el pago con el proveedor…',doneT:'Pagado',doneSub:'Suscripción ampliada · saldo actualizado',methods:'SBP · MIR · Visa · cripto',closeT:'Listo'},
+      de:{balLabel:'AKTIVE ZEIT',balSub:'wird nur bei Verbindung verbraucht',processing:'Zahlung wird verarbeitet',processingSub:'Zahlung wird beim Anbieter bestätigt…',doneT:'Bezahlt',doneSub:'Abo verlängert · Guthaben aktualisiert',methods:'SBP · MIR · Visa · Krypto',closeT:'Fertig'}
     })[lng]||{balLabel:'ACTIVE TIME',balSub:'spent only while connected',processing:'Payment processing',processingSub:'Confirming the payment…',doneT:'Paid',doneSub:'Subscription extended',methods:'SBP · MIR · Visa · crypto',closeT:'Done'};
     const _glC=['#34E5B0','#5BE5A6','#34E5B0','#F4B740','#A78BFA','#FF6B7A','#5B9BFF','#34E5B0','#22D3EE','#22D3EE','#22D3EE','#22D3EE','#34E5B0','#5B9BFF','#22D3EE','#FF6B7A','#5B9BFF','#A78BFA','#34E5B0','#22D3EE','#5B9BFF','#F4B740'];
     const _glossData={
@@ -2107,7 +2111,7 @@ class Component extends DCLogic {
     })[lng]||{title:'Referrals',sub:'',code:'YOUR CODE',copy:'Copy',levelL:'Reputation level',invited:'Invited',converted:'Paying',payouts:'Payouts',howto:'How it works',share:'Share code',unlimited:'Share without limits',levels:['New','Verified','Established','Ambassador'],steps:['Send your code','They subscribe','Both earn days']};
     const _refLvl=1;
     const refLevels=_refX.levels.map((l,i)=>({ label:l, on:i===_refLvl, done:i<_refLvl, style:{flex:'1',textAlign:'center',padding:'7px 4px',borderRadius:'8px',fontSize:'11.5px',fontWeight:i===_refLvl?700:500,color:i===_refLvl?'#06231A':(i<_refLvl?'#34E5B0':'#7C8A99'),background:i===_refLvl?'#34E5B0':(i<_refLvl?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.03)'),whiteSpace:'nowrap'} }));
-    const refStats=[{label:_refX.invited,value:'12',icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:'5',icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:'1 240 ₽',icon:'savings',color:'#F4B740'}];
+    const refStats=[{label:_refX.invited,value:'0',icon:'group_add',color:'#5B9BFF'},{label:_refX.converted,value:'0',icon:'paid',color:'#34E5B0'},{label:_refX.payouts,value:'0 '+(_LX&&_LX.u&&_LX.u.d||'d'),icon:'savings',color:'#F4B740'}];
     const refSteps=_refX.steps.map((s,i)=>({ n:String(i+1), text:s }));
     const _devX=_ext.devX||({
       ru:{title:'Устройства',sub:'Где выполнен вход в ваш аккаунт.',current:'Это устройство',owner:'ВЛАДЕЛЕЦ',last:'был(а)',promote:'Сделать владельцем',revoke:'Отозвать',unlimited:'Безлимит устройств на платном тарифе'},
@@ -2115,7 +2119,7 @@ class Component extends DCLogic {
       es:{title:'Dispositivos',sub:'Dónde tienes la sesión iniciada.',current:'Este dispositivo',owner:'PROPIETARIO',last:'visto',promote:'Hacer propietario',revoke:'Revocar',unlimited:'Dispositivos ilimitados en plan de pago'},
       de:{title:'Geräte',sub:'Wo dein Konto angemeldet ist.',current:'Dieses Gerät',owner:'BESITZER',last:'zuletzt',promote:'Zum Besitzer machen',revoke:'Entfernen',unlimited:'Unbegrenzte Geräte im bezahlten Tarif'}
     })[lng]||{title:'Devices',sub:'',current:'This device',owner:'OWNER',last:'seen',promote:'Make owner',revoke:'Revoke',unlimited:'Unlimited devices on a paid plan'};
-    const _devRaw=[{name:'Рабочий ПК',icon:'desktop_windows',last:'сейчас',owner:true,current:true},{name:'iPhone 15 Pro',icon:'smartphone',last:'2 ч назад',owner:false,current:false},{name:'MacBook Air',icon:'laptop_mac',last:'вчера',owner:false,current:false}];
+    const _devRaw=[];  // превью без входа: без выдуманных устройств
     const deviceList=_devRaw.map((d,i)=>({ name:d.name, icon:d.icon, last:_devX.last+' '+d.last, owner:d.owner, current:d.current, canRevoke:!d.current, onRevoke:()=>this.toast(_devX.revoke+': '+d.name,'ok'), iconStyle:{fontFamily:"'Material Symbols Rounded'",fontSize:'21px',color:d.current?'#34E5B0':'#8E9A9F',flex:'0 0 auto'} }));
     const _recX=_ext.recX||({
       ru:{title:'Код восстановления',sub:'Единственный ключ к аккаунту без личных данных.',warn:'Запишите его и храните офлайн. Без него восстановить доступ нельзя — мы не храним ваши данные.',reveal:'Показать код',hidden:'Скрыто для безопасности',copy:'Копировать код',saved:'Я сохранил код',toast:'Храните код в надёжном месте'},
@@ -2206,7 +2210,7 @@ class Component extends DCLogic {
       isWheel:screen==='wheel', goWheel:()=>this.go('wheel'),
       isAdmin:(screen==='admin')&&_isAdmin, showAdmin:_isAdmin, goAdmin:()=>this.go('admin'), adminBatches, admTariffChips, issueBatch:()=>this.issueBatch(), admT:_admX,
       isRecovery:screen==='recovery', goRecovery:()=>this.go('recovery'), recoveryRevealed:S.recoveryRevealed, recoveryHidden:!S.recoveryRevealed, revealRecovery:()=>this.setField('recoveryRevealed',true), confirmRecovery:()=>this.toast(_recX.toast,'ok'), recoveryCode:'SYMB-R7K2-9X4M-T8VB', recTitle:_recX.title, recSub:_recX.sub, recWarn:_recX.warn, recReveal:_recX.reveal, recHidden:_recX.hidden, recCopy:_recX.copy, recSaved:_recX.saved,
-      isReferral:screen==='referral', goReferral:()=>this.go('referral'), refTitle:_refX.title, refSub:_refX.sub, refCodeL:_refX.code, refLevelL:_refX.levelL, refLevels, refStats, refSteps, refHowto:_refX.howto, refShare:_refX.share, refUnlimited:_refX.unlimited, refCode:'СИМБ-7K2Q-X4M',
+      isReferral:screen==='referral', goReferral:()=>this.go('referral'), refTitle:_refX.title, refSub:_refX.sub, refCodeL:_refX.code, refLevelL:_refX.levelL, refLevels, refStats, refSteps, refHowto:_refX.howto, refShare:_refX.share, refUnlimited:_refX.unlimited, refCode:'—',
       isDevices:screen==='devices', goDevices:()=>this.go('devices'), devTitle:_devX.title, devSub:_devX.sub, deviceList, devOwner:_devX.owner, devCurrent:_devX.current, devRevoke:_devX.revoke, devUnlimited:_devX.unlimited,
       acRewardsHdr:({ru:'Награды и доступ',en:'Rewards & access',es:'Recompensas y acceso',de:'Belohnungen & Zugang'})[lng]||'Rewards & access', wheelStyle, wheelLegend, wheelSegLabels, wheelRimStyle, wheelDots, wheelDividers, wheelWonShort, wheelSvg, wheelRotStyle, wheelLabels2, wheelLegendV2, wheelCountdown, streakCount, streakCells, streakToMega, streakPity, whStX:_whStX, whFz:_whFz, freezeStreak:()=>this.toast(({ru:'Серия заморожена на 1 день',en:'Streak frozen for 1 day',es:'Racha congelada 1 día',de:'Serie 1 Tag eingefroren'})[lng]||'Streak frozen','ok'), whNext:_whU.next, whSpinShort:_whU.spin, whDaily:_whU.daily, whCredited:_whU.credited, refProgressStyle, refProgressHint, wheelSpinning:S.wheelPhase==='spinning', wheelDone:S.wheelPhase==='done', wheelCanSpin:!S.wheelPhase, wheelResult:_whX.prizes[_whWin], spinWheel:()=>this.spinWheel(), whTitle:_whX.title, whSub:_whX.sub, whSpin:_whX.spin, whSpinning:_whX.spinning, whWon:_whX.won, whComeback:_whX.comeback, whFair:_whX.fair, whLegend:_whX.legend,
       nodeQuery:S.nodeQuery, routingQuery:S.routingQuery, msgInput:S.msgInput, addInput:S.addInput, keyInput:S.keyInput,
