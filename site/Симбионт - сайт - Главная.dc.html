@@ -330,7 +330,10 @@ class Component extends DCLogic {
 
     const planArr = Array.isArray(T('h_plans')) ? T('h_plans') : [];
     const cur = lang==='ru' ? 'rub' : 'usd';
-    const planPrice = cur==='rub' ? ['0','199','349'] : ['0','2.99','4.99'];
+    // Цены-тизер из РЕАЛЬНОЙ экономики (/v1/config/economy → SYM_CONFIG), а не хардкод.
+    const _ecP = (typeof window!=='undefined' && window.SYM_CONFIG && window.SYM_CONFIG.economy && window.SYM_CONFIG.economy.prices) || {};
+    const _mo = (t,fb)=>{ try{ var v=_ecP[t][cur].month; return v!=null?String(v):fb; }catch(e){ return fb; } };
+    const planPrice = ['0', _mo('premium', cur==='rub'?'199':'2.99'), _mo('ultimate', cur==='rub'?'349':'4.99')];
     const plans = planArr.map((p,i)=>{ const popular = i===1; return {
       name:p.name, price:planPrice[i], per: cur==='rub' ? p.per : (p.per||'').replace('₽','$'), feats:p.feats||[], cta:p.cta, popular,
       cardStyle:{ position:'relative', display:'flex', flexDirection:'column', gap:'13px', padding:'26px 24px', borderRadius:'18px',
