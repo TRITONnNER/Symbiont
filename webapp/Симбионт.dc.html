@@ -250,10 +250,7 @@
                   <span style="display:flex; align-items:center; gap:4px; direction:ltr;"><span style="font-family:'Material Symbols Rounded'; font-size:14px; color:#FF8E8E;">north</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">{{ upStr }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7C8A99;">{{ hs.mbit }}</span></span>
                 </div>
               </div>
-              <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width:100%; height:42px; display:block;">
-                <polygon points="{{ sparkArea }}" fill="rgba(52,229,176,0.10)"></polygon>
-                <polyline points="{{ sparkPoints }}" fill="none" stroke="#34E5B0" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
-              </svg>
+              <div style="{{ sparkStyleA }}"></div>
             </div>
             <div style="display:flex; gap:12px; width:100%;">
               <div style="flex:1; min-width:0; background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:12px 12px; display:flex; align-items:center; gap:8px;">
@@ -531,10 +528,7 @@
         <span style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#7C8A99;">{{ az.pingCard }}</span>
         <div style="display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270;"><span>{{ az.min }} <span style="color:#9DABA8;">18</span></span><span>{{ az.avg }} <span style="color:#9DABA8;">31</span></span><span>{{ az.max }} <span style="color:#9DABA8;">44</span></span></div>
       </div>
-      <svg viewBox="0 0 100 30" preserveAspectRatio="none" style="width:100%; height:64px; display:block;">
-        <polygon points="{{ sparkArea }}" fill="rgba(52,229,176,0.10)"></polygon>
-        <polyline points="{{ sparkPoints }}" fill="none" stroke="#34E5B0" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></polyline>
-      </svg>
+      <div style="{{ sparkStyleB }}"></div>
     </div>
 
     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 20px; display:flex; gap:16px;">
@@ -1783,6 +1777,12 @@ class Component extends DCLogic {
     const _h=(L.hist&&L.hist.length?L.hist:[38]), _n=_h.length;
     const sparkPoints=_h.map((v,i)=>{const x=(_n>1?i/(_n-1):0)*100; const y=28-((Math.max(20,Math.min(58,v))-20)/38)*25; return x.toFixed(1)+','+y.toFixed(1);}).join(' ');
     const sparkArea='0,30 '+sparkPoints+' 100,30';
+    // Спарклайн через SVG-фон (рантайм не интерполирует {{ }} внутри инлайн-SVG-атрибута
+    // points — рисуем как background-image, style-биндинг рантайм применяет корректно).
+    const _sparkSvg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 30" preserveAspectRatio="none"><polygon points="'+sparkArea+'" fill="rgba(52,229,176,0.10)"/><polyline points="'+sparkPoints+'" fill="none" stroke="#34E5B0" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
+    const _sparkBg='url("data:image/svg+xml,'+encodeURIComponent(_sparkSvg)+'") center/100% 100% no-repeat';
+    const sparkStyleA={width:'100%',height:'42px',display:'block',background:_sparkBg};
+    const sparkStyleB={width:'100%',height:'64px',display:'block',background:_sparkBg};
     const loadColor=(l)=> l<=75?'#5BE5A6': l<=90?'#F5C451':'#FF6B6B';
     const pingColor=(p)=> p<=60?'#5BE5A6': p<=100?'#F5C451':'#FF6B6B';
     // Цвет метрики узла. Пинг/нагрузка могут быть неизвестны (null) — тогда не «зелёним»
@@ -2198,7 +2198,7 @@ class Component extends DCLogic {
       statusPillStyle, statusIcon:stIcon, statusIconStyle, statusText:stText, statusTextStyle, killChipStyle, killIconStyle, killLabelStyle, killIcon:killOn?'gpp_good':'gpp_bad', showKillLabel, killLabelText:ui.killLabel, killTitle:ui.killLabel+' — '+ui.killSub, toggleKill:()=>{ const cur=!!this.state.settings.killswitch; this.toggleSetting('killswitch'); this.toast(ui.killLabel+': '+(!cur?(({ru:'вкл',en:'on',es:'activado',de:'an'})[lng]||'on'):(({ru:'выкл',en:'off',es:'desactivado',de:'aus'})[lng]||'off')), !cur?'ok':'muted'); },
       isHome:screen==='home', isNodes:screen==='nodes', isRouting:screen==='routing', isAnalysis:screen==='analysis', isAccount:screen==='account', isSupport:screen==='support', isSettings:screen==='settings',
       conn:S.conn, stage:S.stage, onStage:(st)=>{ if(this.state.conn==='connected'||this.state.conn==='blocking'){ this.setState({stage:st}); } }, coreSize, homeWrapStyle, homeColStyle,
-      mPing, mLoss, mProto, mProtoColor, node, uptimeStr, dataStr, txStr, downStr, upStr, sparkPoints, sparkArea, livePing,
+      mPing, mLoss, mProto, mProtoColor, node, uptimeStr, dataStr, txStr, downStr, upStr, sparkPoints, sparkArea, sparkStyleA, sparkStyleB, livePing,
       nodeCards, apps:appsView, sites, summary, myApps, mySites, routingTab, account, chat, secItems, sysItems, setSecHdr:_setX.sec, setSysHdr:_setX.sys,
       rApps:routingTab==='apps', rSites:routingTab==='sites',
       tabAppsStyle: routingTab==='apps'?{fontWeight:600,fontSize:'12.5px',color:'#06231A',background:'#34E5B0',padding:'8px 16px',borderRadius:'8px',cursor:'pointer',whiteSpace:'nowrap'}:{fontWeight:500,fontSize:'12.5px',color:'#9DABA8',padding:'8px 16px',borderRadius:'8px',cursor:'pointer',whiteSpace:'nowrap'},
