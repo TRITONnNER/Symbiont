@@ -411,20 +411,22 @@
             <sc-for list="{{ services }}" as="a" hint-placeholder-count="6">
               <dc-import name="ListRow" style="display:block; width:100%;" dir="{{ dir }}" variant="card" tone="{{ a.tone }}" lead="{{ a.lead }}" title="{{ a.title }}" sub="{{ a.sub }}" sub-mono="{{ true }}" action="{{ a.action }}" on-click="{{ a.onClick }}" hint-size="100%,64px"></dc-import>
             </sc-for>
+            <sc-if value="{{ routingEmpty }}" hint-placeholder-val="{{ false }}">
+              <div style="text-align:center; padding:26px 16px; color:#566270; font-size:13px; line-height:1.5;">{{ routingEmptyText }}</div>
+            </sc-if>
           </div>
+          <sc-if value="{{ hasSysProc }}" hint-placeholder-val="{{ false }}">
           <div onClick="{{ toggleSys }}" role="button" style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:14px; border:1px dashed rgba(255,255,255,0.10); cursor:pointer;">
             <span style="font-family:'Material Symbols Rounded'; font-size:21px; color:#566270;">settings_suggest</span>
             <div style="flex:1; display:flex; flex-direction:column; gap:2px; min-width:0;"><span style="font-weight:600; font-size:13px; color:#9DABA8;">{{ rst.sysProc }}</span><span style="font-size:11px; color:#566270; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ rst.sysHint }}</span></div>
-            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270; flex:0 0 auto;">124</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270; flex:0 0 auto;">{{ sysProcCount }}</span>
             <span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270; flex:0 0 auto;">{{ sysChevron }}</span>
           </div>
           <sc-if value="{{ sysOpen }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex; flex-direction:column; gap:8px; padding:2px 2px 0;">
-              <div style="display:flex; align-items:center; gap:12px; padding:8px 16px; border-radius:10px; opacity:0.72;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270; flex:0 0 auto;">memory</span><span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11px; color:#9DABA8; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">svchost.exe</span><span style="font-size:11px; color:#566270;">{{ rl.auto }}</span></div>
-              <div style="display:flex; align-items:center; gap:12px; padding:8px 16px; border-radius:10px; opacity:0.72;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270; flex:0 0 auto;">memory</span><span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11px; color:#9DABA8; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">RuntimeBroker.exe</span><span style="font-size:11px; color:#566270;">{{ rl.auto }}</span></div>
-              <div style="display:flex; align-items:center; gap:12px; padding:8px 16px; border-radius:10px; opacity:0.72;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270; flex:0 0 auto;">memory</span><span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11px; color:#9DABA8; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">SetupME.exe</span><span style="font-size:11px; color:#566270;">{{ rl.auto }}</span></div>
-              <div style="font-size:11px; color:#566270; text-align:center; padding:8px;">{{ rst.moreSys }}</div>
+              <sc-for list="{{ sysProcRows }}" as="p" hint-placeholder-count="0"><div style="display:flex; align-items:center; gap:12px; padding:8px 16px; border-radius:10px; opacity:0.72;"><span style="font-family:'Material Symbols Rounded'; font-size:18px; color:#566270; flex:0 0 auto;">memory</span><span style="flex:1; font-family:'JetBrains Mono',monospace; font-size:11px; color:#9DABA8; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p.name }}</span><span style="font-size:11px; color:#566270;">{{ p.act }}</span></div></sc-for>
             </div>
+          </sc-if>
           </sc-if>
         </div>
       </sc-if>
@@ -1943,22 +1945,9 @@ class Component extends DCLogic {
       title:a.name, sub: a.exe + (a.tag==='game'?' · '+_gameWord:''),
       action:{ kind:'pill', tone:'solid', label:ac.label, color:ac.color, dot:ac.dot, star:!!ac.star, bg:ac.bg, border:ac.border, chevron:'expand_more', onClick:()=>this.toggleAppPicker(i) }
     }; });
-    const DEVICE_APPS=(typeof window!=='undefined'&&window.SYM_DATA&&window.SYM_DATA.installedApps&&window.SYM_DATA.installedApps.length)?window.SYM_DATA.installedApps:[
-      {id:'chrome',name:'Google Chrome',exe:'chrome.exe',cat:'browser',logo:'./icons/googlechrome.svg'},
-      {id:'firefox',name:'Mozilla Firefox',exe:'firefox.exe',cat:'browser',logo:'./icons/firefoxbrowser.svg'},
-      {id:'edge',name:'Microsoft Edge',exe:'msedge.exe',cat:'browser',logo:'./icons/googlechrome.svg'},
-      {id:'telegram',name:'Telegram',exe:'Telegram.exe',cat:'messenger',logo:'./icons/telegram.svg'},
-      {id:'discord',name:'Discord',exe:'Discord.exe',cat:'messenger',logo:'./icons/discord.svg'},
-      {id:'whatsapp',name:'WhatsApp',exe:'WhatsApp.exe',cat:'messenger',logo:'./icons/whatsapp.svg'},
-      {id:'valorant',name:'VALORANT',exe:'VALORANT.exe',cat:'game',logo:'./icons/valorant.svg'},
-      {id:'steam',name:'Steam',exe:'steam.exe',cat:'game',logo:'./icons/steam.svg'},
-      {id:'epic',name:'Epic Games',exe:'EpicGamesLauncher.exe',cat:'game',logo:'./icons/epicgames.svg'},
-      {id:'spotify',name:'Spotify',exe:'Spotify.exe',cat:'media',logo:'./icons/spotify.svg'},
-      {id:'vlc',name:'VLC',exe:'vlc.exe',cat:'media',logo:'./icons/vlcmediaplayer.svg'},
-      {id:'obs',name:'OBS Studio',exe:'obs64.exe',cat:'media',logo:'./icons/obsstudio.svg'},
-      {id:'vscode',name:'VS Code',exe:'Code.exe',cat:'dev',logo:'./icons/codecrafters.svg'},
-      {id:'docker',name:'Docker',exe:'Docker Desktop.exe',cat:'dev',logo:'./icons/docker.svg'}
-    ];
+    // Только РЕАЛЬНО просканированные приложения из движка (нативное приложение). В браузере
+    // без движка список пуст — не выдумываем Chrome/Steam/Discord как «установленные».
+    const DEVICE_APPS=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.installedApps))?window.SYM_DATA.installedApps:[];
     const _scn=this._scanStr();
     const _scanX=_ext.scanX||({ru:{addAll:'Добавить все',addedAll:'Все приложения добавлены'},en:{addAll:'Add all',addedAll:'All apps added'},es:{addAll:'Añadir todo',addedAll:'Todas añadidas'},de:{addAll:'Alle hinzufügen',addedAll:'Alle hinzugefügt'}})[lng]||{addAll:'Add all',addedAll:'All apps added'};
     const _SUG={browser:'auto',messenger:'bypass',game:'boost',media:'direct',dev:'tunnel'};
@@ -1994,8 +1983,18 @@ class Component extends DCLogic {
     const _scat=S.svcCat||'all'; const _sq2=(S.routingQuery||'').toLowerCase().trim();
     const _catDomains=SERVICES.map(s=>s.domain);
     const _catalogRows=SERVICES.filter(s=>(_scat==='all'||s.cat===_scat)&&(!_sq2||(s.name+' '+s.domain).toLowerCase().includes(_sq2))).map(s=>{ const ur=S.userRules.find(r=>r.type==='site'&&r.name===s.domain); const o=ACT[ur?ur.act:s.act]||ACT.auto; return { lead:{kind:'tile',img:s.logo,tint:'rgba(255,255,255,0.05)',imgSize:22}, title:s.name, sub:s.domain, tone:ur?'active':'default', action:{kind:'pill',tone:'solid',label:o.label,color:o.color,dot:o.dot,star:!!o.star,bg:o.bg,border:o.border,chevron:'expand_more', onClick:()=>this.openSvc(s)}, onClick:()=>this.openSvc(s) }; });
-    const _customRows=S.userRules.map((r,idx)=>({r,idx})).filter(x=>x.r.type==='site'&&_catDomains.indexOf(x.r.name)<0&&_scat==='all'&&(!_sq2||x.r.name.toLowerCase().includes(_sq2))).map(x=>{ const o=ACT[x.r.act]||ACT.auto; return { lead:{kind:'icon',icon:'public',color:'#7C8A99',tint:'rgba(255,255,255,0.05)'}, title:x.r.name, sub:'', tone:'active', action:{kind:'pill',tone:'solid',label:o.label,color:o.color,dot:o.dot,star:!!o.star,bg:o.bg,border:o.border,chevron:'expand_more', onClick:()=>this.setState({routeRuleIdx:x.idx})}, onClick:()=>this.setState({routeRuleIdx:x.idx}) }; });
-    const services=[..._customRows, ..._catalogRows];
+    const _customRows=S.userRules.map((r,idx)=>({r,idx})).filter(x=>x.r.type==='site'&&(_scat==='all'||x.r.cat===_scat)&&(!_sq2||x.r.name.toLowerCase().includes(_sq2))).map(x=>{ const o=ACT[x.r.act]||ACT.auto; return { lead:{kind:'icon',icon:'public',color:'#7C8A99',tint:'rgba(255,255,255,0.05)'}, title:x.r.name, sub:'', tone:'active', action:{kind:'pill',tone:'solid',label:o.label,color:o.color,dot:o.dot,star:!!o.star,bg:o.bg,border:o.border,chevron:'expand_more', onClick:()=>this.setState({routeRuleIdx:x.idx})}, onClick:()=>this.setState({routeRuleIdx:x.idx}) }; });
+    // Только РЕАЛЬНЫЕ правила пользователя. Предзаданный каталог сервисов
+    // (Instagram→VPN, YouTube→обход и т.п.) НЕ показываем как настроенные правила —
+    // маршрутизация пуста, пока пользователь сам не добавит правило или не просканирует
+    // приложения. _catalogRows больше не подставляется.
+    const services=_customRows;
+    // Системные процессы — только реальные из движка. Нет данных → секция скрыта
+    // (без выдуманных «124 · svchost.exe / RuntimeBroker.exe»).
+    const _sysRaw=(typeof window!=='undefined'&&window.SYM_DATA&&Array.isArray(window.SYM_DATA.sysProc))?window.SYM_DATA.sysProc:[];
+    const hasSysProc=_sysRaw.length>0;
+    const sysProcCount=String(_sysRaw.length);
+    const sysProcRows=_sysRaw.map(p=>({ name:(p.name||p.exe||''), act:((ACT[p.act]&&ACT[p.act].label)||rl.auto) }));
     const categoryChips=[{k:'all'},{k:'social'},{k:'video'},{k:'messenger'},{k:'game'},{k:'bank'},{k:'other'}].map(c=>{ const on=_scat===c.k; return { label:_catL[c.k], onClick:()=>this.setState({svcCat:c.k}), style:{padding:'8px 15px',borderRadius:'999px',background:on?'rgba(52,229,176,0.12)':'rgba(255,255,255,0.03)',border:'1px solid '+(on?'rgba(52,229,176,0.30)':'rgba(255,255,255,0.10)'),color:on?'#34E5B0':'#9DABA8',fontSize:'12.5px',fontWeight:on?600:500,cursor:'pointer',whiteSpace:'nowrap'} }; });
     const _addT=_ext.addT||({ru:{title:'Что добавить?',sub:'Добавьте сайт по ссылке или приложение с компьютера.',site:'Добавить сайт',siteSub:'Вписать домен вручную (например, example.com)',app:'Обзор приложения',appSub:'Выбрать программу файлом с компьютера',input:'например, reddit.com',sub2:'Применить ко всем поддоменам (*.домен)',traffic:'Как пускать трафик:',add:'Добавить'},en:{title:'What to add?',sub:'Add a site by URL or an app from your computer.',site:'Add a site',siteSub:'Enter a domain manually (e.g. example.com)',app:'Browse apps',appSub:'Pick a program file from your computer',input:'e.g. reddit.com',sub2:'Apply to all subdomains (*.domain)',traffic:'How to route:',add:'Add'},es:{title:'¿Qué añadir?',sub:'Añade un sitio por URL o una app del equipo.',site:'Añadir sitio',siteSub:'Escribe un dominio (p. ej. example.com)',app:'Explorar apps',appSub:'Elegir un programa del equipo',input:'p. ej. reddit.com',sub2:'Aplicar a todos los subdominios (*.dominio)',traffic:'Cómo enrutar:',add:'Añadir'},de:{title:'Was hinzufügen?',sub:'Seite per URL oder App vom Computer hinzufügen.',site:'Seite hinzufügen',siteSub:'Domain manuell eingeben (z. B. example.com)',app:'Apps durchsuchen',appSub:'Programmdatei vom Computer wählen',input:'z. B. reddit.com',sub2:'Auf alle Subdomains anwenden (*.Domain)',traffic:'Routing:',add:'Hinzufügen'}})[lng]||{title:'What to add?',sub:'Add a site or app.',site:'Add a site',siteSub:'Enter a domain',app:'Browse apps',appSub:'Pick a program',input:'e.g. reddit.com',sub2:'Apply to all subdomains',traffic:'How to route:',add:'Add'};
     const _svc=S.svcTarget; const _svcRule=_svc?S.userRules.find(r=>r.type==='site'&&r.name===_svc.domain):null;
@@ -2282,7 +2281,8 @@ class Component extends DCLogic {
       addRule:()=>this.addRule(), sendMsg:()=>this.sendMsg(),
       modeChips, modePresets, presetsHdr, routeMode:S.routeMode,
       protoChips, profileChips, routeAppOpen, routeAppName, routeAppDefault, appRouteOpts,
-      services, categoryChips, openSvc:(s)=>this.openSvc(s),
+      services, categoryChips, openSvc:(s)=>this.openSvc(s), hasSysProc, sysProcCount, sysProcRows,
+      routingEmpty:(myApps.length===0 && services.length===0), routingEmptyText:({ru:'Пока нет правил. Добавьте приложение или сайт кнопкой «Добавить» или просканируйте устройство.',en:'No rules yet. Add an app or site with “Add”, or scan your device.',es:'Aún no hay reglas. Añade una app o sitio con «Añadir», o escanea tu dispositivo.',de:'Noch keine Regeln. Füge per „Hinzufügen“ eine App/Seite hinzu oder scanne dein Gerät.'})[lng]||'No rules yet.',
       routeCoverage:_covDom?{domain:_covDom,subs:'*.'+_covDom}:null, covT:({ru:{title:'Что охватывает правило',site:'сам сайт',subs:'все поддомены'},en:{title:'What the rule covers',site:'the site itself',subs:'all subdomains'},es:{title:'Qué cubre la regla',site:'el sitio',subs:'todos los subdominios'},de:{title:'Was die Regel abdeckt',site:'die Seite selbst',subs:'alle Subdomains'}})[lng]||{title:'What the rule covers',site:'the site itself',subs:'all subdomains'},
       svcHdr:({ru:'Сервисы',en:'Services',es:'Servicios',de:'Dienste'})[lng]||'Services', addT:_addT,
       addFlowChoose:S.addFlow==='choose', addFlowSite:S.addFlow==='site',
