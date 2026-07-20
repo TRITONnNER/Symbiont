@@ -526,7 +526,7 @@
     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 20px;">
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
         <span style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#7C8A99;">{{ az.pingCard }}</span>
-        <div style="display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270;"><span>{{ az.min }} <span style="color:#9DABA8;">18</span></span><span>{{ az.avg }} <span style="color:#9DABA8;">31</span></span><span>{{ az.max }} <span style="color:#9DABA8;">44</span></span></div>
+        <div style="display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#566270;"><span>{{ az.min }} <span style="color:#9DABA8;">—</span></span><span>{{ az.avg }} <span style="color:#9DABA8;">—</span></span><span>{{ az.max }} <span style="color:#9DABA8;">—</span></span></div>
       </div>
       <div style="{{ sparkStyleB }}"></div>
     </div>
@@ -546,9 +546,9 @@
     <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07); border-radius:14px; padding:16px 20px;">
       <div style="font-size:11px; font-weight:700; letter-spacing:0.12em; color:#7C8A99; margin-bottom:12px;">{{ az.conn }}</div>
       <div style="display:flex; flex-direction:column; gap:12px;">
-        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.ipOut }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">185.46.···.118</span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.port }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">443</span></div>
-        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.proto }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#34E5B0;">reality / TLS 1.3</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.ipOut }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">—</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.port }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">—</span></div>
+        <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.proto }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#34E5B0;">—</span></div>
         <div style="display:flex; align-items:center; gap:12px;"><span style="font-size:13px; color:#9DABA8; flex:1; min-width:0;">{{ az.handshake }}</span><span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#EAF1EF;">{{ az.hsV }}</span></div>
       </div>
     </div>
@@ -1875,6 +1875,12 @@ class Component extends DCLogic {
       de:{title:'Analyse',sub:'Was das Netz gerade tut und wie die Kaskade hält.',run:'Test starten',cascade:'VERBINDUNGSKASKADE',cascadeStat:'2 von 4 bestanden · VPN aktiv',direct:'DIREKT',directV:'blockiert',directM:'RST · 0 ms',bypass:'DPI UMGEHEN',bypassV:'DPI-Sperre · SNI-Filter',vpnV:'aktiv',vpnM:'reality · 38 ms',relay:'RELAY',relayV:'in Reserve',relayM:'bereit',pingCard:'PING · 60 S',min:'min',avg:'Ø',max:'max',rx:'EMPFANG',tx:'SENDEN',conn:'VERBINDUNG',ipOut:'Ausgangs-IP',port:'Port',proto:'Protokoll',handshake:'Handshake',hsV:'412 ms',warnT:'DPI-Sperre',warnB:'DPI ist auf :443 aktiv. Die Verbindung wird über VPN reality gehalten, Relay in Reserve.',geo1:'Moskau · stabil',geo2:'Ural · blockiert',geo3:'St. Petersburg · stabil'}
     };
     const az=_mrg(ASt,'az');
+    // Экран «Анализ»: реальный сетевой тест выполняет ДВИЖОК приложения. В веб-версии
+    // движка нет — не выдумываем IP/handshake/ping/гео/каскад, показываем честные «—».
+    { const _ru=this.state.lang==='ru';
+      Object.assign(az, { cascadeStat:'—', directV:'—', directM:'—', bypassV:'—', vpnV:'—', vpnM:'—', relayV:'—', relayM:'—', hsV:'—', geo1:'—', geo2:'—', geo3:'—',
+        warnT:(_ru?'Анализ — в приложении':'Analysis — in the app'),
+        warnB:(_ru?'Реальный анализ сети выполняет движок приложения. В веб-версии данных нет.':'Real network analysis runs in the app engine — no data in the web version.') }); }
     const ACSt={
       ru:{title:'Аккаунт',sub:'Профиль, подписка и доступ.',plan:'Симбионт Стандарт',active:'АКТИВНА',expiry:'активна до 14 апр 2026',unlimited:'безлимит трафика',manage:'Управлять →',tokenLabel:'ТОКЕН ДОСТУПА',copied:'Скопировано',copy:'Копировать',device:'МЕТКА УСТРОЙСТВА',deviceName:'Рабочий ПК',activate:'АКТИВИРОВАТЬ КЛЮЧ',ok:'ОК',inviteT:'Пригласить друга',inviteS:'+30 дней Стандарт вам обоим'},
       en:{title:'Account',sub:'Profile, subscription and access.',plan:'Symbiont Standard',active:'ACTIVE',expiry:'active until 14 Apr 2026',unlimited:'unlimited traffic',manage:'Manage →',tokenLabel:'ACCESS TOKEN',copied:'Copied',copy:'Copy',device:'DEVICE LABEL',deviceName:'Work PC',activate:'ACTIVATE KEY',ok:'OK',inviteT:'Invite a friend',inviteS:'+30 days Standard for both of you'},
