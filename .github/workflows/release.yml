@@ -122,6 +122,11 @@ jobs:
           flutter config --enable-macos-desktop
           flutter create --platforms=macos --project-name symbiont --org com.symbiont .
           flutter pub get
+          # flutter_inappwebview_macos требует macOS 10.14+ (WebAuthenticationSession →
+          # ASWebAuthenticationPresentationContextProviding), а шаблон Flutter 3.32 ставит
+          # деплой-таргет ниже. Поднимаем минимум до 10.15 (Podfile + проект Runner).
+          sed -i '' -E "s/^#? *platform :osx, '[0-9.]+'/platform :osx, '10.15'/" macos/Podfile || true
+          sed -i '' -E "s/MACOSX_DEPLOYMENT_TARGET = [0-9.]+;/MACOSX_DEPLOYMENT_TARGET = 10.15;/g" macos/Runner.xcodeproj/project.pbxproj || true
           flutter build macos --release
       - name: Bundle sing-box + zip
         env:
