@@ -860,15 +860,12 @@
       <div style="display:flex; gap:8px; flex:0 0 auto;"><span style="display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); cursor:pointer; font-size:13px; font-weight:600; color:#C2CCCA;"><span style="font-family:'Material Symbols Rounded'; font-size:16px;">content_copy</span>{{ ui.lgCopy }}</span></div>
     </div>
     <div style="border-radius:14px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.07); padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.85;">
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:01:58</span><span style="color:#7C8A99; width:48px; flex:0 0 auto;">INFO</span><span style="color:#C2CCCA;">{{ ui.lg1 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:01:59</span><span style="color:#7C8A99; width:48px; flex:0 0 auto;">INFO</span><span style="color:#C2CCCA;">{{ ui.lg2 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:02:00</span><span style="color:#F5C451; width:48px; flex:0 0 auto;">WARN</span><span style="color:#C2CCCA;">{{ ui.lg3 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:02:00</span><span style="color:#F5C451; width:48px; flex:0 0 auto;">WARN</span><span style="color:#C2CCCA;">{{ ui.lg4 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:02:01</span><span style="color:#34E5B0; width:48px; flex:0 0 auto;">OK</span><span style="color:#C2CCCA;">{{ ui.lg5 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:02:01</span><span style="color:#34E5B0; width:48px; flex:0 0 auto;">OK</span><span style="color:#C2CCCA;">{{ ui.lg6 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:04:12</span><span style="color:#F5C451; width:48px; flex:0 0 auto;">WARN</span><span style="color:#C2CCCA;">{{ ui.lg7 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:04:14</span><span style="color:#34E5B0; width:48px; flex:0 0 auto;">OK</span><span style="color:#C2CCCA;">{{ ui.lg8 }}</span></div>
-      <div style="display:flex; gap:12px;"><span style="color:#46515C; flex:0 0 auto;">10:05:03</span><span style="color:#7C8A99; width:48px; flex:0 0 auto;">INFO</span><span style="color:#C2CCCA;">{{ ui.lg9 }}</span></div>
+      <sc-for list="{{ logRows }}" as="e" hint-placeholder-count="4">
+        <div style="display:flex; gap:12px;"><span style="{{ e.tStyle }}">{{ e.t }}</span><span style="{{ e.levelStyle }}">{{ e.level }}</span><span style="{{ e.msgStyle }}">{{ e.msg }}</span></div>
+      </sc-for>
+      <sc-if value="{{ logEmpty }}" hint-placeholder-val="{{ true }}">
+        <div style="color:#566270; text-align:center; padding:14px 0;">{{ logEmptyText }}</div>
+      </sc-if>
     </div>
   </div>
 </div></sc-if>
@@ -1555,7 +1552,7 @@ class Component extends DCLogic {
     actInput:'', kcOpen:false, kcPhase:null, kcStatus:null, kcCode:'', pay:null,
     glTab:'gloss', glQuery:'', faqOpen:null, wheelPhase:null, wheelAngle:0, wheelWin:null, wheelNextAt:null, recoveryRevealed:false, obStep:'auth', admTariff:'Standard', topMenuOpen:false, admin:false,
     lang:(function(){try{var l=((typeof navigator!=='undefined'&&(navigator.language||navigator.userLanguage))||'').slice(0,2).toLowerCase();return ['ru','en','es','de'].indexOf(l)!==-1?l:'en';}catch(e){return 'ru';}})(), theme:'minimal', profile:'home', protocol:'reality', routeMode:'auto', nodeFilter:'all', favs:{0:true,1:true}, sysOpen:false,
-    routingTab:'apps', copied:false, expandedApp:null, routeAppIdx:null, routeRuleIdx:null, routeDefOpen:false, svcCat:'all', svcTarget:null, addFlow:null, addSub:true, scanPhase:null, appActions:{}, langOpen:false, obLangOpen:false, langMenuOpen:false, langQuery:'',
+    routingTab:'apps', copied:false, expandedApp:null, routeAppIdx:null, routeRuleIdx:null, routeDefOpen:false, svcCat:'all', svcTarget:null, addFlow:null, addSub:true, scanPhase:null, appActions:{}, langOpen:false, obLangOpen:false, eventLog:[], langMenuOpen:false, langQuery:'',
     live:{ping:38,rx:1.33,down:18.4,up:3.2,start:Date.now(),hist:[38,41,37,40,39,42,36,38,40,37,41,38,39,42,37]},
     settings:{killswitch:true, autostart:true, dns:true, reduceMotion:false, adblock:true, trackers:true, phishing:false, tray:true},
     embedChrome:true
@@ -1574,7 +1571,12 @@ class Component extends DCLogic {
     de:{ noNet:'Kein Netz — Verbindung prüfen', protectedT:'Geschützt · Reality-Tunnel', disc:'Getrennt', connectFirst:'Zuerst verbinden', dpiAt:'DPI-Block auf :443', toRelay:'Auf Relay gewechselt — Verbindung hält', offOn:'Offline-Modus an', offOff:'Offline-Modus aus', ruleNeed:'App oder Domain eingeben', ruleAdded:'Regel hinzugefügt', invite:'Einladungscode kopiert', bestNode:'Besten Knoten nach Ping und Last gewählt', randNode:'Zufälliger Knoten — Fingerprint gewechselt', protoSet:'Protokoll: ', now:'jetzt', botReply:'Verstanden — prüfe die Curtain-Logs für deinen Host, melde mich gleich.', curtainBlock:'DPI-Block — wechsle zum Relay…', curtainOk:'Block umgangen — Verbindung hält über das Relay.' }
   }; const _xt=(typeof window!=='undefined'&&window.SYM_I18N&&window.SYM_I18N[this.state.lang]&&window.SYM_I18N[this.state.lang].toasts)||{}; return Object.assign({}, L.en, L[this.state.lang]||{}, _xt); }
   _engine(){ return (typeof window!=='undefined'&&window.SYM_ENGINE)||null; }
-  _engineEvent(ev){ if(!ev) return; const p={}; if(ev.conn) p.conn=ev.conn; if(ev.stage) p.stage=ev.stage; if(ev.ping!=null||ev.down!=null||ev.up!=null){ p.live=Object.assign({}, this.state.live, ev.ping!=null?{ping:ev.ping}:{}, ev.down!=null?{down:ev.down}:{}, ev.up!=null?{up:ev.up}:{}); } if(Object.keys(p).length) this.setState(p); if(ev.toast) this.toast(ev.toast, ev.toastKind||'ok'); }
+  _logEvt(level,msg){ try{ const d=new Date(); const t=[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':'); this.setState(s=>({eventLog:[...(s.eventLog||[]).slice(-59), {t:t,level:level,msg:String(msg)}]})); }catch(_){}}
+  _engineEvent(ev){ if(!ev) return; const p={}; if(ev.conn) p.conn=ev.conn; if(ev.stage) p.stage=ev.stage; if(ev.ping!=null||ev.down!=null||ev.up!=null){ p.live=Object.assign({}, this.state.live, ev.ping!=null?{ping:ev.ping}:{}, ev.down!=null?{down:ev.down}:{}, ev.up!=null?{up:ev.up}:{}); } if(Object.keys(p).length) this.setState(p); if(ev.toast) this.toast(ev.toast, ev.toastKind||'ok');
+    // Реальный журнал: пишем только НАСТОЯЩИЕ события движка (в браузере без движка — пусто).
+    if(ev.conn) this._logEvt(ev.conn==='error'?'WARN':(ev.conn==='connected'?'OK':'INFO'), 'conn: '+ev.conn);
+    if(ev.stage) this._logEvt('INFO', 'stage: '+ev.stage);
+    if(ev.toast) this._logEvt('INFO', ev.toast); }
   async connect(){ if(this.state.offline){ this.setState({conn:'error'}); this.toast(this._T().noNet,'error'); return; } const eng=this._engine(); if(eng&&eng.connect){ const seq=++this._seq; this.setState({conn:'measuring', stage:'tunnel'}); try{ await eng.connect((this._nodes()||[])[this.state.node]); }catch(e){ if(this._seq===seq){ this.setState({conn:'error'}); this.toast(this._T().noNet,'error'); } } return; } const seq=++this._seq; this.setState({conn:'measuring', stage:'tunnel'}); await this._wait(900); if(this._seq!==seq) return; this.setState({conn:'connecting'}); await this._wait(1200); if(this._seq!==seq) return; this.setState({conn:'connected', stage:'tunnel'}); this.toast(this._T().protectedT,'ok'); }
   disconnect(){ ++this._seq; const eng=this._engine(); if(eng&&eng.disconnect){ try{ eng.disconnect(); }catch(e){} } this.setState({conn:'idle', stage:'tunnel'}); this.toast(this._T().disc,'muted'); }
   cancelConn(){ ++this._seq; this.setState({conn:'idle'}); }
@@ -2218,6 +2220,8 @@ class Component extends DCLogic {
       isHome:screen==='home', isNodes:screen==='nodes', isRouting:screen==='routing', isAnalysis:screen==='analysis', isAccount:screen==='account', isSupport:screen==='support', isSettings:screen==='settings',
       conn:S.conn, stage:S.stage, onStage:(st)=>{ if(this.state.conn==='connected'||this.state.conn==='blocking'){ this.setState({stage:st}); } }, coreSize, homeWrapStyle, homeColStyle,
       mPing, mLoss, mProto, mProtoColor, node, uptimeStr, dataStr, txStr, downStr, upStr, sparkPoints, sparkArea, sparkStyleA, sparkStyleB, livePing,
+      logRows:((S.eventLog||[]).slice().reverse().map(e=>({ t:e.t, level:e.level, msg:e.msg, tStyle:{color:'#46515C',flex:'0 0 auto'}, levelStyle:{color:(e.level==='WARN'?'#F5C451':e.level==='OK'?'#34E5B0':'#7C8A99'),width:'48px',flex:'0 0 auto'}, msgStyle:{color:'#C2CCCA'} }))),
+      logEmpty:!((S.eventLog||[]).length), logEmptyText:({ru:'Событий пока нет — движок ещё ничего не сообщал',en:'No events yet — the engine has not reported anything',es:'Sin eventos aún',de:'Noch keine Ereignisse'})[lng]||'No events yet',
       nodeCards, apps:appsView, sites, summary, myApps, mySites, routingTab, account, chat, secItems, sysItems, setSecHdr:_setX.sec, setSysHdr:_setX.sys,
       rApps:routingTab==='apps', rSites:routingTab==='sites',
       tabAppsStyle: routingTab==='apps'?{fontWeight:600,fontSize:'12.5px',color:'#06231A',background:'#34E5B0',padding:'8px 16px',borderRadius:'8px',cursor:'pointer',whiteSpace:'nowrap'}:{fontWeight:500,fontSize:'12.5px',color:'#9DABA8',padding:'8px 16px',borderRadius:'8px',cursor:'pointer',whiteSpace:'nowrap'},
