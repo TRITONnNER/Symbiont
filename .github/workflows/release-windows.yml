@@ -12,9 +12,6 @@ on:
   workflow_dispatch: {}
   push:
     tags: ["v*"]
-    # Публикуем релиз v0.1.0 сборкой с этой ветки (пуш тегов из окружения недоступен —
-    # релиз/тег создаёт сам workflow сервером). После публикации строку можно убрать.
-    branches: ["claude/what-happened-fu3t6c"]
 
 permissions:
   contents: write   # чтобы создать Release при push тега
@@ -143,13 +140,11 @@ jobs:
           path: Symbiont-Windows-x64.zip
           if-no-files-found: error
 
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/claude/what-happened-fu3t6c'
+      - name: Create GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          # На пуше тега — имя тега; на сборке с ветки — фиксируем v0.1.0 (тег создаст action).
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v0.1.0' }}
-          name: Симбионт v0.1.0 — Windows
+          name: Симбионт ${{ github.ref_name }} — Windows
           make_latest: true
           files: Symbiont-Windows-x64.zip
           body: |
