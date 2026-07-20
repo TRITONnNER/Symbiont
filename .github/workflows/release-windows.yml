@@ -33,6 +33,11 @@ jobs:
       - name: Build Symbiont (Windows release)
         working-directory: symbiont_build
         shell: pwsh
+        env:
+          # Плагин flutter_inappwebview_windows тянет <experimental/coroutine>, который
+          # свежий MSVC превращает в hard-error (STL1011). Глушим макросом для ВСЕХ вызовов
+          # cl.exe (переменная CL добавляет опции ко всем компиляциям).
+          CL: /D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS /D_SILENCE_CXX17_DEPRECATION_WARNINGS
         run: |
           flutter config --enable-windows-desktop
           # windows/ в репозитории — заглушка (только runner.exe.manifest). Досоздаём
