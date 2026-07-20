@@ -48,7 +48,8 @@ jobs:
           flutter build windows --release
       - name: Bundle sing-box + zip
         shell: pwsh
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $exe = Get-ChildItem symbiont_build/build/windows -Recurse -Filter symbiont.exe | Where-Object { $_.FullName -match "Release" } | Select-Object -First 1
           $rel = $exe.Directory.FullName
@@ -83,7 +84,8 @@ jobs:
           flutter pub get
           flutter build linux --release
       - name: Bundle sing-box + tar
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           BUND=$(dirname "$(find symbiont_build/build/linux -type f -name symbiont -path '*release*bundle*' | head -1)")
@@ -116,7 +118,8 @@ jobs:
           flutter pub get
           flutter build macos --release
       - name: Bundle sing-box + zip
-        env: { GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e
           APP=$(find symbiont_build/build/macos -maxdepth 6 -type d -name "*.app" -path "*Release*" | head -1)
